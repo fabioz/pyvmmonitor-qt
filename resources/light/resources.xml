@@ -1,0 +1,19 @@
+
+<RCC>
+  <qresource>
+    <file>appbar.arrow.left.png</file>
+    <file>appbar.arrow.right.png</file>
+    <file>appbar.connect.png</file>
+    <file>appbar.folder.open.png</file>
+    <file>appbar.list.gear.png</file>
+    <file>appbar.save.png</file>
+    <file>magnify_browse.png</file>
+    <file>magnify_minus.png</file>
+    <file>magnify_plus.png</file>
+    <file>main_icon.png</file>
+    <file>tree-branch-closed-dark.png</file>
+    <file>tree-branch-closed.png</file>
+    <file>tree-branch-open-dark.png</file>
+    <file>tree-branch-open.png</file>
+  </qresource>
+</RCC>
