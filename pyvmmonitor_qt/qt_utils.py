@@ -248,9 +248,12 @@ def iter_widget_captions_and_items(
             row_items = []
 
             for col in cols:
-                index = model.index(row, col, parent_index)
+                index_in_col = model.index(row, col, parent_index)
+                data = model.data(index_in_col, QtCore.Qt.DisplayRole)
+                if data is None:
+                    data = ''
                 row_items.append(
-                    prefix + model.data(index, QtCore.Qt.DisplayRole))
+                    prefix + data)
 
             if len(cols) > 1:
                 yield row_items, index
@@ -287,13 +290,15 @@ def list_wiget_item_captions(
     a list where each element is either a string (if only one column was asked for) or
     a list(list(str)) if more than one column was asked for.
     '''
-    return list(
-        x[0] for x in iter_widget_captions_and_items(
+    ret = []
+    for x in iter_widget_captions_and_items(
             widget,
             parent_index,
             prefix,
             cols,
-            only_show_expanded))
+            only_show_expanded):
+        ret.append(x[0])
+    return ret
 
 
 def count_items(widget):
