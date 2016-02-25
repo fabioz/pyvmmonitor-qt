@@ -2,7 +2,10 @@
 #
 # Copyright: Brainwy Software
 from pyvmmonitor_core.callback import Callback
-from pyvmmonitor_qt.qt.QtGui import QPalette
+from pyvmmonitor_core.weak_utils import WeakSet
+from pyvmmonitor_qt import compat
+from pyvmmonitor_qt.qt.QtGui import QPalette, QAction, QIcon, QPushButton
+
 
 _applied_stylesheet = False
 
@@ -27,6 +30,52 @@ def get_app_stylesheet():
 
     return AppStylesheet()
 
+_is_dark_to_resource_modules = {}
+_currently_applied_resource_modules = set()
+
+
+class _Resource(object):
+
+    def __init__(self, resource_module_name):
+        self.resource_module_name = resource_module_name
+        self._module = None
+
+    def _load_module(self):
+        ret = __import__(self.resource_module_name)
+        for part in self.resource_module_name.split('.')[1:]:
+            ret = getattr(ret, part)
+        return ret
+
+    def load(self):
+        if self._module is None:
+            self._module = self._load_module()
+            return  # Just importing it loads it.
+        self._module.qInitResources()
+
+    def unload(self):
+        if self._module is None:
+            return
+        self._module.qCleanupResources()
+
+
+def register_resource_module(resource_module_name, is_dark):
+    _is_dark_to_resource_modules.setdefault(is_dark, set()).add(_Resource(resource_module_name))
+
+register_resource_module('pyvmmonitor_qt.stylesheet.dark_resources', is_dark=True)
+register_resource_module('pyvmmonitor_qt.stylesheet.light_resources', is_dark=False)
+
+
+def _switch_resources_to_style(is_dark):
+    if _currently_applied_resource_modules:
+        for resource in _currently_applied_resource_modules:
+            resource.unload()
+        _currently_applied_resource_modules.clear()
+
+    resources_to_apply = _is_dark_to_resource_modules.get(is_dark)
+    for resource in resources_to_apply:
+        resource.load()
+    _currently_applied_resource_modules.update(resources_to_apply)
+
 
 def apply_default_stylesheet(app, force=False):
     global _applied_stylesheet
@@ -36,19 +85,19 @@ def apply_default_stylesheet(app, force=False):
 
         if _USE_THEME == 'DARK_ORANGE':
             from pyvmmonitor_qt.stylesheet.dark import STYLESHEET
-            from pyvmmonitor_qt.stylesheet import dark_resources  # @UnusedImport
             # app.setStyle("plastique")
             # app.setStyle("cleanlooks")
             # app.setStyle("motif")
             # app.setStyle("cde")
+            is_dark = True
         elif _USE_THEME == 'DARK':
             import qdarkstyle
-            from pyvmmonitor_qt.stylesheet import dark_resources  # @UnusedImport @Reimport
             # setup stylesheet
             STYLESHEET = qdarkstyle.load_stylesheet()
+            is_dark = True
         else:  # Native or error...
             from pyvmmonitor_qt.stylesheet.light import STYLESHEET
-            from pyvmmonitor_qt.stylesheet import light_resources  # @UnusedImport
+            is_dark = False
 
         app.setStyleSheet(STYLESHEET)
 
@@ -57,8 +106,29 @@ def apply_default_stylesheet(app, force=False):
         pal.setColor(QPalette.Link, foreground)
         pal.setColor(QPalette.LinkVisited, foreground)
         app.setPalette(pal)
+
+        _switch_resources_to_style(is_dark)
+        for icon_name, actions in compat.iteritems(_styled_qt_objects):
+            for action in actions:
+                action.setIcon(QIcon(icon_name))
+
         on_stylesheet_changed()
 
 
 def is_light_theme():
     return not _USE_THEME.startswith('DARK')
+
+_styled_qt_objects = {}
+
+
+def CreateStyledQAction(parent, icon_name, text=''):
+    ret = QAction(QIcon(icon_name), text, parent)
+    _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
+    return ret
+
+
+def CreateStyledQPushButton(parent, icon_name, text=''):
+    ret = QPushButton(parent)
+    ret.setIcon(QIcon(icon_name))
+    _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
+    return ret

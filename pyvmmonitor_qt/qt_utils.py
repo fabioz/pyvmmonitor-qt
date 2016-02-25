@@ -712,12 +712,15 @@ def create_toolbuttton_with_menu(parent, menu, icon=None):
     toolbutton = QtGui.QToolButton(parent)
     toolbutton.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
 
-    default_action = QtGui.QAction(parent)
+    if isinstance(icon, (compat.bytes, compat.unicode)):
+        from pyvmmonitor_qt.stylesheet import CreateStyledQAction
+        default_action = CreateStyledQAction(parent, icon)
+    else:
+        default_action = QtGui.QAction(parent)
+        if icon is not None:
+            default_action.setIcon(icon)
+
     default_action.triggered.connect(toolbutton.showMenu)
-
-    if icon is not None:
-        default_action.setIcon(icon)
-
     toolbutton.setDefaultAction(default_action)
     toolbutton.setMenu(menu)
     return toolbutton
