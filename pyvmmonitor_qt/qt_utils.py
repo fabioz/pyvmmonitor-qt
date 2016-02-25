@@ -40,7 +40,7 @@ from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
 # Modules moved (keep backward compatibility for now).
 from .qt_app import obtain_qapp  # @NoMove
 from .qt_collect import GarbageCollector, QtGarbageCollector, start_collect_only_in_ui_thread
-from .qt_tree_utils import scroll_pos, expanded_nodes_tree, count_items
+from .qt_tree_utils import scroll_pos, expanded_nodes_tree
 
 
 # ==================================================================================================
