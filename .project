@@ -3,7 +3,6 @@
 	<name>pyvmmonitor-qt</name>
 	<comment></comment>
 	<projects>
-		<project>pytest-qt</project>
 		<project>pyvmmonitor-core</project>
 	</projects>
 	<buildSpec>

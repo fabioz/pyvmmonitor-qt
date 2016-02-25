@@ -6,6 +6,8 @@ import threading
 import time
 import weakref
 
+from pyvmmonitor_qt import compat
+from pyvmmonitor_qt.pytest_plugin import qtapi
 from pyvmmonitor_qt.qt.QtGui import QTreeView, QStandardItemModel, QStandardItem, QMenu
 from pyvmmonitor_qt.qt_utils import execute_after_millis, process_events,\
     expanded_nodes_tree, expanded_nodes_tree, count_widget_children
@@ -72,6 +74,8 @@ def test_expanded_items(qtapi):
 unicode: Item 4
 '''.replace('\r\n', '\n').replace('\r', '\n')
 
+    if compat.PY3:
+        expected_initial_expanded = expected_initial_expanded.replace('unicode', 'str')
     assert stream.getvalue() == expected_initial_expanded
 
     qtree_view.setExpanded(item2.index(), False)
@@ -98,10 +102,10 @@ def test_menu_creator(qtapi):
     class Class(object):
 
         def cumulative(self):
-            print 'cumulative'
+            print('cumulative')
 
         def total(self):
-            print 'total'
+            print('total')
 
     c = Class()
     submenu.add_action('Cumulative', c.cumulative)

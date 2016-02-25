@@ -9,6 +9,7 @@ from pygments.styles.monokai import MonokaiStyle
 from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
 from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
 from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
+from pyvmmonitor_qt.pytest_plugin import qtapi
 from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QColor
