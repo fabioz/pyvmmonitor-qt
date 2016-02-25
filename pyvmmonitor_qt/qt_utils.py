@@ -22,7 +22,7 @@ from pyvmmonitor_core.nodes_tree import NodesTree, Node
 from pyvmmonitor_core.ordered_set import OrderedSet
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
-from pyvmmonitor_core.weakmethod import WeakMethodProxy
+from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.qt import QtGui, QtCore, qt_api
 from pyvmmonitor_qt.qt.QtCore import QTimer, QObject, QEvent, Qt, QModelIndex
 from pyvmmonitor_qt.qt.QtGui import (
@@ -37,23 +37,8 @@ from pyvmmonitor_qt.qt.QtGui import (
     QToolBar,
     QWidget,
     QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
-    QTextBrowser, QTreeView, QHBoxLayout, QIcon, QStyle)
+    QTextBrowser, QHBoxLayout, QIcon, QStyle)
 from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
-
-
-PY2 = sys.version_info[0] < 3
-PY3 = not PY2
-
-if PY3:
-    def as_unicode(b):
-        if b.__class__ != str:
-            return b.decode('utf-8', 'replace')
-        return b
-else:
-    def as_unicode(b):
-        if b.__class__ != unicode:
-            return b.decode('utf-8', 'replace')
-        return b
 
 
 _app = None
@@ -242,7 +227,7 @@ class QtWeakMethod(object):
 # ==================================================================================================
 def children(tree):
     if hasattr(tree, 'topLevelItem'):
-        return [tree.topLevelItem(i) for i in xrange(tree.topLevelItemCount())]
+        return [tree.topLevelItem(i) for i in compat.xrange(tree.topLevelItemCount())]
     else:
         raise AssertionError('Unable to get children for: %s' % (tree,))
 
@@ -275,7 +260,7 @@ def iter_widget_captions_and_items(
             parent_index = QtCore.QModelIndex()
         row_count = model.rowCount(parent_index)
 
-        for row in xrange(row_count):
+        for row in compat.xrange(row_count):
             index = model.index(row, 0, parent_index)
             row_items = []
 
@@ -345,7 +330,7 @@ def _get_expanded_nodes_tree(
     if parent_node is None:
         parent_node = NodesTree()
 
-    for row in xrange(row_count):
+    for row in compat.xrange(row_count):
         index = model.index(row, 0, parent_index)
         if not widget.isExpanded(index):
             continue
@@ -376,7 +361,7 @@ def _set_expanded_nodes_tree(
 
     found = 0
 
-    for row in xrange(row_count):
+    for row in compat.xrange(row_count):
         index = model.index(row, 0, parent_index)
 
         model_data = model.data(index, data)
@@ -431,7 +416,7 @@ def count_items(tree):
 if qt_api == 'pyside':
     try:
         from PySide import shiboken
-    except:
+    except ImportError:
         import shiboken
 
     def is_qobject_alive(obj):
@@ -465,10 +450,29 @@ class GarbageCollector(object):
             flags = (
                 gc.DEBUG_COLLECTABLE |
                 gc.DEBUG_UNCOLLECTABLE |
-                gc.DEBUG_INSTANCES |
-                gc.DEBUG_SAVEALL |   # i.e.: put in gc.garbage!
-                gc.DEBUG_OBJECTS
+                gc.DEBUG_SAVEALL   # i.e.: put in gc.garbage!
             )
+
+            try:
+                flags |= gc.DEBUG_INSTANCES  # @UndefinedVariable
+            except AttributeError:
+                pass
+
+            try:
+                flags |= gc.DEBUG_OBJECTS  # @UndefinedVariable
+            except AttributeError:
+                pass
+
+            try:
+                flags |= gc.DEBUG_LEAK
+            except AttributeError:
+                pass
+
+            try:
+                flags |= gc.DEBUG_STATS
+            except AttributeError:
+                pass
+
         else:
             flags = 0
 
@@ -478,24 +482,24 @@ class GarbageCollector(object):
         if l0 > self.threshold[0]:
             num = gc.collect(0)
             if DEBUG:
-                print ('collecting gen 0, found:', num, 'unreachable')
+                print('collecting gen 0, found:', num, 'unreachable')
 
             if l1 > self.threshold[1]:
                 num = gc.collect(1)
                 if DEBUG:
-                    print ('collecting gen 1, found:', num, 'unreachable')
+                    print('collecting gen 1, found:', num, 'unreachable')
 
                 if l2 > self.threshold[2]:
                     num = gc.collect(2)
                     if DEBUG:
-                        print ('collecting gen 2, found:', num, 'unreachable')
+                        print('collecting gen 2, found:', num, 'unreachable')
 
         # uncomment for debug
         if DEBUG:
             garbage = gc.garbage
             if garbage:
                 for obj in garbage:
-                    print ('Error: cycle in: %s (%r) %s' % (obj, repr(obj), type(obj)))
+                    print('Error: cycle in: %s (%r) %s' % (obj, repr(obj), type(obj)))
 
             del gc.garbage[:]
 
@@ -525,7 +529,7 @@ class QtGarbageCollector(QObject):
         self._collector = GarbageCollector()
 
         timer = self.timer = QTimer()
-        timer.timeout.connect(WeakMethodProxy(self.check))
+        timer.timeout.connect(self.check)
         timer.start(self.INTERVAL)
 
     def check(self):
@@ -568,8 +572,7 @@ def show_exception():
     except:
         show_exception()
     '''
-    import StringIO
-    fp = StringIO.StringIO()
+    fp = compat.StringIO()
 
     traceback.print_exc(file=fp)
     # Print to console
@@ -577,7 +580,7 @@ def show_exception():
 
     sys.stderr.write(stack_trace)
 
-    if isinstance(stack_trace, str):
+    if isinstance(stack_trace, compat.bytes):
         stack_trace = stack_trace.decode(sys.getfilesystemencoding(), 'replace')
 
     info = sys.exc_info()
@@ -613,7 +616,7 @@ def install_except_hook():
 
 def set_additional_exception_msg(exception_msg):
     global _ADDITIONAL_EXCEPTION_MSG
-    if isinstance(exception_msg, str):
+    if isinstance(exception_msg, compat.bytes):
         exception_msg = exception_msg.decode('utf-8', 'replace')
 
     _ADDITIONAL_EXCEPTION_MSG = exception_msg
@@ -633,7 +636,10 @@ def show_message(
         QMessageBox.Warning
         QMessageBox.Critical
     '''
-    if isinstance(icon, basestring):
+    if isinstance(icon, compat.bytes):
+        icon = icon.decode('utf-8', 'replace')
+
+    if isinstance(icon, compat.unicode):
         icon = icon.lower()
         if icon == 'error':
             icon = QMessageBox.Critical
@@ -792,9 +798,9 @@ class _ResizeMessageBox(CustomMessageDialog):
     def __init__(self, parent, title, message, detailed_message, icon):
         CustomMessageDialog.__init__(self, parent)
 
-        title = as_unicode(title)
-        message = as_unicode(message)
-        detailed_message = as_unicode(detailed_message)
+        title = compat.as_unicode(title)
+        message = compat.as_unicode(message)
+        detailed_message = compat.as_unicode(detailed_message)
 
         cp = [title, message]
         if detailed_message:
@@ -1111,7 +1117,7 @@ def expand(tree, caption):
     :param QTreeView tree:
     :param unicode caption:
     '''
-    if isinstance(caption, basestring):
+    if isinstance(caption, (compat.bytes, compat.unicode)):
         caption = set([caption])
     else:
         assert isinstance(caption, (list, tuple, set))
@@ -1150,7 +1156,7 @@ def assert_condition_within_timeout(condition, timeout=2.):
         if isinstance(c, bool):
             if c:
                 return
-        elif isinstance(c, basestring):
+        elif isinstance(c, (compat.bytes, compat.unicode)):
             if not c:
                 return
         else:

@@ -152,3 +152,4 @@ QtValidLicenseForDeclarativeModule = QtValidLicenseForDeclarativeModule
 QtValidLicenseForMultimediaModule = QtValidLicenseForMultimediaModule
 QtValidLicenseForOpenVGModule = QtValidLicenseForOpenVGModule
 QtWarningMsg = QtWarningMsg
+qRegisterResourceData = qRegisterResourceData

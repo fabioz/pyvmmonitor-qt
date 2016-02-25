@@ -22,7 +22,7 @@ def generate(target_name):
 
     resources_xml = template % dict(files='\n'.join(files))
     resources_xml_file = os.path.join(target, 'resources.xml')
-    with file(resources_xml_file, 'w') as stream:
+    with open(resources_xml_file, 'w') as stream:
         stream.write(resources_xml)
 
     import PySide
@@ -45,6 +45,8 @@ def generate(target_name):
         '%s_resources.py' %
         (target_name,
          ))
+    stdout = stdout.replace('from PySide import QtCore', 'from pyvmmonitor_qt.qt import QtCore')
+    stdout = stdout.replace('"\\', 'b"\\')
     with open(f, 'w') as stream:
         stream.write(stdout)
 

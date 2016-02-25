@@ -39,7 +39,7 @@ import datetime
 import itertools
 import os
 import sys
-from types import NoneType
+NoneType = type(None)
 
 from pyvmmonitor_qt.qt import qt_api
 
@@ -701,7 +701,10 @@ class FormDialog(QDialog):
         for field in self.float_fields:
             if not is_edit_valid(field):
                 valid = False
-        for btn_type in (QDialogButtonBox.Ok, QDialogButtonBox.Apply, QDialogButtonBox.RestoreDefaults):
+        for btn_type in (
+                QDialogButtonBox.Ok,
+                QDialogButtonBox.Apply,
+                QDialogButtonBox.RestoreDefaults):
             btn = self.bbox.button(btn_type)
             if btn is not None:
                 btn.setEnabled(valid)
