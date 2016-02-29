@@ -14,6 +14,7 @@ from pygments.lexers import CLexer, CppLexer, PythonLexer, get_lexer_by_name
 from pygments.styles.default import DefaultStyle
 from pygments.token import Comment
 
+from pyvmmonitor_core import compat
 from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
@@ -114,7 +115,7 @@ class BlockUserData(QtGui.QTextBlockUserData):
 
     def __init__(self, **kwds):
         QtGui.QTextBlockUserData.__init__(self)
-        for key, value in kwds.iteritems():
+        for key, value in compat.iteritems(kwds):
             setattr(self, key, value)
 
     def __repr__(self):
@@ -146,7 +147,7 @@ class PygmentsHighlighter(QtGui.QSyntaxHighlighter):
     def highlightBlock(self, qstring):
         """ Highlight a block of text.
         """
-        qstring = unicode(qstring)
+        qstring = compat.unicode(qstring)
         prev_data = self.previous_block_data()
 
         if prev_data is not None:

@@ -13,7 +13,7 @@ import weakref
 
 from pyvmmonitor_qt.qt import QtGui, QtCore
 
-from find_widget import FindWidget
+from .find_widget import FindWidget
 
 
 class ReplaceWidget(FindWidget):

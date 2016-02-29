@@ -6,6 +6,7 @@ import time
 
 from pygments.styles.monokai import MonokaiStyle
 
+from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
 from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
 from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
@@ -100,7 +101,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
     edit.code.set_code(new_code)
     assert not dirty[0]
 
-    edit.filename = unicode(p)
+    edit.filename = compat.unicode(p)
 
     edit.save()
     assert p.read() == new_code
@@ -131,12 +132,12 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
 
     p.write('foo')
     with mock.patch('pyvmmonitor_qt.qt.QtGui.QFileDialog.getSaveFileName') as m:
-        m.return_value = unicode(p), ''
+        m.return_value = compat.unicode(p), ''
         edit.filename = ''
 
         edit.save()
 
-        assert edit.filename == unicode(p)
+        assert edit.filename == compat.unicode(p)
         assert p.read() == initial_code
         assert edit.code.get_code() == initial_code
 
@@ -151,7 +152,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert p.read() == 'foo'
         assert edit.code.get_code() == initial_code
 
-    edit.filename = unicode(p)
+    edit.filename = compat.unicode(p)
     edit.reload()
     assert p.read() == 'foo'
     assert edit.code.get_code() == 'foo'
@@ -182,7 +183,7 @@ def test_python_code_text_edit_dirty(qtapi, tmpdir):
     assert new_code + '\n' == edit.code.get_code()
     assert dirty[0]
 
-    edit.filename = unicode(p)
+    edit.filename = compat.unicode(p)
     edit.save()
     assert not dirty[0]
 

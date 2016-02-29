@@ -13,13 +13,14 @@
 import math
 import sys
 
-from find_widget import FindWidget
-from gutters import LineNumberWidget, StatusGutterWidget
-from pygments_highlighter import PygmentsHighlighter
 from pyvmmonitor_qt.qt import QtCore, QtGui
 from pyvmmonitor_qt.qt.QtGui import QTextCursor
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
-from replace_widget import ReplaceWidget
+
+from .find_widget import FindWidget
+from .gutters import LineNumberWidget, StatusGutterWidget
+from .pygments_highlighter import PygmentsHighlighter
+from .replace_widget import ReplaceWidget
 
 
 class CodeWidget(QtGui.QPlainTextEdit):
