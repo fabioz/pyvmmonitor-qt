@@ -119,3 +119,24 @@ def test_hierarchy_different_from_ids(qtapi):
     assert len(tree) == 2
     del tree['a']
     assert qt_utils.count_items(tree.tree) == 0
+
+
+def test_clear(qtapi):
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+
+    tree.tree.show()
+
+    tree.columns = ['col1', 'col2']
+    qtapi.add_widget(tree.tree)
+    tree['a'] = [10, 20]
+    tree.add_node('a', 'a.b.c.d', [1, 2])
+
+    contents = []
+    for node in tree.iternodes('a'):
+        contents.append(node.obj_id)
+    assert ''.join(contents) == 'a.b.c.d'
+
+    assert qt_utils.count_items(tree.tree) == 2
+    tree.clear()
+    assert qt_utils.count_items(tree.tree) == 0
