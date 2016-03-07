@@ -968,6 +968,23 @@ def assert_condition_within_timeout(condition, timeout=2.):
         process_queue()
         time.sleep(1 / 60.)
 
+
+def copy_qtransform(transform):
+    from pyvmmonitor_qt.qt.QtGui import QTransform
+    return QTransform(
+        transform.m11(),
+        transform.m12(),
+        transform.m13(),
+
+        transform.m21(),
+        transform.m22(),
+        transform.m23(),
+
+        transform.m31(),
+        transform.m32(),
+        transform.m33()
+    )
+
 # ==================================================================================================
 # main -- manual testing
 # ==================================================================================================

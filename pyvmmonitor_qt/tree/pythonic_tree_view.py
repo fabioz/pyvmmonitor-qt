@@ -155,6 +155,10 @@ class PythonicQTreeView(object):
         self._fast = {}
         self._root_items = set()
 
+    def clear(self):
+        while self._root_items:
+            del self[compat.next(iter(self._root_items)).obj_id]
+
     @property
     def columns(self):
         ret = []
@@ -207,6 +211,8 @@ class PythonicQTreeView(object):
         while node._children:
             child_node = compat.next(iter(node._children))
             del self[child_node.obj_id]
+
+        self._root_items.discard(node)
 
         parent_node = node._parent
         if parent_node is None:
