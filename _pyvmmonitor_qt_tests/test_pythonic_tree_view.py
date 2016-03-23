@@ -140,3 +140,6 @@ def test_clear(qtapi):
     assert qt_utils.count_items(tree.tree) == 2
     tree.clear()
     assert qt_utils.count_items(tree.tree) == 0
+    tree['a'] = [10, 20]
+    tree.add_node('a', 'a.b.c.d', [1, 2])
+    assert qt_utils.count_items(tree.tree) == 2
