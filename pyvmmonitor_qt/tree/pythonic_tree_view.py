@@ -213,6 +213,7 @@ class PythonicQTreeView(object):
             del self[child_node.obj_id]
 
         self._root_items.discard(node)
+        del self._fast[obj_id]
 
         parent_node = node._parent
         if parent_node is None:
