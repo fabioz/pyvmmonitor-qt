@@ -6,9 +6,9 @@ import os
 import re
 
 from pyvmmonitor_core.callback import Callback
+from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.pyface_based.code_widget import AdvancedCodeWidget
 from pyvmmonitor_qt.qt import QtGui
-from pyvmmonitor_qt.qt.QtGui import QFileDialog
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
 
@@ -91,7 +91,7 @@ class SaveableAdvancedCodeWidget(AdvancedCodeWidget):
             filename = self._filename
 
         if not filename:
-            selected, _selected_filter = QFileDialog.getSaveFileName(
+            selected, _selected_filter = qt_utils.ask_save_filename(
                 self,
                 'Filename to save',
                 None,

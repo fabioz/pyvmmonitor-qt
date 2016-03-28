@@ -34,7 +34,7 @@ from pyvmmonitor_qt.qt.QtGui import (
     QToolBar,
     QWidget,
     QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
-    QTextBrowser, QHBoxLayout, QIcon, QStyle)
+    QTextBrowser, QHBoxLayout, QIcon, QStyle, QFileDialog)
 from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
 
 # Modules moved (keep backward compatibility for now).
@@ -984,6 +984,10 @@ def copy_qtransform(transform):
         transform.m32(),
         transform.m33()
     )
+
+
+def ask_save_filename(parent, caption, initial_dir, files_filter):
+    return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter)
 
 # ==================================================================================================
 # main -- manual testing

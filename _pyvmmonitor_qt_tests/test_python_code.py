@@ -6,11 +6,11 @@ import time
 
 from pygments.styles.monokai import MonokaiStyle
 
-from pyvmmonitor_qt import compat
+from pyvmmonitor_qt import compat, qt_utils
 from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
 from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
 from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
-from pyvmmonitor_qt.pytest_plugin import qtapi
+from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QColor
@@ -131,7 +131,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write('foo')
-    with mock.patch('pyvmmonitor_qt.qt.QtGui.QFileDialog.getSaveFileName') as m:
+    with mock.patch.object(qt_utils, 'ask_save_filename') as m:
         m.return_value = compat.unicode(p), ''
         edit.filename = ''
 
@@ -142,7 +142,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write('foo')
-    with mock.patch('pyvmmonitor_qt.qt.QtGui.QFileDialog.getSaveFileName') as m:
+    with mock.patch.object(qt_utils, 'ask_save_filename') as m:
         m.return_value = '', ''
         edit.filename = ''
 
