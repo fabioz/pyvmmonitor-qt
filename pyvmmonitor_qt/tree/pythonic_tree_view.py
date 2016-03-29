@@ -45,7 +45,7 @@ from __future__ import unicode_literals
 
 from pyvmmonitor_core import thread_utils, compat
 from pyvmmonitor_qt.qt.QtCore import Qt
-from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem, QBrush
+from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
 
 
 class _CustomModel(QStandardItemModel):
