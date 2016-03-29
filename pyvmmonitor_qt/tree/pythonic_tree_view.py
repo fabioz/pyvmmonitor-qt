@@ -201,6 +201,7 @@ class PythonicQTreeView(object):
 
         node._parent = parent_node
         self._fast[obj_id] = node
+        return node
 
     def __getitem__(self, obj_id):
         return self._fast[obj_id]
