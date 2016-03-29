@@ -45,7 +45,7 @@ from __future__ import unicode_literals
 
 from pyvmmonitor_core import thread_utils, compat
 from pyvmmonitor_qt.qt.QtCore import Qt
-from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
+from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem, QBrush
 
 
 class _CustomModel(QStandardItemModel):
@@ -144,6 +144,18 @@ class TreeNode(object):
             return False
 
         return self._items[col].checkState() == Qt.Checked
+
+    def set_foreground_brush(self, brush, col=-1):
+        if col == -1:
+            items = self._items
+        else:
+            items = [self._items[col]]
+
+        for item in items:
+            item.setData(brush, Qt.ForegroundRole)
+
+    def get_foreground_brush(self, col):
+        return self._items[col].data(Qt.ForegroundRole)
 
 
 class PythonicQTreeView(object):
