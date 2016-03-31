@@ -157,6 +157,18 @@ class TreeNode(object):
     def get_foreground_brush(self, col):
         return self._items[col].data(Qt.ForegroundRole)
 
+    def set_background_brush(self, brush, col=-1):
+        if col == -1:
+            items = self._items
+        else:
+            items = [self._items[col]]
+
+        for item in items:
+            item.setData(brush, Qt.BackgroundRole)
+
+    def get_background_brush(self, col):
+        return self._items[col].data(Qt.BackgroundRole)
+
 
 class PythonicQTreeView(object):
 

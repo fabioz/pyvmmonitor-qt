@@ -154,3 +154,7 @@ def test_color(qtapi):
     tree['a'].set_foreground_brush(QBrush(QColor(Qt.red)))
 
     assert tree['a'].get_foreground_brush(0).color() == QColor(Qt.red)
+
+    tree['a'].set_background_brush(QBrush(QColor(Qt.gray)))
+
+    assert tree['a'].get_background_brush(0).color() == QColor(Qt.gray)
