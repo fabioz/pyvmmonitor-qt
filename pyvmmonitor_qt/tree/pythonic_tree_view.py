@@ -5,8 +5,9 @@
 This module provides a Pythonic API to a QTreeView using a QStandardItemModel.
 
 Nodes always have an id (which is used to access the node in a fast way and by
-default, ids identify the hierarchy based on dots -- although it's also possible
-to create an hierarchy which is not dot-based by using `add_node` directly).
+default, ids identify the hierarchy based on dots in the id -- although it's
+also possible to create an hierarchy which is not dot-based by using `add_node`
+directly).
 
 To use:
 
@@ -145,6 +146,30 @@ class TreeNode(object):
 
         return self._items[col].checkState() == Qt.Checked
 
+    def set_foreground_brush(self, brush, col=-1):
+        if col == -1:
+            items = self._items
+        else:
+            items = [self._items[col]]
+
+        for item in items:
+            item.setData(brush, Qt.ForegroundRole)
+
+    def get_foreground_brush(self, col):
+        return self._items[col].data(Qt.ForegroundRole)
+
+    def set_background_brush(self, brush, col=-1):
+        if col == -1:
+            items = self._items
+        else:
+            items = [self._items[col]]
+
+        for item in items:
+            item.setData(brush, Qt.BackgroundRole)
+
+    def get_background_brush(self, col):
+        return self._items[col].data(Qt.BackgroundRole)
+
 
 class PythonicQTreeView(object):
 
@@ -201,6 +226,7 @@ class PythonicQTreeView(object):
 
         node._parent = parent_node
         self._fast[obj_id] = node
+        return node
 
     def __getitem__(self, obj_id):
         return self._fast[obj_id]

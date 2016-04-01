@@ -6,7 +6,8 @@ import pytest
 
 from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.pytest_plugin import qtapi
-from pyvmmonitor_qt.qt.QtGui import QTreeView
+from pyvmmonitor_qt.qt.QtCore import Qt
+from pyvmmonitor_qt.qt.QtGui import QTreeView, QColor, QBrush
 from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView, TreeNode
 
 
@@ -143,3 +144,17 @@ def test_clear(qtapi):
     tree['a'] = [10, 20]
     tree.add_node('a', 'a.b.c.d', [1, 2])
     assert qt_utils.count_items(tree.tree) == 2
+
+
+def test_color(qtapi):
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+    tree.tree.show()
+    tree['a'] = [10, 20]
+    tree['a'].set_foreground_brush(QBrush(QColor(Qt.red)))
+
+    assert tree['a'].get_foreground_brush(0).color() == QColor(Qt.red)
+
+    tree['a'].set_background_brush(QBrush(QColor(Qt.gray)))
+
+    assert tree['a'].get_background_brush(0).color() == QColor(Qt.gray)
