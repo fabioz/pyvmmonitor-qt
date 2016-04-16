@@ -2,15 +2,14 @@
 #
 # Copyright: Brainwy Software
 import io
-import threading
 import time
 import weakref
 
 from pyvmmonitor_qt import compat
-from pyvmmonitor_qt.pytest_plugin import qtapi
+from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 from pyvmmonitor_qt.qt.QtGui import QTreeView, QStandardItemModel, QStandardItem, QMenu
 from pyvmmonitor_qt.qt_utils import execute_after_millis, process_events,\
-    expanded_nodes_tree, expanded_nodes_tree, count_widget_children
+    expanded_nodes_tree, count_widget_children
 
 
 def test_execute_in_millis(qtapi):
@@ -35,7 +34,8 @@ def test_execute_in_millis(qtapi):
     assert processed >= 2, 'It takes at least one loop to enable the timer and another to call it!'
     assert len(called_at) == 1
     # When using 0.1 we had fails such as 1393329951.561 >= (1393329951.462 + 0.1)
-    assert called_at[0] >= initial + 0.098
+    # When using 0.098 we had fails such as 1460803824.435426 >= (1460803824.338036 + 0.098)
+    assert called_at[0] >= initial + 0.096
 
 
 def create_item(txt):
