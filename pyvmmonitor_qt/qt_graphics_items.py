@@ -19,17 +19,6 @@ def set_graphics_item_colors(item, pen=None, fill_color=None, alpha=255):
     item.setBrush(brush)
 
 
-def create_graphics_item_circle(
-        center, radius, pen=None, fill_color=None, parent_item=None, alpha=200):
-    circle = QGraphicsEllipseItem(parent_item)
-    circle.setRect(QtCore.QRectF(
-        center[0] - radius, center[1] - radius, 2. * radius, 2. * radius))
-
-    set_graphics_item_colors(circle, pen, fill_color, alpha)
-
-    return circle
-
-
 class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
     def __init__(self, parent_item, center, radius_in_px):
@@ -70,6 +59,17 @@ def create_fixed_pixels_graphics_item_circle(
         center, radius_in_px, pen=None, fill_color=None, parent_item=None, alpha=200):
     circle = _CustomGraphicsEllipseItem(parent_item, center, radius_in_px)
     set_graphics_item_colors(circle, pen, fill_color, alpha)
+    return circle
+
+
+def create_graphics_item_circle(
+        center, radius, pen=None, fill_color=None, parent_item=None, alpha=200):
+    circle = QGraphicsEllipseItem(parent_item)
+    circle.setRect(QtCore.QRectF(
+        center[0] - radius, center[1] - radius, 2. * radius, 2. * radius))
+
+    set_graphics_item_colors(circle, pen, fill_color, alpha)
+
     return circle
 
 
