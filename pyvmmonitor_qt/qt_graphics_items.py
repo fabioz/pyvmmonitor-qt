@@ -44,11 +44,33 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self._regular_fill_color = fill_color
         self._regular_alpha = alpha
         self._regular_radius_in_px = radius_in_px
+
+        # May be changed for a function and if True is returned, the mouse press
+        # is accepted.
+        self.accept_mouse_press = lambda event: False
+
         self.on_enter_hover = Callback()
         self.on_leave_hover = Callback()
 
+        self.on_mouse_press = Callback()
+        self.on_mouse_move = Callback()
+        self.on_mouse_release = Callback()
+
         self._update(radius_in_px)
         set_graphics_item_colors(self, pen, fill_color, alpha)
+
+    def mousePressEvent(self, event):
+        if self.accept_mouse_press(event):
+            event.accept()
+            self.on_mouse_press(self, event)
+
+    def mouseMoveEvent(self, event):
+        event.accept()
+        self.on_mouse_move(self, event)
+
+    def mouseReleaseEvent(self, event):
+        event.accept()
+        self.on_mouse_release(self, event)
 
     def set_radius_in_px(self, radius_in_px):
         self._radius_in_px = radius_in_px
