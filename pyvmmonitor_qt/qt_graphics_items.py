@@ -75,6 +75,15 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
     def set_radius_in_px(self, radius_in_px):
         self._radius_in_px = radius_in_px
 
+    def get_radius_in_px(self):
+        return self._radius_in_px
+
+    def set_center(self, center):
+        self._center = center
+
+    def get_center(self):
+        return self._center
+
     def _update(self, radius):
         center = self._center
 
@@ -88,13 +97,16 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
                     2. * radius,
                     2. * radius))
 
+    def update_info(self, graphics_widget):
+        transform = graphics_widget.transform()
+        radius = calculate_size_for_value_in_px(transform, self._radius_in_px)
+        self._update(radius)
+
     @overrides(QGraphicsEllipseItem.paint)
     def paint(self, painter, option, widget=None):
         if widget is not None:
             graphics_widget = widget.parent()
-            transform = graphics_widget.transform()
-            radius = calculate_size_for_value_in_px(transform, self._radius_in_px)
-            self._update(radius)
+            self.update_info(graphics_widget)
 
         return QGraphicsEllipseItem.paint(self, painter, option, widget)
 
