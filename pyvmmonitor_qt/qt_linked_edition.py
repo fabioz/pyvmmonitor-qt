@@ -29,7 +29,7 @@ def _skip_on_expected_change(func):
     return _skip_on_change
 
 
-class _Base(object):
+class BaseLinkedEdition(object):
 
     __slots__ = [
         '__weakref__',
@@ -89,7 +89,7 @@ class _Base(object):
         self._updater = None
 
 
-class SpinBox(_Base):
+class SpinBox(BaseLinkedEdition):
 
     __slots__ = []
 
@@ -98,7 +98,7 @@ class SpinBox(_Base):
         :param QWidget parent_widget:
         :param str link_to_attribute:
         '''
-        _Base.__init__(self, link_to_attribute)
+        BaseLinkedEdition.__init__(self, link_to_attribute)
         self.qwidget = QSpinBox(parent_widget)
 
         self.qwidget.valueChanged.connect(self.on_value_changed)
@@ -123,7 +123,7 @@ class SpinBox(_Base):
     value = property(get_value, set_value)
 
 
-class Combo(_Base):
+class Combo(BaseLinkedEdition):
 
     __slots__ = ['caption_to_internal_value', '_caption_to_index']
 
@@ -133,7 +133,7 @@ class Combo(_Base):
         :param str link_to_attribute:
         :param OrderedDict caption_to_internal_value:
         '''
-        _Base.__init__(self, link_to_attribute)
+        BaseLinkedEdition.__init__(self, link_to_attribute)
         self._link_to_attribute = link_to_attribute
         qwidget = self.qwidget = QComboBox(parent_widget)
         self._caption_to_index = {}

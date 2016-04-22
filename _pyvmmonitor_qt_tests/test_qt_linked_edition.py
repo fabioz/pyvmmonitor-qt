@@ -58,35 +58,41 @@ def test_combo_qt_linked_edition(qtapi):
         ('Val 20', 20,),
     ]))
 
-    combo.qwidget.show()
-    data = _Data()
-    combo.set_data([data])
-    assert combo.current_text == 'Val 10'
-    combo.set_current_text('Val 20')
-    assert data.val == 20
-    data.val = 1
-    assert combo.current_text == 'Val 20'
-    process_queue()
-    assert combo.current_text == 'Val 1'
+    try:
+        combo.qwidget.show()
+        data = _Data()
+        combo.set_data([data])
+        assert combo.current_text == 'Val 10'
+        combo.set_current_text('Val 20')
+        assert data.val == 20
+        data.val = 1
+        assert combo.current_text == 'Val 20'
+        process_queue()
+        assert combo.current_text == 'Val 1'
 
-    with pytest.raises(AttributeError):
-        combo.invalid_attribute = 20
+        with pytest.raises(AttributeError):
+            combo.invalid_attribute = 20
+    finally:
+        combo.dispose()
 
 
 def test_spin_box_qt_linked_edition(qtapi):
 
     spin = qt_linked_edition.SpinBox(None, 'val')
 
-    spin.qwidget.show()
-    data = _Data()
-    spin.set_data([data])
-    assert spin.value == 10
-    spin.value = 20
-    assert data.val == 20
-    data.val = 1
-    assert spin.value == 20
-    process_queue()
-    assert spin.value == 1
+    try:
+        spin.qwidget.show()
+        data = _Data()
+        spin.set_data([data])
+        assert spin.value == 10
+        spin.value = 20
+        assert data.val == 20
+        data.val = 1
+        assert spin.value == 20
+        process_queue()
+        assert spin.value == 1
 
-    with pytest.raises(AttributeError):
-        spin.invalid_attribute = 20
+        with pytest.raises(AttributeError):
+            spin.invalid_attribute = 20
+    finally:
+        spin.dispose()
