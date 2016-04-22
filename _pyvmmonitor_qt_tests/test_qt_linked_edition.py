@@ -1,6 +1,8 @@
 from collections import OrderedDict
 import sys
 
+import pytest
+
 from pyvmmonitor_core import compat
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt import qt_linked_edition
@@ -59,13 +61,16 @@ def test_combo_qt_linked_edition(qtapi):
     combo.qwidget.show()
     data = _Data()
     combo.set_data([data])
-    assert combo.current_text() == 'Val 10'
+    assert combo.current_text == 'Val 10'
     combo.set_current_text('Val 20')
     assert data.val == 20
     data.val = 1
-    assert combo.current_text() == 'Val 20'
+    assert combo.current_text == 'Val 20'
     process_queue()
-    assert combo.current_text() == 'Val 1'
+    assert combo.current_text == 'Val 1'
+
+    with pytest.raises(AttributeError):
+        combo.invalid_attribute = 20
 
 
 def test_spin_box_qt_linked_edition(qtapi):
@@ -75,10 +80,13 @@ def test_spin_box_qt_linked_edition(qtapi):
     spin.qwidget.show()
     data = _Data()
     spin.set_data([data])
-    assert spin.value() == 10
-    spin.set_value(20)
+    assert spin.value == 10
+    spin.value = 20
     assert data.val == 20
     data.val = 1
-    assert spin.value() == 20
+    assert spin.value == 20
     process_queue()
-    assert spin.value() == 1
+    assert spin.value == 1
+
+    with pytest.raises(AttributeError):
+        spin.invalid_attribute = 20
