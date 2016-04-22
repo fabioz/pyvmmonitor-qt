@@ -121,9 +121,25 @@ def is_light_theme():
 _styled_qt_objects = {}
 
 
-def CreateStyledQAction(parent, icon_name, text=''):
-    ret = QAction(QIcon(icon_name), text, parent)
+def CreateStyledQAction(
+        parent,
+        icon_name,
+        text='',
+        shortcut=None,
+        status_tip=None,
+        connect_to=None):
+    icon = QIcon(icon_name)
+    ret = QAction(icon, text, parent)
     _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
+
+    if shortcut is not None:
+        ret.setShortcut(shortcut)
+
+    if status_tip is not None:
+        ret.setStatusTip(status_tip)
+
+    if connect_to is not None:
+        ret.triggered.connect(connect_to)
     return ret
 
 
