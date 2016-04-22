@@ -16,12 +16,11 @@ import warnings
 import weakref
 
 from pyvmmonitor_core.html import escape_html
-from pyvmmonitor_core.ordered_set import OrderedSet
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.qt import QtGui, QtCore, qt_api
-from pyvmmonitor_qt.qt.QtCore import QTimer, QObject, QEvent, Qt, QModelIndex
+from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex
 from pyvmmonitor_qt.qt.QtGui import (
     QMdiArea,
     QTabWidget,
@@ -35,62 +34,15 @@ from pyvmmonitor_qt.qt.QtGui import (
     QWidget,
     QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
     QTextBrowser, QHBoxLayout, QIcon, QStyle, QFileDialog)
-from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
 
 # Modules moved (keep backward compatibility for now).
 from .qt_app import obtain_qapp  # @NoMove
-from .qt_collect import GarbageCollector, QtGarbageCollector, start_collect_only_in_ui_thread
-from .qt_tree_utils import scroll_pos, expanded_nodes_tree
 
-
-# ==================================================================================================
-# Helpers to execute on the next event loop
-# ==================================================================================================
-class _ExecuteOnLoopEvent(QEvent):
-
-    def __init__(self):
-        QEvent.__init__(self, QEvent.User)
-
-
-class _Receiver(QObject):
-
-    def __init__(self):
-        QObject.__init__(self)
-        self.funcs = OrderedSet()
-
-    def event(self, ev):
-        if isinstance(ev, _ExecuteOnLoopEvent):
-            try:
-                while True:
-                    with _lock:
-                        if not self.funcs:
-                            return True
-                        else:
-                            func, _ = self.funcs.popitem(last=False)
-
-                    # Execute it without the lock
-                    func()
-            except:
-                show_exception()
-            return True
-        return False
-
-_lock = threading.Lock()
-
-_receiver = _Receiver()
-
-
-def process_queue():
-    _receiver.event(_ExecuteOnLoopEvent())
-
-
-def execute_on_next_event_loop(func):
-    # Note: keeps a strong reference and stacks the same call to be run only once.
-    with _lock:
-        # Remove and add so that it gets to the end of the list
-        _receiver.funcs.discard(func)
-        _receiver.funcs.add(func)
-    obtain_qapp().postEvent(_receiver, _ExecuteOnLoopEvent())
+from .qt_collect import (  # @NoMove
+    GarbageCollector, QtGarbageCollector, start_collect_only_in_ui_thread)  # @NoMove
+from .qt_tree_utils import scroll_pos, expanded_nodes_tree  # @NoMove
+from .qt_event_loop import process_queue, execute_on_next_event_loop, process_events  # @NoMove
+from pyvmmonitor_qt.stylesheet import apply_default_stylesheet  # @NoMove
 
 
 # ==================================================================================================
@@ -157,24 +109,6 @@ def execute_after_millis(millis, func):
         execute_on_next_event_loop(register_timer)
     else:
         register_timer()
-
-
-# ==================================================================================================
-# Helpers to process events
-# ==================================================================================================
-def process_events(collect=False):
-    assert is_in_main_thread()
-    if not collect:
-        obtain_qapp().processEvents()
-
-    else:
-
-        app = obtain_qapp()
-        timer = QTimer()
-        timer.setSingleShot(True)
-        timer.timeout.connect(app.exit)
-        timer.start(0)
-        app.exec_()
 
 
 class QtWeakMethod(object):
