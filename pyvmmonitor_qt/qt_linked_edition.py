@@ -3,7 +3,7 @@ import functools
 from pyvmmonitor_core import abstract
 from pyvmmonitor_core.weak_utils import WeakList
 from pyvmmonitor_qt import compat, qt_utils
-from pyvmmonitor_qt.qt.QtGui import QSpinBox, QComboBox
+from pyvmmonitor_qt.qt.QtGui import QSpinBox, QComboBox, QDoubleSpinBox
 from pyvmmonitor_qt.qt_event_loop import NextEventLoopUpdater
 
 
@@ -99,10 +99,13 @@ class SpinBox(BaseLinkedEdition):
         :param str link_to_attribute:
         '''
         BaseLinkedEdition.__init__(self, link_to_attribute)
-        self.qwidget = QSpinBox(parent_widget)
+        self.qwidget = self._get_widget_class()(parent_widget)
 
         self.qwidget.valueChanged.connect(self.on_value_changed)
         self._link_to_attribute = link_to_attribute
+
+    def _get_widget_class(self):
+        return QSpinBox
 
     def _on_update_ui(self):
         for data in self.data:
@@ -121,6 +124,17 @@ class SpinBox(BaseLinkedEdition):
         return self.qwidget.setValue(value)
 
     value = property(get_value, set_value)
+
+
+class DoubleSpinBox(SpinBox):
+
+    __slots__ = []
+
+    def _get_widget_class(self):
+        return QDoubleSpinBox
+
+    def set_value_range(self, value_range):
+        self.qwidget.setRange(*value_range)
 
 
 class Combo(BaseLinkedEdition):

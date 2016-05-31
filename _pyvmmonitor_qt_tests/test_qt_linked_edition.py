@@ -96,3 +96,26 @@ def test_spin_box_qt_linked_edition(qtapi):
             spin.invalid_attribute = 20
     finally:
         spin.dispose()
+
+
+def test_double_spin_box_qt_linked_edition(qtapi):
+
+    spin = qt_linked_edition.DoubleSpinBox(None, 'val')
+    spin.set_value_range((0, 50))
+
+    try:
+        spin.qwidget.show()
+        data = _Data()
+        spin.set_data([data])
+        assert spin.value == 10
+        spin.value = 20.5
+        assert data.val == 20.5
+        data.val = 1.2
+        assert spin.value == 20.5
+        process_queue()
+        assert spin.value == 1.2
+
+        with pytest.raises(AttributeError):
+            spin.invalid_attribute = 20
+    finally:
+        spin.dispose()
