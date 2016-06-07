@@ -5,7 +5,7 @@
 import pytest
 
 from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.pytest_plugin import qtapi
+from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QTreeView, QColor, QBrush
 from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView, TreeNode
@@ -158,3 +158,21 @@ def test_color(qtapi):
     tree['a'].set_background_brush(QBrush(QColor(Qt.gray)))
 
     assert tree['a'].get_background_brush(0).color() == QColor(Qt.gray)
+
+
+def test_selection(qtapi):
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+
+    tree.tree.show()
+
+    tree.columns = ['col1', 'col2']
+    qtapi.add_widget(tree.tree)
+    tree['a'] = [10, 20]
+    tree.add_node('a', 'a.b.c.d', [1, 2])
+
+    tree.set_selection(['a.b.c.d'])
+    assert tree.get_selection() == ['a.b.c.d']
+
+    tree.set_selection(['a', 'a.b.c.d'])
+    assert tree.get_selection() == ['a', 'a.b.c.d']

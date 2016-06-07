@@ -45,6 +45,7 @@ To use:
 from __future__ import unicode_literals
 
 from pyvmmonitor_core import thread_utils, compat
+from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
 
@@ -60,7 +61,6 @@ class TreeNode(object):
         self.tree = None
         self.obj_id = None
         self._items = None
-        self._state = None
         self._children = set()
 
     def _as_str(self, obj):
@@ -89,6 +89,7 @@ class TreeNode(object):
         if parent_node is not None:
             parent_node._children.remove(self)
 
+        self._items[0].setData(None)
         parent_item.removeRow(self._items[0].row())
         self.tree = None
         self._items = None
@@ -101,15 +102,7 @@ class TreeNode(object):
             self._items = [QStandardItem(self._as_str(x)) for x in data]
 
             assert len(self._items) > 0
-
-            state = self._state
-            if state is not None:
-                self._state = None
-                for (meth, col), args in compat.iteritems(state):
-                    if col is not None:
-                        getattr(self, meth)(*(args + (col,)))
-                    else:
-                        getattr(self, meth)(*args)
+            self._items[0].setData(self)
 
         return self._items
 
@@ -174,8 +167,12 @@ class TreeNode(object):
 class PythonicQTreeView(object):
 
     def __init__(self, tree):
+        from pyvmmonitor_qt.qt.QtGui import QAbstractItemView
+
         self.tree = tree
         model = self._model = _CustomModel(tree)
+        tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        tree.setSelectionBehavior(QAbstractItemView.SelectRows)
         tree.setModel(model)
         self._fast = {}
         self._root_items = set()
@@ -277,3 +274,50 @@ class PythonicQTreeView(object):
     def __len__(self):
         # Len of tree is the total number of nodes in the tree
         return len(self._fast)
+
+    def get_selection(self):
+        assert thread_utils.is_in_main_thread()
+        new_selection = []
+        selected_indexes = self.tree.selectedIndexes()
+        if selected_indexes:
+            for i in selected_indexes:
+                model = self.tree.model()  # : :type model: QStandardItemModel
+                item = model.itemFromIndex(i)
+                node = item.data()
+                if node is not None:
+                    obj_id = node.obj_id
+                    new_selection.append(obj_id)
+        return new_selection
+
+    def set_selection(self, obj_ids, clear_selection=True):
+        from pyvmmonitor_qt.qt import QtGui
+        from pyvmmonitor_qt.qt.QtCore import QModelIndex
+
+        assert thread_utils.is_in_main_thread()
+        selection_model = self.tree.selectionModel()
+
+        selection = None
+        for obj_id in obj_ids:
+
+            item = self._fast.get(obj_id)
+            if item is not None:
+                index = item._items[0].index()
+                if index is not None:
+                    if selection is None:
+                        selection = QtGui.QItemSelection(index, index)
+                    else:
+                        selection.select(index, index)
+
+        if selection:
+            if not clear_selection:
+                selection_model.select(
+                    selection,
+                    QtGui.QItemSelectionModel.Select | QtGui.QItemSelectionModel.Rows)
+            else:
+                selection_model.select(
+                    selection,
+                    QtGui.QItemSelectionModel.ClearAndSelect | QtGui.QItemSelectionModel.Current |
+                    QtGui.QItemSelectionModel.Rows)
+        else:
+            if clear_selection:
+                selection_model.select(QModelIndex(), QtGui.QItemSelectionModel.Clear)
