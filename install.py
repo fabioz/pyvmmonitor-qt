@@ -17,7 +17,7 @@ def generate(target_name):
     target = os.path.join(resources_dir, target_name)
     files = []
     for f in sorted(os.listdir(target)):
-        if f.endswith('.png'):
+        if f.endswith('.png') or f.endswith('.svg'):
             files.append('    <file>%s</file>' % f)
 
     resources_xml = template % dict(files='\n'.join(files))
@@ -45,7 +45,9 @@ def generate(target_name):
         '%s_resources.py' %
         (target_name,
          ))
-    stdout = stdout.replace('from PySide import QtCore', 'from pyvmmonitor_qt.qt import QtCore')
+    stdout = stdout.replace(
+        'from PySide import QtCore',
+        'from pyvmmonitor_qt.qt import QtCore, QtSvg')
     stdout = stdout.replace('"\\', 'b"\\')
     with open(f, 'w') as stream:
         stream.write(stdout)
