@@ -44,10 +44,14 @@ To use:
 
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
+
 from pyvmmonitor_core import thread_utils, compat
 from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
+
+_SORT_KEY_ROLE = Qt.UserRole + 9
 
 
 class _CustomModel(QStandardItemModel):
@@ -57,11 +61,37 @@ class _CustomModel(QStandardItemModel):
 class TreeNode(object):
 
     def __init__(self, data):
+        self._items = None
         self.data = data
         self.tree = None
         self.obj_id = None
-        self._items = None
         self._children = set()
+        self._sort_key = None
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        if not isinstance(data, (list, tuple)):
+            data = (data,)
+
+        self._data = data
+        if self._items is not None:
+            for item, d in compat.izip(self._items, data):
+                item.setData(self._as_str(d), Qt.DisplayRole)
+
+    @property
+    def sort_key(self):
+        return self._sort_key
+
+    @sort_key.setter
+    def sort_key(self, sort_key):
+        self._sort_key = sort_key
+        if self._items is not None:
+            for item in self._items:
+                item.setData(sort_key, _SORT_KEY_ROLE)
 
     def _as_str(self, obj):
         if obj.__class__ == compat.unicode:
@@ -97,9 +127,17 @@ class TreeNode(object):
     def _create_items(self):
         if self._items is None:
             data = self.data
-            if not isinstance(data, (list, tuple)):
-                data = (data,)
-            self._items = [QStandardItem(self._as_str(x)) for x in data]
+            items = []
+            for x in data:
+                item = QStandardItem(self._as_str(x))
+
+                # Always define a sort key role (even if we don't use it).
+                sort_role = self._sort_key if self._sort_key is not None else self.obj_id
+                item.setData(sort_role, _SORT_KEY_ROLE)
+
+                items.append(item)
+
+            self._items = items
 
             assert len(self._items) > 0
             self._items[0].setData(self)
@@ -110,17 +148,23 @@ class TreeNode(object):
         if self._items is None:
             raise RuntimeError('Can only expand a node after it is added to the tree.')
 
-        self.tree.tree.expand(self._items[0].index())
+        index = self._get_sort_model_index(col=0)
+        self.tree.tree.expand(index)
 
     def _expand(self, b):
         if self.tree is not None and self._items:
-            self.tree.tree.expand(self._items[0].index())
+            index = self._get_sort_model_index(col=0)
+            self.tree.tree.expand(index)
 
     def is_expanded(self):
         if self._items is None:
             return False
 
-        return self.tree.tree.isExpanded(self._items[0].index())
+        index = self._get_sort_model_index(col=0)
+        return self.tree.tree.isExpanded(index)
+
+    def _get_sort_model_index(self, col=0):
+        return self.tree._sort_model.mapFromSource(self._items[col].index())
 
     def check(self, b=True, col=0):
         if self._items is None:
@@ -173,9 +217,73 @@ class PythonicQTreeView(object):
         model = self._model = _CustomModel(tree)
         tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         tree.setSelectionBehavior(QAbstractItemView.SelectRows)
-        tree.setModel(model)
+        from pyvmmonitor_qt.qt.QtGui import QSortFilterProxyModel
+
+        self._sort_model = QSortFilterProxyModel()
+        self._sort_model.setSourceModel(model)
+
+        tree.setModel(self._sort_model)
         self._fast = {}
         self._root_items = set()
+
+    def list_item_captions(self, prefix='', cols=(0,), only_show_expanded=False):
+        return qt_utils.list_wiget_item_captions(
+            self.tree,
+            parent_index=None,
+            prefix=prefix,
+            cols=cols,
+            only_show_expanded=only_show_expanded
+        )
+
+    @property
+    def sort_strategy(self):
+        sort_role = self._sort_model.sortRole()
+        if sort_role == _SORT_KEY_ROLE:
+            return 'sort_key'
+        if sort_role == Qt.DisplayRole:
+            return 'display'
+        return sort_role
+
+    @sort_strategy.setter
+    def sort_strategy(self, sort_strategy):
+        if sort_strategy == 'sort_key':
+            self._sort_model.setSortRole(_SORT_KEY_ROLE)
+        elif sort_strategy == 'display':
+            self._sort_model.setSortRole(Qt.DisplayRole)
+        else:
+            self._sort_model.setSortRole(sort_strategy)
+
+    @property
+    def sorting_enabled(self):
+        return self.tree.isSortingEnabled()
+
+    @sorting_enabled.setter
+    def sorting_enabled(self, enable):
+        self.tree.setSortingEnabled(enable)
+        if enable:
+            self._sort_model.setDynamicSortFilter(True)
+            self._sort_model.sort(0, Qt.AscendingOrder)
+        else:
+            self._sort_model.setDynamicSortFilter(False)
+
+    @contextmanager
+    def batch_changes(self):
+        '''
+        Context manager to be used when multiple changes are going to be done at once.
+        Can disable features from the tree while in the context.
+
+        I.e.:
+            with tree.batch_changes():
+                tree['x'] = '20'
+        '''
+        if self.tree.isSortingEnabled():
+            self.sorting_enabled = False
+            try:
+                yield
+            finally:
+                self.sorting_enabled = True
+        else:
+            yield
 
     def clear(self):
         while self._root_items:
@@ -279,9 +387,13 @@ class PythonicQTreeView(object):
         assert thread_utils.is_in_main_thread()
         new_selection = []
         selected_indexes = self.tree.selectedIndexes()
+
+        sort_model = self._sort_model
+        model = self._model  # : :type model: QStandardItemModel
+
         if selected_indexes:
             for i in selected_indexes:
-                model = self.tree.model()  # : :type model: QStandardItemModel
+                i = sort_model.mapToSource(i)
                 item = model.itemFromIndex(i)
                 node = item.data()
                 if node is not None:
@@ -303,6 +415,7 @@ class PythonicQTreeView(object):
             if item is not None:
                 index = item._items[0].index()
                 if index is not None:
+                    index = self._sort_model.mapFromSource(index)
                     if selection is None:
                         selection = QtGui.QItemSelection(index, index)
                     else:

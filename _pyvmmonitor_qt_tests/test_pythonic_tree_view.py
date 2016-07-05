@@ -176,3 +176,60 @@ def test_selection(qtapi):
 
     tree.set_selection(['a', 'a.b.c.d'])
     assert tree.get_selection() == ['a', 'a.b.c.d']
+
+
+def test_sort_order(qtapi):
+    '''
+    By default there's no sorting (it's kept by insertion order), but it's possible to turn on the
+    sorting to be used and set the sort key.
+    '''
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+
+    tree.tree.show()
+
+    tree['a'] = 'a'
+    tree['c'] = 'c'
+    tree['b'] = 'b'
+    assert tree.list_item_captions() == 'a c b'.split()
+
+    tree.sorting_enabled = True
+
+    assert tree.list_item_captions() == 'a b c'.split()
+
+    tree['d'] = 'a'
+    assert tree.list_item_captions() == 'a a b c'.split()
+
+    tree.sorting_enabled = False
+
+    tree['e'] = 'b'
+    assert tree.list_item_captions() == 'a a b c b'.split()
+
+    tree.sorting_enabled = True
+
+    assert tree.list_item_captions() == 'a a b b c'.split()
+
+    with tree.batch_changes():
+        tree['f'] = 'b'
+        tree['g'] = 'a'
+        assert not tree.sorting_enabled
+
+    assert tree.list_item_captions() == 'a a a b b b c'.split()
+
+    for node in tree.iternodes():
+        # Reverse sort order
+        node.sort_key = ord('z') - ord(node.data[0])
+
+    # for node in sorted(tree.iternodes(), key=lambda node: node.sort_key):
+    #     print(node.obj_id, node.data, node.sort_key)
+
+    tree.sort_strategy = 'sort_key'
+    assert tree.list_item_captions() == list(reversed('a a a b b b c'.split()))
+
+    tree.sort_strategy = 'display'
+    assert tree.list_item_captions() == 'a a a b b b c'.split()
+
+    # Now, let's change the caption and make sure it's still Ok.
+    tree['g'].data = 'g'
+
+    assert tree.list_item_captions() == 'a a b b b c g'.split()
