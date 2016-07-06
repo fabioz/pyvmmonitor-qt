@@ -52,6 +52,7 @@ from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
 
 _SORT_KEY_ROLE = Qt.UserRole + 9
+_NODE_ROLE = Qt.UserRole + 21
 
 
 class _CustomModel(QStandardItemModel):
@@ -161,7 +162,8 @@ class TreeNode(object):
         if parent_node is not None:
             parent_node._children.remove(self)
 
-        self._items[0].setData(None)
+        for item in self._items:
+            item.setData(None, _NODE_ROLE)
         parent_item.removeRow(self._items[0].row())
         self.tree = None
         self._items = None
@@ -177,13 +179,13 @@ class TreeNode(object):
                 sort_role = self._sort_key if self._sort_key is not None else self.obj_id
                 item.setData(sort_role, _SORT_KEY_ROLE)
                 self._set_item_data(item, x)
+                item.setData(self, _NODE_ROLE)
 
                 items.append(item)
 
             self._items = items
 
             assert len(self._items) > 0
-            self._items[0].setData(self)
 
         return self._items
 
@@ -392,6 +394,18 @@ class PythonicQTreeView(object):
         self._fast[obj_id] = node
         return node
 
+    def node_from_index(self, index):
+        '''
+        :param QModelIndex index:
+            The model index from qt
+
+        :return QTreeNode:
+            Return the PythonicQTreeView node (or None if not found).
+        '''
+        if not index.isValid():
+            return None
+        return index.data(_NODE_ROLE)
+
     def __getitem__(self, obj_id):
         return self._fast[obj_id]
 
@@ -447,17 +461,15 @@ class PythonicQTreeView(object):
         new_selection = []
         selected_indexes = self.tree.selectedIndexes()
 
-        sort_model = self._sort_model
-        model = self._model  # : :type model: QStandardItemModel
-
         if selected_indexes:
+            nodes = set()
             for i in selected_indexes:
-                i = sort_model.mapToSource(i)
-                item = model.itemFromIndex(i)
-                node = item.data()
-                if node is not None:
-                    obj_id = node.obj_id
-                    new_selection.append(obj_id)
+                node = i.data(_NODE_ROLE)
+                if node not in nodes:
+                    nodes.add(node)
+                    if node is not None:
+                        obj_id = node.obj_id
+                        new_selection.append(obj_id)
         return new_selection
 
     def set_selection(self, obj_ids, clear_selection=True):

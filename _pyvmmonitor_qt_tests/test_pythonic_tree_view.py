@@ -236,7 +236,28 @@ def test_sort_order(qtapi):
 
 
 def test_icon(qtapi):
-    tree = QTreeView()
+
+    # Example on how to deal with a mouse click.
+    class MyQTreeView(QTreeView):
+
+        def mousePressEvent(self, ev):
+            index = self.indexAt(ev.pos())
+            if index.isValid():
+                # print('col', col, 'col_width', col_width, 'col_viewport_pos', col_viewport_pos)
+                # print('relative', relative_x)
+                if index.column() == 1:
+                    col = self.columnAt(ev.pos().x())
+                    col_width = self.columnWidth(col)
+                    col_viewport_pos = self.columnViewportPosition(col)
+                    relative_x = ev.pos().x() - col_viewport_pos
+
+                    node = tree.node_from_index(index)
+                    print(node.__class__, relative_x, col_width)
+                    ev.setAccepted(True)
+                    return
+            return QTreeView.mousePressEvent(self, ev)
+
+    tree = MyQTreeView()
     tree = PythonicQTreeView(tree)
     tree.columns = ['Caption', 'Action']
     tree.tree.show()
@@ -246,7 +267,7 @@ def test_icon(qtapi):
     tree['b'] = ('b', '')
 
     from pyvmmonitor_qt.qt.QtGui import QPixmap
-    pixmap = QPixmap(20, 20)
+    pixmap = QPixmap(30, 30)
     pixmap.fill(Qt.red)
 
     # Should show a red square for column 1
