@@ -233,3 +233,49 @@ def test_sort_order(qtapi):
     tree['g'].data = 'g'
 
     assert tree.list_item_captions() == 'a a b b b c g'.split()
+
+
+def test_icon(qtapi):
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+    tree.columns = ['Caption', 'Action']
+    tree.tree.show()
+
+    tree['a'] = ('a', '')
+    tree['c'] = ('c', '')
+    tree['b'] = ('b', '')
+
+    from pyvmmonitor_qt.qt.QtGui import QPixmap
+    pixmap = QPixmap(20, 20)
+    pixmap.fill(Qt.red)
+
+    # Should show a red square for column 1
+    tree['a'].set_item_role(Qt.DecorationRole, 1, pixmap)
+
+    # __eq__ works properly for QImage but not QPixmap.
+    assert tree['a'].item_role(Qt.DecorationRole, 1).toImage() == pixmap.toImage()
+
+
+def test_custom_widget(qtapi):
+    tree = QTreeView()
+    tree = PythonicQTreeView(tree)
+    tree.columns = ['Caption', 'Action']
+    tree.tree.show()
+
+    tree['a'] = ('a', '')
+    tree['c'] = ('c', '')
+    tree['b'] = ('b', '')
+
+    from pyvmmonitor_qt.qt.QtGui import QPixmap
+    from pyvmmonitor_qt.qt.QtGui import QPushButton
+
+    bt = QPushButton(None)
+    icon = QPixmap(20, 20)
+    icon.fill(Qt.red)
+    from pyvmmonitor_qt.qt.QtGui import QIcon
+    bt.setIcon(QIcon(icon))
+    bt.setAutoFillBackground(True)
+
+    # Should show a button at column 1
+    tree['a'].set_item_custom_widget(1, bt)
+    assert tree['a'].item_custom_widget(1) == bt

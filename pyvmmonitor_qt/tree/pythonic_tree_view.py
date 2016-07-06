@@ -84,7 +84,53 @@ class TreeNode(object):
         self._data = data
         if self._items is not None:
             for item, d in compat.izip(self._items, data):
-                item.setData(self._as_str(d), Qt.DisplayRole)
+                self._set_item_data(item, d)
+
+    def _set_item_data(self, item, d):
+        item.setData(self._as_str(d), Qt.DisplayRole)
+
+    def _as_str(self, obj):
+        if obj.__class__ == compat.unicode:
+            return obj
+        if obj.__class__ == compat.bytes:
+            return compat.as_unicode(obj)
+
+        return compat.unicode(obj)
+
+    def set_item_role(self, role, column, data):
+        if self._items is None:
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        self._items[column].setData(data, role)
+
+    def item_role(self, role, column):
+        if self._items is None:
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        return self._items[column].data(role)
+
+    def set_item_custom_widget(self, column, widget):
+        if self._items is None:
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        item = self._items[column]
+        index = item.index()
+        if not index.isValid():
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        self.tree.tree.setIndexWidget(
+            self.tree._sort_model.mapFromSource(index), widget)
+
+    def item_custom_widget(self, column):
+        if self._items is None:
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        item = self._items[column]
+        index = item.index()
+        if not index.isValid():
+            raise AssertionError(
+                'This method can only be called when the item is attached to the tree.')
+        return self.tree.tree.indexWidget(self.tree._sort_model.mapFromSource(index))
 
     @property
     def sort_key(self):
@@ -96,14 +142,6 @@ class TreeNode(object):
         if self._items is not None:
             for item in self._items:
                 item.setData(sort_key, _SORT_KEY_ROLE)
-
-    def _as_str(self, obj):
-        if obj.__class__ == compat.unicode:
-            return obj
-        if obj.__class__ == compat.bytes:
-            return compat.as_unicode(obj)
-
-        return compat.unicode(obj)
 
     def _attach_to_tree(self, tree, obj_id):
         assert self.tree is None
@@ -133,11 +171,12 @@ class TreeNode(object):
             data = self.data
             items = []
             for x in data:
-                item = QStandardItem(self._as_str(x))
+                item = QStandardItem('')
 
                 # Always define a sort key role (even if we don't use it).
                 sort_role = self._sort_key if self._sort_key is not None else self.obj_id
                 item.setData(sort_role, _SORT_KEY_ROLE)
+                self._set_item_data(item, x)
 
                 items.append(item)
 
@@ -213,6 +252,8 @@ class TreeNode(object):
 
 
 class PythonicQTreeView(object):
+
+    __slots__ = ['__weakref__', '_sort_model', '_fast', '_root_items', 'tree', '_model']
 
     def __init__(self, tree):
         from pyvmmonitor_qt.qt.QtGui import QAbstractItemView
