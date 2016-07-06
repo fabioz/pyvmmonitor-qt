@@ -62,6 +62,8 @@ class TreeNode(object):
 
     def __init__(self, data):
         self._items = None
+
+        # data is always a tuple so that each column can have a different data
         self.data = data
         self.tree = None
         self.obj_id = None
@@ -74,7 +76,9 @@ class TreeNode(object):
 
     @data.setter
     def data(self, data):
-        if not isinstance(data, (list, tuple)):
+        if isinstance(data, list):
+            data = tuple(data)
+        elif not isinstance(data, tuple):
             data = (data,)
 
         self._data = data
@@ -313,6 +317,20 @@ class PythonicQTreeView(object):
         self.add_node(parent_node, obj_id, node)
 
     def add_node(self, parent_node, obj_id, node):
+        '''
+        Adds a node to the tree below the passed parent.
+
+        :param TreeNode|unicode|NoneType parent_node:
+            If None is passed, it'll be added to the root, otherwise, it'll be added to
+            the passed node (which can be passed directly or through its id).
+
+        :param unicode obj_id:
+            The id for this node.
+
+        :param object|TreeNode node:
+            Either the instanced TreeNode to be added or the data for which a TreeNode
+            should be created.
+        '''
         if isinstance(parent_node, compat.unicode):
             parent_node = self._fast[parent_node]
 
