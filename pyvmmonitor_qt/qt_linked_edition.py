@@ -175,7 +175,10 @@ class Combo(BaseLinkedEdition):
             pass
         else:
             for obj in self.data:
-                setattr(obj, self._link_to_attribute, value)
+                try:
+                    setattr(obj, self._link_to_attribute, value)
+                except:
+                    raise AttributeError('Unable to set: %s' % (self._link_to_attribute))
 
     def get_current_text(self):
         return self.qwidget.currentText()

@@ -470,7 +470,8 @@ class CustomMessageDialog(QDialog):
         else:
             self._create_contents()
         self.setLayout(self._layout)
-        self.resize(*size)
+        if size:
+            self.resize(*size)
 
     def get_layout(self):
         return self._layout
