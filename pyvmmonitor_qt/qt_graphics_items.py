@@ -1,8 +1,18 @@
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt.qt import QtCore
-from pyvmmonitor_qt.qt.QtCore import Qt
+from pyvmmonitor_qt.qt.QtCore import Qt, QRectF
 from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush
+from pyvmmonitor_qt.qt.QtGui import QGraphicsRectItem
+
+
+def create_graphics_item_rect(rect, fill_color=None, alpha=255, pen=None, parent=None):
+    if isinstance(rect, (list, tuple)):
+        rect = QRectF(*rect)
+    rect_item = QGraphicsRectItem(rect, parent)
+    set_graphics_item_pen(rect_item, pen)
+    set_graphics_item_brush(rect_item, fill_color, alpha)
+    return rect_item
 
 
 def set_graphics_item_pen(item, pen=None):
