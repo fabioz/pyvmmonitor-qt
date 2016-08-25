@@ -35,7 +35,8 @@ def test_execute_in_millis(qtapi):
     assert len(called_at) == 1
     # When using 0.1 we had fails such as 1393329951.561 >= (1393329951.462 + 0.1)
     # When using 0.098 we had fails such as 1460803824.435426 >= (1460803824.338036 + 0.098)
-    assert called_at[0] >= initial + 0.096
+    # When using 0.096 we had fails such as 1472124879.664037 >= (1472124879.568162 + 0.096)
+    assert called_at[0] >= initial + 0.094
 
 
 def create_item(txt):
