@@ -927,23 +927,6 @@ def assert_condition_within_timeout(condition, timeout=2.):
         time.sleep(1 / 60.)
 
 
-def copy_qtransform(transform):
-    from pyvmmonitor_qt.qt.QtGui import QTransform
-    return QTransform(
-        transform.m11(),
-        transform.m12(),
-        transform.m13(),
-
-        transform.m21(),
-        transform.m22(),
-        transform.m23(),
-
-        transform.m31(),
-        transform.m32(),
-        transform.m33()
-    )
-
-
 def ask_save_filename(parent, caption, initial_dir, files_filter):
     return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter)
 
