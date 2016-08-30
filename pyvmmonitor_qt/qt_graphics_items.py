@@ -1,9 +1,11 @@
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
+from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import Qt, QRectF
 from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush
 from pyvmmonitor_qt.qt.QtGui import QGraphicsRectItem
+from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
 
 
 def create_graphics_item_rect(rect, fill_color=None, alpha=255, pen=None, parent=None):
@@ -53,6 +55,7 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self._last_radius = None
         self._last_center = None
         self._last_pixels_displacement = None
+        self._last_transform = None
 
         self._custom_hover = False
         self._hover_pen = None
@@ -77,15 +80,13 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self.on_mouse_move = Callback()
         self.on_mouse_release = Callback()
 
-        self._update(
-            radius_in_px,
-            (0, 0) if pixels_displacement_func is None else pixels_displacement_func())
-
         set_graphics_item_colors(self, pen, fill_color, alpha)
 
-        if graphics_widget is not None:
-            # Needed to set the real position in pixels for the radius and pixels displacement.
-            self.update_info(graphics_widget)
+        assert graphics_widget is not None
+        self._graphics_widget = get_weakref(graphics_widget)
+
+        # Needed to set the real position in pixels for the radius and pixels displacement.
+        self._update_with_graphics_widget()
 
     def mousePressEvent(self, event):
         if self.accept_mouse_press(event):
@@ -102,24 +103,33 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
     def set_radius_in_px(self, radius_in_px):
         self._radius_in_px = radius_in_px
+        self._update_with_graphics_widget()
 
     def get_radius_in_px(self):
         return self._radius_in_px
 
     def set_center(self, center):
         self._center = center
+        self._update_with_graphics_widget()
 
     def get_center(self):
         return self._center
 
-    def _update(self, radius, pixels_displacement):
+    def _update_with_graphics_widget(self):
+        g = self._graphics_widget()
+        if g is not None:
+            self._update_info(g)
+
+    def _update(self, radius, pixels_displacement, transform):
         center = self._center
 
         if radius != self._last_radius or center != self._last_center or \
-                pixels_displacement != self._last_pixels_displacement:
+                pixels_displacement != self._last_pixels_displacement or \
+                transform != self._last_transform:
             self._last_radius = radius
             self._last_center = center
             self._last_pixels_displacement = pixels_displacement
+            self._last_transform = transform
             self.setRect(
                 QtCore.QRectF(
                     center[0] - radius + pixels_displacement[0],
@@ -127,7 +137,7 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
                     2. * radius,
                     2. * radius))
 
-    def update_info(self, graphics_widget):
+    def _update_info(self, graphics_widget):
         transform = graphics_widget.transform()
         pixels_displacement = (0, 0)
         if self._pixels_displacement_func is not None:
@@ -138,13 +148,18 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
             )
 
         radius = calculate_size_for_value_in_px(transform, self._radius_in_px)
-        self._update(radius, pixels_displacement)
+        self._update(radius, pixels_displacement, transform)
 
     @overrides(QGraphicsEllipseItem.paint)
     def paint(self, painter, option, widget=None):
-        if widget is not None:
-            graphics_widget = widget.parent()
-            self.update_info(graphics_widget)
+        g = self._graphics_widget()
+        if g is not None:
+            transform = g.transform()
+            if transform != self._last_transform:
+                # Note: updating on paint doesn't work well (bug was: when item goes out of the
+                # window and then back, it is no longer shown).
+                # So, always ask to update on next event.
+                execute_on_next_event_loop(self._update_with_graphics_widget)
 
         return QGraphicsEllipseItem.paint(self, painter, option, widget)
 
