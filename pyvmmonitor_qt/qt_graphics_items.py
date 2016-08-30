@@ -46,11 +46,12 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
             pen,
             fill_color,
             alpha,
-            pixels_displacement_func,
+            pixels_displacement=(0, 0),
             graphics_widget=None):
         QGraphicsEllipseItem.__init__(self, parent_item)
         self._center = center
         self._radius_in_px = radius_in_px
+        self._pixels_displacement = pixels_displacement
 
         self._last_radius = None
         self._last_center = None
@@ -67,7 +68,6 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self._regular_fill_color = fill_color
         self._regular_alpha = alpha
         self._regular_radius_in_px = radius_in_px
-        self._pixels_displacement_func = pixels_displacement_func
 
         # May be changed for a function and if True is returned, the mouse press
         # is accepted.
@@ -112,6 +112,13 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self._center = center
         self._update_with_graphics_widget()
 
+    def set_pixels_displacement(self, pixels_displacement):
+        self._pixels_displacement = pixels_displacement
+        self._update_with_graphics_widget()
+
+    def get_pixels_displacement(self):
+        return self._pixels_displacement
+
     def get_center(self):
         return self._center
 
@@ -139,9 +146,8 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
     def _update_info(self, graphics_widget):
         transform = graphics_widget.transform()
-        pixels_displacement = (0, 0)
-        if self._pixels_displacement_func is not None:
-            pixels_displacement = self._pixels_displacement_func()
+        pixels_displacement = self._pixels_displacement
+        if pixels_displacement != (0, 0):
             pixels_displacement = (
                 calculate_size_for_value_in_px(transform, pixels_displacement[0]),
                 calculate_size_for_value_in_px(transform, pixels_displacement[1]),
@@ -218,11 +224,11 @@ def create_fixed_pixels_graphics_item_circle(
         fill_color=None,
         parent_item=None,
         alpha=200,
-        pixels_displacement_func=None,
+        pixels_displacement=(0, 0),
         graphics_widget=None):
     '''
-    :param pixels_displacement_func:
-        A callable which returns a tuple (x, y) with pixels coordinates with a translation to be
+    :param pixels_displacement:
+        A tuple (x, y) with pixels coordinates with a translation to be
         applied to sum with the center passed to calculate the actual center (useful when it's
         some item which is anchored in another item based on some distance in pixels).
     '''
@@ -233,7 +239,7 @@ def create_fixed_pixels_graphics_item_circle(
         pen,
         fill_color,
         alpha,
-        pixels_displacement_func,
+        pixels_displacement,
         graphics_widget)
     return circle
 
