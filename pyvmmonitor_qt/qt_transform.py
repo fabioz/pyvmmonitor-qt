@@ -38,3 +38,19 @@ def qtransform_to_tuple(transform):
 def tuple_to_qtransform(tup):
     from pyvmmonitor_qt.qt.QtGui import QTransform
     return QTransform(*tup)
+
+
+def transform_tuple(point, qtransform):
+    from pyvmmonitor_qt.qt.QtCore import QPointF
+
+    p = qtransform.map(QPointF(*point))
+    return p.x(), p.y()
+
+
+def calc_angle_in_radians_from_qtransform(qtransform):
+    from pyvmmonitor_qt.qt.QtCore import QPointF
+    from pyvmmonitor_core.math_utils import calc_angle_in_radians
+
+    p0 = qtransform.map(QPointF(0, 0))
+    p1 = qtransform.map(QPointF(0, 1))  # Note: compute based on y, not on x.
+    return calc_angle_in_radians((p0.x(), p0.y()), (p1.x(), p1.y()))

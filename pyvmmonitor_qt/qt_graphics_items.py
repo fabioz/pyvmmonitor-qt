@@ -1,9 +1,11 @@
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
+from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import Qt, QRectF
 from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush
 from pyvmmonitor_qt.qt.QtGui import QGraphicsRectItem
+from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
 
 
 def create_graphics_item_rect(rect, fill_color=None, alpha=255, pen=None, parent=None):
@@ -36,13 +38,25 @@ def set_graphics_item_colors(item, pen=None, fill_color=None, alpha=255):
 
 class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
-    def __init__(self, parent_item, center, radius_in_px, pen, fill_color, alpha):
+    def __init__(
+            self,
+            parent_item,
+            center,
+            radius_in_px,
+            pen,
+            fill_color,
+            alpha,
+            pixels_displacement=(0, 0),
+            graphics_widget=None):
         QGraphicsEllipseItem.__init__(self, parent_item)
         self._center = center
         self._radius_in_px = radius_in_px
+        self._pixels_displacement = pixels_displacement
 
         self._last_radius = None
         self._last_center = None
+        self._last_pixels_displacement = None
+        self._last_transform = None
 
         self._custom_hover = False
         self._hover_pen = None
@@ -66,8 +80,13 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         self.on_mouse_move = Callback()
         self.on_mouse_release = Callback()
 
-        self._update(radius_in_px)
         set_graphics_item_colors(self, pen, fill_color, alpha)
+
+        assert graphics_widget is not None
+        self._graphics_widget = get_weakref(graphics_widget)
+
+        # Needed to set the real position in pixels for the radius and pixels displacement.
+        self._update_with_graphics_widget()
 
     def mousePressEvent(self, event):
         if self.accept_mouse_press(event):
@@ -84,39 +103,69 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
     def set_radius_in_px(self, radius_in_px):
         self._radius_in_px = radius_in_px
+        self._update_with_graphics_widget()
 
     def get_radius_in_px(self):
         return self._radius_in_px
 
     def set_center(self, center):
         self._center = center
+        self._update_with_graphics_widget()
+
+    def set_pixels_displacement(self, pixels_displacement):
+        self._pixels_displacement = pixels_displacement
+        self._update_with_graphics_widget()
+
+    def get_pixels_displacement(self):
+        return self._pixels_displacement
 
     def get_center(self):
         return self._center
 
-    def _update(self, radius):
+    def _update_with_graphics_widget(self):
+        g = self._graphics_widget()
+        if g is not None:
+            self._update_info(g)
+
+    def _update(self, radius, pixels_displacement, transform):
         center = self._center
 
-        if radius != self._last_radius or center != self._last_center:
+        if radius != self._last_radius or center != self._last_center or \
+                pixels_displacement != self._last_pixels_displacement or \
+                transform != self._last_transform:
             self._last_radius = radius
             self._last_center = center
+            self._last_pixels_displacement = pixels_displacement
+            self._last_transform = transform
             self.setRect(
                 QtCore.QRectF(
-                    center[0] - radius,
-                    center[1] - radius,
+                    center[0] - radius + pixels_displacement[0],
+                    center[1] - radius + pixels_displacement[1],
                     2. * radius,
                     2. * radius))
 
-    def update_info(self, graphics_widget):
+    def _update_info(self, graphics_widget):
         transform = graphics_widget.transform()
+        pixels_displacement = self._pixels_displacement
+        if pixels_displacement != (0, 0):
+            pixels_displacement = (
+                calculate_size_for_value_in_px(transform, pixels_displacement[0]),
+                calculate_size_for_value_in_px(transform, pixels_displacement[1]),
+            )
+
         radius = calculate_size_for_value_in_px(transform, self._radius_in_px)
-        self._update(radius)
+        self._update(radius, pixels_displacement, transform)
 
     @overrides(QGraphicsEllipseItem.paint)
     def paint(self, painter, option, widget=None):
-        if widget is not None:
-            graphics_widget = widget.parent()
-            self.update_info(graphics_widget)
+        g = self._graphics_widget()
+        if g is not None:
+            transform = g.transform()
+            if transform != self._last_transform:
+                # Note: updating on paint doesn't work well (bug was: when item goes out of the
+                # window and then back, it is no longer shown).
+                # So, always ask to update on next event.
+                execute_on_next_event_loop(self._update_with_graphics_widget)
 
         return QGraphicsEllipseItem.paint(self, painter, option, widget)
 
@@ -169,8 +218,29 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
 
 
 def create_fixed_pixels_graphics_item_circle(
-        center, radius_in_px, pen=None, fill_color=None, parent_item=None, alpha=200):
-    circle = _CustomGraphicsEllipseItem(parent_item, center, radius_in_px, pen, fill_color, alpha)
+        center,
+        radius_in_px,
+        pen=None,
+        fill_color=None,
+        parent_item=None,
+        alpha=200,
+        pixels_displacement=(0, 0),
+        graphics_widget=None):
+    '''
+    :param pixels_displacement:
+        A tuple (x, y) with pixels coordinates with a translation to be
+        applied to sum with the center passed to calculate the actual center (useful when it's
+        some item which is anchored in another item based on some distance in pixels).
+    '''
+    circle = _CustomGraphicsEllipseItem(
+        parent_item,
+        center,
+        radius_in_px,
+        pen,
+        fill_color,
+        alpha,
+        pixels_displacement,
+        graphics_widget)
     return circle
 
 
