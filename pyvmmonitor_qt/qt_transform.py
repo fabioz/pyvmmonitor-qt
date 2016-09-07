@@ -54,3 +54,13 @@ def calc_angle_in_radians_from_qtransform(qtransform):
     p0 = qtransform.map(QPointF(0, 0))
     p1 = qtransform.map(QPointF(0, 1))  # Note: compute based on y, not on x.
     return calc_angle_in_radians((p0.x(), p0.y()), (p1.x(), p1.y()))
+
+
+def calculate_size_for_value_in_px(transform, value_in_px):
+    p0 = transform.map(0.0, 0.0)
+    p1 = transform.map(1.0, 0.0)
+
+    size = 1.0 / (p1[0] - p0[0])
+    size *= value_in_px
+
+    return size

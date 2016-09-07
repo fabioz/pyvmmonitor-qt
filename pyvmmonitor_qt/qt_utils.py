@@ -930,6 +930,38 @@ def assert_condition_within_timeout(condition, timeout=2.):
 def ask_save_filename(parent, caption, initial_dir, files_filter):
     return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter)
 
+
+def set_painter_antialiased(painter, antialias, widget):
+    '''
+    Besides antialising the QPainter, if we have an OpenGL backend, the OpenGL antialiasing also
+    needs to be turned on (so, if the widget can be a QGLWidget, the widget is required).
+
+    In the case that there's no related widget (such as drawing to a QImage), the widget should be
+    None (it's not default because it's really important to pass it in the case that there's a
+    widget, so, making it required so that each case actually takes it into account).
+    '''
+    from pyvmmonitor_qt.qt.QtGui import QPainter
+    RENDER_HINTS = (QPainter.Antialiasing |
+                    QPainter.TextAntialiasing |
+                    QPainter.SmoothPixmapTransform |
+                    QPainter.HighQualityAntialiasing)
+    # painter.setRenderHint(QPainter.NonCosmeticDefaultPen, False)
+    use_opengl = hasattr(widget, 'makeCurrent')
+    if use_opengl:
+        from OpenGL import GL
+        widget.makeCurrent()
+
+    if antialias:
+        painter.setRenderHints(RENDER_HINTS)
+        if use_opengl:
+            GL.glEnable(GL.GL_MULTISAMPLE)
+            GL.glEnable(GL.GL_LINE_SMOOTH)
+    else:
+        painter.setRenderHints(RENDER_HINTS, False)
+        if use_opengl:
+            GL.glDisable(GL.GL_MULTISAMPLE)
+            GL.glDisable(GL.GL_LINE_SMOOTH)
+
 # ==================================================================================================
 # main -- manual testing
 # ==================================================================================================
