@@ -27,6 +27,9 @@ def set_graphics_item_pen(item, pen=None):
 
 
 def set_graphics_item_brush(item, fill_color=None, alpha=255):
+    '''
+    :param alpha: 255 means opaque, 0 means transparent.
+    '''
     if fill_color is None:
         fill_color = QColor(Qt.white)
     fill_color.setAlpha(alpha)
@@ -59,6 +62,9 @@ def _init_item(
         alpha,
         pixels_displacement=(0, 0),
         graphics_widget=None):
+    '''
+    :param alpha: 255 means opaque, 0 means transparent.
+    '''
 
     item._center = center
     item._radius_in_px = radius_in_px
@@ -348,19 +354,24 @@ class _CustomGraphicsSquareItem(QGraphicsRectItem):
 # ==================================================================================================
 class _CustomGraphicsSvgItem(QGraphicsSvgItem):
     def __init__(
-            self,
-            parent_item,
-            origin_pos,
-            radius_in_px,
-            pen,
-            fill_color,
-            alpha,
-            pixels_displacement=(0, 0),
-            graphics_widget=None):
+        self,
+        parent_item,
+        origin_pos,
+        radius_in_px,
+        pen,
+        fill_color,
+        alpha,
+        pixels_displacement=(0, 0),
+        graphics_widget=None,
+        svg_renderer=None
+    ):
         QGraphicsSvgItem.__init__(self, parent_item)
         self._qimage = None
         self._rotation_in_radians = 0.0
         self._base_scale = 1.0
+        self._pen = None
+        self._brush = None
+
         _init_item(
             self,
             origin_pos,
@@ -370,6 +381,22 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
             alpha,
             pixels_displacement,
             graphics_widget)
+
+        if svg_renderer is not None:
+            self._renderer = svg_renderer
+            self.setSharedRenderer(svg_renderer)
+
+    def setPen(self, pen):
+        self._pen = pen
+
+    def setBrush(self, brush):
+        self._brush = brush
+
+    def pen(self):
+        return self._pen
+
+    def brush(self):
+        return self._brush
 
     def mousePressEvent(self, event):
         _mouse_press_event_item(self, event)
@@ -405,10 +432,34 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
     def _update_with_graphics_widget(self, force=False):
         _update_with_graphics_widget_item(self, force=force)
 
+    def configure_hover(
+            self,
+            hover_pen,
+            hover_fill_color=None,
+            hover_alpha=255,
+            hover_radius_in_px=None):
+        _configure_hover_item(self, hover_pen, hover_fill_color, hover_alpha, hover_radius_in_px)
+
+    def unconfigure_hover(self):
+        _unconfigure_hover_item(self)
+
     @overrides(QGraphicsSvgItem.paint)
     def paint(self, painter, option, widget=None):
         _before_paint_item(self, painter, widget)
 
+        renderer = self.renderer()
+        size = renderer.defaultSize()
+        if size is not None and size.width() > 0 and size.height() > 0:
+            width, height = size.width(), size.height()
+            if self._pen is not None:
+                painter.setPen(self._pen)
+                painter.drawRect(QRectF(0, 0, width, height))
+
+            if self._brush is not None:
+                painter.setBrush(self._brush)
+                painter.fillRect(QRectF(0, 0, width, height), self._brush)
+
+        #: :type painter: QPainter
         QGraphicsSvgItem.paint(self, painter, option, widget)
 
     def hoverEnterEvent(self, event):
@@ -428,11 +479,12 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
         x = origin_pos[0] + pixels_displacement[0]
         y = origin_pos[1] + pixels_displacement[1]
 
-        self.setScale(self._base_scale * radius)
-
-        import math
-        self.setTransformOriginPoint(QPointF(x, y))
-        self.setRotation(math.degrees(self._rotation_in_radians))
+        from pyvmmonitor_qt.qt.QtGui import QTransform
+        transf = QTransform()
+        transf.translate(x, y)
+        transf.rotateRadians(self._rotation_in_radians)
+        transf.scale(self._base_scale * radius, self._base_scale * radius)
+        self.setTransform(transf)
 
     def set_base_scale(self, base_scale):
         force = self._base_scale != base_scale
@@ -552,6 +604,8 @@ def create_fixed_pixels_graphics_item_circle(
         A tuple (x, y) with pixels coordinates with a translation to be
         applied to sum with the center passed to calculate the actual center (useful when it's
         some item which is anchored in another item based on some distance in pixels).
+
+    :param alpha: 255 means opaque, 0 means transparent.
     '''
     circle = _CustomGraphicsEllipseItem(
         parent_item,
@@ -582,6 +636,8 @@ def create_fixed_pixels_graphics_item_square(
         A tuple (x, y) with pixels coordinates with a translation to be
         applied to sum with the center passed to calculate the actual center (useful when it's
         some item which is anchored in another item based on some distance in pixels).
+
+    :param alpha: 255 means opaque, 0 means transparent.
     '''
     circle = _CustomGraphicsSquareItem(
         parent_item,
@@ -606,12 +662,15 @@ def create_fixed_pixels_graphics_item_svg(
         parent_item=None,
         alpha=200,
         pixels_displacement=(0, 0),
-        graphics_widget=None):
+        graphics_widget=None,
+        svg_renderer=None):
     '''
     :param pixels_displacement:
         A tuple (x, y) with pixels coordinates with a translation to be applied to sum with the
         origin_pos passed to calculate the actual origin_pos (useful when it's some item which is
         anchored in another item based on some distance in pixels).
+
+    :param alpha: 255 means opaque, 0 means transparent.
     '''
     circle = _CustomGraphicsSvgItem(
         parent_item,
@@ -621,5 +680,6 @@ def create_fixed_pixels_graphics_item_svg(
         fill_color,
         alpha,
         pixels_displacement,
-        graphics_widget)
+        graphics_widget,
+        svg_renderer)
     return circle
