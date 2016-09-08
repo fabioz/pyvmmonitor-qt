@@ -483,7 +483,7 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
         transf = QTransform()
         transf.translate(x, y)
         transf.rotateRadians(self._rotation_in_radians)
-        transf.scale(self._base_scale * radius, self._base_scale * radius)
+        transf.scale(self._base_scale * (radius * 2), self._base_scale * (radius * 2))
         self.setTransform(transf)
 
     def set_base_scale(self, base_scale):
