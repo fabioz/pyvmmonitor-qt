@@ -20,7 +20,7 @@ from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.qt import QtGui, QtCore, qt_api
-from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex
+from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex, QPointF
 from pyvmmonitor_qt.qt.QtGui import (
     QMdiArea,
     QTabWidget,
@@ -961,6 +961,17 @@ def set_painter_antialiased(painter, antialias, widget):
         if use_opengl:
             GL.glDisable(GL.GL_MULTISAMPLE)
             GL.glDisable(GL.GL_LINE_SMOOTH)
+
+
+def create_painter_path_from_points(points):
+    from pyvmmonitor_qt.qt.QtGui import QPainterPath
+    path = QPainterPath()
+    path.moveTo(*points[0])
+    for p in points[1:]:
+        path.lineTo(*p)
+    path.lineTo(*points[0])  # Close
+    return path
+
 
 # ==================================================================================================
 # main -- manual testing
