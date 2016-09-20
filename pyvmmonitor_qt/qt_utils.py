@@ -6,6 +6,7 @@
 # Examples: https://qt.gitorious.org/pyvmmonitor_qt.qt/pyvmmonitor_qt.qt-examples
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
 from functools import wraps
 import sys
 import threading
@@ -34,6 +35,7 @@ from pyvmmonitor_qt.qt.QtGui import (
     QWidget,
     QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
     QTextBrowser, QHBoxLayout, QIcon, QStyle, QFileDialog)
+
 
 # Modules moved (keep backward compatibility for now).
 from .qt_app import obtain_qapp  # @NoMove
@@ -971,6 +973,16 @@ def create_painter_path_from_points(points):
         path.lineTo(*p)
     path.lineTo(*points[0])  # Close
     return path
+
+
+@contextmanager
+def painter_on(device):
+    from pyvmmonitor_qt.qt.QtGui import QPainter
+    painter = QPainter(device)
+    try:
+        yield painter
+    finally:
+        painter.end()
 
 
 # ==================================================================================================
