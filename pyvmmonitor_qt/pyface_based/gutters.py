@@ -28,7 +28,7 @@ class GutterWidget(QtGui.QWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        with painter_on(self) as painter:
+        with painter_on(self, antialias=True) as painter:
             painter.fillRect(event.rect(), QtCore.Qt.lightGray)
 
     @handle_exception_in_method
@@ -58,7 +58,7 @@ class StatusGutterWidget(GutterWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        with painter_on(self) as painter:
+        with painter_on(self, antialias=True) as painter:
             if self.background_color is not None:
                 painter.fillRect(event.rect(), self.background_color)
 
@@ -111,7 +111,7 @@ class LineNumberWidget(GutterWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        with painter_on(self) as painter:
+        with painter_on(self, antialias=True) as painter:
             painter.setFont(self.font)
             if self.background_color is not None:
                 painter.fillRect(event.rect(), self.background_color)

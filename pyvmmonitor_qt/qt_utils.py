@@ -976,13 +976,53 @@ def create_painter_path_from_points(points):
 
 
 @contextmanager
-def painter_on(device):
+def painter_on(device, antialias, widget=None):
     from pyvmmonitor_qt.qt.QtGui import QPainter
     painter = QPainter(device)
+    set_painter_antialiased(painter, antialias, widget)
     try:
         yield painter
     finally:
         painter.end()
+
+
+def qimage_as_numpy(image):
+    '''
+    Provide a way to get a QImage as a numpy array.
+    '''
+    if not isinstance(image, QtGui.QImage):
+        raise TypeError("image argument must be a QImage instance")
+
+    shape = image.height(), image.width()
+    strides0 = image.bytesPerLine()
+
+    image_format = image.format()
+    if image_format == QtGui.QImage.Format_Indexed8:
+        dtype = "|u1"
+        strides1 = 1
+    elif image_format in (
+            QtGui.QImage.Format_RGB32,
+            QtGui.QImage.Format_ARGB32,
+            QtGui.QImage.Format_ARGB32_Premultiplied):
+        dtype = "|u4"
+        strides1 = 4
+    elif image_format == QtGui.QImage.Format_Invalid:
+        raise ValueError("qimage_as_numpy got invalid QImage")
+    else:
+        raise ValueError("qimage_as_numpy can only handle 8- or 32-bit QImages")
+
+    image.__array_interface__ = {
+        'shape': shape,
+        'typestr': dtype,
+        'data': image.bits(),
+        'strides': (strides0, strides1),
+        'version': 3,
+    }
+
+    import numpy
+    result = numpy.asarray(image)
+    del image.__array_interface__
+    return result
 
 
 # ==================================================================================================
