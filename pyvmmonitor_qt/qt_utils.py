@@ -977,13 +977,16 @@ def create_painter_path_from_points(points):
 
 @contextmanager
 def painter_on(device, antialias, widget=None):
+    if device.width() <= 0 or device.height() <= 0:
+        sys.stderr.write('Warning: trying to create painter on device with empty size.\n')
     from pyvmmonitor_qt.qt.QtGui import QPainter
     painter = QPainter(device)
     set_painter_antialiased(painter, antialias, widget)
     try:
         yield painter
     finally:
-        painter.end()
+        if painter.isActive():
+            painter.end()
 
 
 def qimage_as_numpy(image):
