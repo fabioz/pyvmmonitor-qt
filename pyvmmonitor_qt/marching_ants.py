@@ -14,11 +14,12 @@ class MarchingAnts(object):
     ants.dispose()  # Should be disposed before the scene is disposed.
     '''
 
-    def __init__(self, scene):
+    def __init__(self, scene=None):
         import itertools
         self._next = itertools.count(0).__next__
         self._marching_ants_handlers = set()
-        self._scene = scene
+        from pyvmmonitor_core.weak_utils import get_weakref
+        self._scene = get_weakref(scene)
 
         from pyvmmonitor_qt.qt.QtCore import QTimer
         self._timer = QTimer()
@@ -54,8 +55,15 @@ class MarchingAnts(object):
         pen.setColor(Qt.black)
         item2.setPen(pen)
 
-        self._scene.addItem(item1)
-        self._scene.addItem(item2)
+        scene = self._scene()
+        if scene is not None:
+            scene.addItem(item1)
+            scene.addItem(item2)
+        self.animate_items(item1, item2)
+
+    def animate_items(self, item1, item2):
+        if self._disposed:
+            raise RuntimeError('Already disposed.')
 
         offset = 5
         handler = _MarchingAntsHandler((item1, item2), offset, offset * 4, 1, self)
@@ -120,8 +128,13 @@ class _MarchingAntsHandler(object):
         if container is not None:
             if self in container._marching_ants_handlers:
                 container._marching_ants_handlers.discard(self)
-                for item in self._items:
-                    container._scene.removeItem(item)
+
+                # If scene is available, items are managed by this class, otherwise, they're managed
+                # outside.
+                scene = container._scene()
+                if scene is not None:
+                    for item in self._items:
+                        scene.removeItem(item)
 
                 container._timer.timeout.disconnect(self._update_marching_ants_offset)
 
