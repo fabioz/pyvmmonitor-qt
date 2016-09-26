@@ -99,8 +99,7 @@ class _MarchingAntsHandler(object):
     def _update_marching_ants_offset(self):
         items = list(self._items)
         if len(items) == 2:
-            self._last_offset += self._delta
-            self._last_offset = self._last_offset % self._max_offset
+            self._last_offset = (self._last_offset + self._delta) % self._max_offset
 
             item1 = items[0]
             pen = item1.pen()
@@ -111,6 +110,10 @@ class _MarchingAntsHandler(object):
             pen = item2.pen()
             pen.setDashOffset((self._last_offset + self._offset) % self._max_offset)
             item2.setPen(pen)
+        else:
+            import sys
+            sys.stderr.write('_MarchingAntsHandler._update_marching_ants_offset: len(items)==%s' % (
+                len(items)))
 
     def stop(self):
         container = self._container()
@@ -119,6 +122,8 @@ class _MarchingAntsHandler(object):
                 container._marching_ants_handlers.discard(self)
                 for item in self._items:
                     container._scene.removeItem(item)
+
+                container._timer.timeout.disconnect(self._update_marching_ants_offset)
 
                 from pyvmmonitor_core.weak_utils import WeakList
                 from pyvmmonitor_core.weak_utils import get_weakref
