@@ -356,6 +356,9 @@ def handle_exception_in_method(method):
                 traceback.print_exc()
             if sys is not None:
                 sys.excepthook(*sys.exc_info())
+        finally:
+            args = None
+            kwargs = None
     return wrapper
 
 
