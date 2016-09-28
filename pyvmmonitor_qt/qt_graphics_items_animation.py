@@ -63,7 +63,9 @@ class _MarchingAntsHandler(object):
     def _update_marching_ants_offset(self):
         items = list(self._items)
         if len(items) == 2:
-            self._last_offset = (self._last_offset + self._delta) % self._max_offset
+            # Minus so that it rotates clockwise on qt rect/circle.
+            # Note that paths should also be created clockwise to flow in the same direction.
+            self._last_offset = (self._last_offset - self._delta) % self._max_offset
 
             item1 = items[0]
             pen = item1.pen()
@@ -72,7 +74,7 @@ class _MarchingAntsHandler(object):
 
             item2 = items[1]
             pen = item2.pen()
-            pen.setDashOffset((self._last_offset + self._offset) % self._max_offset)
+            pen.setDashOffset((self._last_offset - self._offset) % self._max_offset)
             item2.setPen(pen)
         else:
             import sys

@@ -968,13 +968,19 @@ def set_painter_antialiased(painter, antialias, widget):
             GL.glDisable(GL.GL_LINE_SMOOTH)
 
 
-def create_painter_path_from_points(points):
+def create_painter_path_from_points(points, clockwise=None):
+    if clockwise is not None:
+        from pyvmmonitor_core import math_utils
+        if clockwise != math_utils.is_clockwise(points):
+            points = reversed(points)
     from pyvmmonitor_qt.qt.QtGui import QPainterPath
     path = QPainterPath()
-    path.moveTo(*points[0])
-    for p in points[1:]:
+    it = iter(points)
+    first = next(it)
+    path.moveTo(*first)
+    for p in it:
         path.lineTo(*p)
-    path.lineTo(*points[0])  # Close
+    path.lineTo(*first)  # Close
     return path
 
 
