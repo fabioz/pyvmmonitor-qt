@@ -31,8 +31,8 @@ def test_marching_ants(qtapi):
     assert item1.pen().dashOffset() == 0.0
     assert item2.pen().dashOffset() == 0.0
     qt_event_loop.process_events()
-    assert item1.pen().dashOffset() == 2.0
-    assert item2.pen().dashOffset() == 7.0
+    assert item1.pen().dashOffset() == 18.0
+    assert item2.pen().dashOffset() == 13.0
     ants_handle = handle.handle
     assert ants_handle in animation._marching_ants._marching_ants_handlers
     handle.stop()
