@@ -1,51 +1,19 @@
+from pyvmmonitor_core import overrides
+from pyvmmonitor_core.disposable import Disposable
 
 
-class MarchingAnts(object):
-    '''
-    To use:
+class _MarchingAnts(Disposable):
 
-    marching_ants = MarchingAnts(scene)
-    ants = marching_ants.MarchingAnts(scene)
-    handle = ants.animate(((0, 0), (40, 0), (40, 20)))
-    ...
-    handle.stop()
-
-    ...
-    ants.dispose()  # Should be disposed before the scene is disposed.
-    '''
-
-    def __init__(self, scene=None):
-        import itertools
-        self._next = itertools.count(0).__next__
+    def __init__(self, timer):
+        super().__init__()
         self._marching_ants_handlers = set()
-        from pyvmmonitor_core.weak_utils import get_weakref
-        self._scene = get_weakref(scene)
+        self._timer = timer
 
-        from pyvmmonitor_qt.qt.QtCore import QTimer
-        self._timer = QTimer()
-        self._disposed = False
-
-        import atexit
-        atexit.register(self._check_properly_disposed)
-
-    def _check_properly_disposed(self):
-        if not self._disposed:
-            import sys
-            # It should be disposed before the scene!
-            sys.stderr.write('MarchingAnts: not properly disposed before shutdown.\n')
-            self.dispose()
-
-    def animate(self, polygon):
-        if self._disposed:
+    def _items(self, item1, item2):
+        if self.is_disposed():
             raise RuntimeError('Already disposed.')
 
         from pyvmmonitor_qt.qt.QtCore import Qt
-        from pyvmmonitor_qt.qt.QtGui import QPolygonF
-        from pyvmmonitor_qt.qt.QtCore import QPointF
-        from pyvmmonitor_qt.qt.QtGui import QGraphicsPolygonItem
-
-        item1 = QGraphicsPolygonItem(QPolygonF([QPointF(*tup) for tup in polygon]))
-        item2 = QGraphicsPolygonItem(QPolygonF([QPointF(*tup) for tup in polygon]))
 
         pen = item1.pen()
         pen.setColor(Qt.white)
@@ -54,16 +22,6 @@ class MarchingAnts(object):
         pen = item2.pen()
         pen.setColor(Qt.black)
         item2.setPen(pen)
-
-        scene = self._scene()
-        if scene is not None:
-            scene.addItem(item1)
-            scene.addItem(item2)
-        self.animate_items(item1, item2)
-
-    def animate_items(self, item1, item2):
-        if self._disposed:
-            raise RuntimeError('Already disposed.')
 
         offset = 5
         handler = _MarchingAntsHandler((item1, item2), offset, offset * 4, 1, self)
@@ -77,18 +35,16 @@ class MarchingAnts(object):
             pen.setDashPattern([offset, offset, offset, offset])
             item.setPen(pen)
             timer.timeout.connect(handler._update_marching_ants_offset)
-            timer.start(250)
+
         return handler
 
-    def dispose(self):
+    @overrides(Disposable._on_dispose)
+    def _on_dispose(self):
         for handler in self._marching_ants_handlers.copy():
             handler.stop()
 
-        self._timer.stop()
-        self._timer.deleteLater()
-        import atexit
-        atexit.unregister(self._check_properly_disposed)
-        self._disposed = True
+    def __len__(self):
+        return len(self._marching_ants_handlers)
 
 
 class _MarchingAntsHandler(object):
@@ -129,13 +85,6 @@ class _MarchingAntsHandler(object):
             if self in container._marching_ants_handlers:
                 container._marching_ants_handlers.discard(self)
 
-                # If scene is available, items are managed by this class, otherwise, they're managed
-                # outside.
-                scene = container._scene()
-                if scene is not None:
-                    for item in self._items:
-                        scene.removeItem(item)
-
                 container._timer.timeout.disconnect(self._update_marching_ants_offset)
 
                 from pyvmmonitor_core.weak_utils import WeakList
@@ -143,3 +92,64 @@ class _MarchingAntsHandler(object):
 
                 self._items = WeakList()
                 self._container = get_weakref(None)
+
+
+class _HandleWrapper(object):
+
+    def __init__(self, handle, animation):
+        self.handle = handle
+        self.animation = animation
+
+    def stop(self):
+        self.handle.stop()
+        if len(self.animation) == 0:
+            self.animation._timer.stop()
+        self.handle = None
+        self.animation = None
+
+
+class GraphicsItemsAnimation(Disposable):
+    '''
+    To use:
+
+    animation = GraphicsItemsAnimation(scene)
+
+    # item1 and item2 should have the same visual representation as we use one
+    # to draw in white and another to draw in black with different offsets.
+    handle = animation.marching_ants(item1, item2)
+    ...
+    handle.stop()
+
+    ...
+    animation.dispose()  # Should be disposed before the scene is disposed.
+    '''
+
+    def __init__(self, timeout=200):
+        super().__init__()
+        from pyvmmonitor_qt.qt.QtCore import QTimer
+
+        self._timer = QTimer()
+        self._timeout = timeout
+        self._marching_ants = None
+
+    def marching_ants(self, item1, item2):
+        assert not self.is_disposed()
+        if self._marching_ants is None:
+            self._marching_ants = _MarchingAnts(self._timer)
+        ret = _HandleWrapper(self._marching_ants._items(item1, item2), self)
+        self._timer.start(self._timeout)
+
+        return ret
+
+    def __len__(self):
+        if self._marching_ants is None:
+            return 0
+        return len(self._marching_ants)
+
+    def _on_dispose(self):
+        if self._marching_ants is not None:
+            self._marching_ants.dispose()
+            self._marching_ants = None
+
+        self._timer.stop()
+        self._timer.deleteLater()
