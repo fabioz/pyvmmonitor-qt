@@ -6,6 +6,7 @@
 # Examples: https://qt.gitorious.org/pyvmmonitor_qt.qt/pyvmmonitor_qt.qt-examples
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
 from functools import wraps
 import sys
 import threading
@@ -34,6 +35,7 @@ from pyvmmonitor_qt.qt.QtGui import (
     QWidget,
     QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
     QTextBrowser, QHBoxLayout, QIcon, QStyle, QFileDialog)
+
 
 # Modules moved (keep backward compatibility for now).
 from .qt_app import obtain_qapp  # @NoMove
@@ -354,6 +356,9 @@ def handle_exception_in_method(method):
                 traceback.print_exc()
             if sys is not None:
                 sys.excepthook(*sys.exc_info())
+        finally:
+            args = None
+            kwargs = None
     return wrapper
 
 
@@ -963,14 +968,73 @@ def set_painter_antialiased(painter, antialias, widget):
             GL.glDisable(GL.GL_LINE_SMOOTH)
 
 
-def create_painter_path_from_points(points):
+def create_painter_path_from_points(points, clockwise=None):
+    if clockwise is not None:
+        from pyvmmonitor_core import math_utils
+        if clockwise != math_utils.is_clockwise(points):
+            points = reversed(points)
     from pyvmmonitor_qt.qt.QtGui import QPainterPath
     path = QPainterPath()
-    path.moveTo(*points[0])
-    for p in points[1:]:
+    it = iter(points)
+    first = next(it)
+    path.moveTo(*first)
+    for p in it:
         path.lineTo(*p)
-    path.lineTo(*points[0])  # Close
+    path.lineTo(*first)  # Close
     return path
+
+
+@contextmanager
+def painter_on(device, antialias, widget=None):
+    if device.width() <= 0 or device.height() <= 0:
+        sys.stderr.write('Warning: trying to create painter on device with empty size.\n')
+    from pyvmmonitor_qt.qt.QtGui import QPainter
+    painter = QPainter(device)
+    set_painter_antialiased(painter, antialias, widget)
+    try:
+        yield painter
+    finally:
+        if painter.isActive():
+            painter.end()
+
+
+def qimage_as_numpy(image):
+    '''
+    Provide a way to get a QImage as a numpy array.
+    '''
+    if not isinstance(image, QtGui.QImage):
+        raise TypeError("image argument must be a QImage instance")
+
+    shape = image.height(), image.width()
+    strides0 = image.bytesPerLine()
+
+    image_format = image.format()
+    if image_format == QtGui.QImage.Format_Indexed8:
+        dtype = "|u1"
+        strides1 = 1
+    elif image_format in (
+            QtGui.QImage.Format_RGB32,
+            QtGui.QImage.Format_ARGB32,
+            QtGui.QImage.Format_ARGB32_Premultiplied):
+        dtype = "|u4"
+        strides1 = 4
+    elif image_format == QtGui.QImage.Format_Invalid:
+        raise ValueError("qimage_as_numpy got invalid QImage")
+    else:
+        raise ValueError("qimage_as_numpy can only handle 8- or 32-bit QImages")
+
+    image.__array_interface__ = {
+        'shape': shape,
+        'typestr': dtype,
+        'data': image.bits(),
+        'strides': (strides0, strides1),
+        'version': 3,
+    }
+
+    import numpy
+    result = numpy.asarray(image)
+    del image.__array_interface__
+    return result
 
 
 # ==================================================================================================

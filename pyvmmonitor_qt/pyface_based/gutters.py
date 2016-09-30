@@ -12,7 +12,7 @@
 import math
 
 from pyvmmonitor_qt.qt import QtCore, QtGui
-from pyvmmonitor_qt.qt_utils import handle_exception_in_method
+from pyvmmonitor_qt.qt_utils import handle_exception_in_method, painter_on
 
 
 class GutterWidget(QtGui.QWidget):
@@ -28,8 +28,8 @@ class GutterWidget(QtGui.QWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        painter = QtGui.QPainter(self)
-        painter.fillRect(event.rect(), QtCore.Qt.lightGray)
+        with painter_on(self, antialias=True) as painter:
+            painter.fillRect(event.rect(), QtCore.Qt.lightGray)
 
     @handle_exception_in_method
     def wheelEvent(self, event):
@@ -58,25 +58,25 @@ class StatusGutterWidget(GutterWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        painter = QtGui.QPainter(self)
-        if self.background_color is not None:
-            painter.fillRect(event.rect(), self.background_color)
+        with painter_on(self, antialias=True) as painter:
+            if self.background_color is not None:
+                painter.fillRect(event.rect(), self.background_color)
 
-        cw = self.parent()
+            cw = self.parent()
 
-        pixels_per_block = self.height() / float(cw.blockCount())
+            pixels_per_block = self.height() / float(cw.blockCount())
 
-        for line in self.info_lines:
-            painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
-                             QtCore.Qt.green)
+            for line in self.info_lines:
+                painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
+                                 QtCore.Qt.green)
 
-        for line in self.warn_lines:
-            painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
-                             QtCore.Qt.yellow)
+            for line in self.warn_lines:
+                painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
+                                 QtCore.Qt.yellow)
 
-        for line in self.error_lines:
-            painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
-                             QtCore.Qt.red)
+            for line in self.error_lines:
+                painter.fillRect(QtCore.QRect(0, line * pixels_per_block, self.width(), 3),
+                                 QtCore.Qt.red)
 
 
 class LineNumberWidget(GutterWidget):
@@ -111,25 +111,25 @@ class LineNumberWidget(GutterWidget):
     def paintEvent(self, event):
         """ Paint the line numbers.
         """
-        painter = QtGui.QPainter(self)
-        painter.setFont(self.font)
-        if self.background_color is not None:
-            painter.fillRect(event.rect(), self.background_color)
+        with painter_on(self, antialias=True) as painter:
+            painter.setFont(self.font)
+            if self.background_color is not None:
+                painter.fillRect(event.rect(), self.background_color)
 
-        cw = self.parent()
-        block = cw.firstVisibleBlock()
-        blocknum = block.blockNumber()
-        top = cw.blockBoundingGeometry(block).translated(
-            cw.contentOffset()).top()
-        bottom = top + int(cw.blockBoundingRect(block).height())
-
-        while block.isValid() and top <= event.rect().bottom():
-            if block.isVisible() and bottom >= event.rect().top():
-                painter.setPen(self.foreground_color)
-                painter.drawText(0, top, self.width() - 2,
-                                 self.fontMetrics().height(),
-                                 QtCore.Qt.AlignRight, str(blocknum + 1))
-            block = block.next()
-            top = bottom
+            cw = self.parent()
+            block = cw.firstVisibleBlock()
+            blocknum = block.blockNumber()
+            top = cw.blockBoundingGeometry(block).translated(
+                cw.contentOffset()).top()
             bottom = top + int(cw.blockBoundingRect(block).height())
-            blocknum += 1
+
+            while block.isValid() and top <= event.rect().bottom():
+                if block.isVisible() and bottom >= event.rect().top():
+                    painter.setPen(self.foreground_color)
+                    painter.drawText(0, top, self.width() - 2,
+                                     self.fontMetrics().height(),
+                                     QtCore.Qt.AlignRight, str(blocknum + 1))
+                block = block.next()
+                top = bottom
+                bottom = top + int(cw.blockBoundingRect(block).height())
+                blocknum += 1

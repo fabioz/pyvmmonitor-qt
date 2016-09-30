@@ -40,6 +40,13 @@ def tuple_to_qtransform(tup):
     return QTransform(*tup)
 
 
+def iter_transform_list_tuple(points, qtransform):
+    from pyvmmonitor_qt.qt.QtCore import QPointF
+    for point in points:
+        p = qtransform.map(QPointF(*point))
+        yield p.x(), p.y()
+
+
 def transform_tuple(point, qtransform):
     from pyvmmonitor_qt.qt.QtCore import QPointF
 

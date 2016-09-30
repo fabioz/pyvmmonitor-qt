@@ -12,6 +12,9 @@ from pyvmmonitor_qt.qt_transform import calculate_size_for_value_in_px
 
 
 def create_graphics_item_rect(rect, fill_color=None, alpha=255, pen=None, parent=None):
+    '''
+    :param alpha: 255 means opaque, 0 means transparent.
+    '''
     if isinstance(rect, (list, tuple)):
         rect = QRectF(*rect)
     rect_item = QGraphicsRectItem(rect, parent)
