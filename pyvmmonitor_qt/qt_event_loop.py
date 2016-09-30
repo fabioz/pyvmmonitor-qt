@@ -1,7 +1,6 @@
 import threading
 
-from pyvmmonitor_core.ordered_set import OrderedSet
-from pyvmmonitor_core.weak_utils import get_weakref
+from pyvmmonitor_core import compat
 from pyvmmonitor_qt.qt.QtCore import QObject, QEvent
 
 
@@ -18,12 +17,22 @@ class _Receiver(QObject):
 
     def __init__(self):
         QObject.__init__(self)
+        from pyvmmonitor_core.ordered_set import OrderedSet
+
         self.funcs = OrderedSet()
 
     def event(self, ev):
         if isinstance(ev, _ExecuteOnLoopEvent):
             try:
-                while True:
+                with _lock:
+                    found = len(self.funcs)
+                    if not found:
+                        return True
+
+                for _i in compat.xrange(found):
+                    # Note: we execute all currently registered functions, but new functions
+                    # scheduled in such a function are only called in a new loop (to avoid
+                    # a possible event recursion).
                     with _lock:
                         if not self.funcs:
                             return True
@@ -78,8 +87,17 @@ def execute_on_next_event_loop(func):
 
 
 class NextEventLoopUpdater(object):
+    '''
+    Helper to call a function in the next event loop after a call to invalidate.
+
+    next_event_loop_updater = NextEventLoopUpdater(func)
+
+    # Schedules func to be executed in the next event loop.
+    next_event_loop_updater.invalidate()
+    '''
 
     def __init__(self, function):
+        from pyvmmonitor_core.weak_utils import get_weakref
         self._update_method = get_weakref(function)
         self._disposed = False
         self._invalidate = False

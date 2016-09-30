@@ -909,6 +909,14 @@ def convert_data_to_obj(data):
 
 
 def assert_condition_within_timeout(condition, timeout=2.):
+    '''
+    :param callable condition:
+        A callable which may return a bool or a string (if True or an empty
+        string, the condition is considered matched).
+
+    :param float timeout:
+        Timeout in seconds
+    '''
     assert is_in_main_thread()
     initial = time.time()
     while True:
@@ -929,7 +937,7 @@ def assert_condition_within_timeout(condition, timeout=2.):
 
         # process_events()
         process_queue()
-        time.sleep(1 / 60.)
+        time.sleep(1 / 50.)
 
 
 def ask_save_filename(parent, caption, initial_dir, files_filter):
