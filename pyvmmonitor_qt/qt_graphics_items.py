@@ -5,7 +5,7 @@ from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import Qt, QRectF, QPointF
-from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush
+from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush, QGraphicsPathItem
 from pyvmmonitor_qt.qt.QtGui import QGraphicsRectItem
 from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
 from pyvmmonitor_qt.qt_transform import calculate_size_for_value_in_px
@@ -588,6 +588,95 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
                 center[1] - radius + pixels_displacement[1],
                 2. * radius,
                 2. * radius))
+
+
+# ==================================================================================================
+# _CustomQGraphicsPathItem
+# ==================================================================================================
+class _CustomQGraphicsPathItem(QGraphicsPathItem):
+
+    def __init__(
+            self,
+            parent_item,
+            pen,
+            fill_color,
+            alpha,
+            graphics_widget=None):
+        QGraphicsPathItem.__init__(self, parent_item)
+        _init_item(
+            self,
+            center=(0, 0),
+            radius_in_px=0,
+            pen=pen,
+            fill_color=fill_color,
+            alpha=alpha,
+            pixels_displacement=(0, 0),
+            graphics_widget=graphics_widget)
+
+    def get_center(self):
+        rect = self.path().controlPointRect()
+        center = rect.center()
+        return center.x(), center.y()
+
+    def mousePressEvent(self, event):
+        _mouse_press_event_item(self, event)
+
+    def mouseMoveEvent(self, event):
+        _mouse_move_event_item(self, event)
+
+    def mouseReleaseEvent(self, event):
+        _mouse_release_event_item(self, event)
+
+    def _update_with_graphics_widget(self, force=False):
+        # Nothing to actually update based on the graphics widget in this case.
+        pass
+
+    def configure_hover(
+            self,
+            hover_pen,
+            hover_fill_color=None,
+            hover_alpha=255):
+        _configure_hover_item(
+            self,
+            hover_pen,
+            hover_fill_color,
+            hover_alpha,
+            hover_radius_in_px=None)
+
+    def unconfigure_hover(self):
+        _unconfigure_hover_item(self)
+
+    def hoverEnterEvent(self, event):
+        _before_hover_enter_event(self, event)
+        return QGraphicsPathItem.hoverEnterEvent(self, event)
+
+    def hoverLeaveEvent(self, event):
+        _before_hover_leave_event(self, event)
+        return QGraphicsPathItem.hoverLeaveEvent(self, event)
+
+
+# ==================================================================================================
+# create_graphics_path_item
+# ==================================================================================================
+def create_graphics_path_item(
+        parent_item=None,
+        pen=None,
+        fill_color=None,
+        alpha=200,
+        graphics_widget=None):
+    '''
+    This is a bit different from the other custom elements. It's main purpose is just giving us
+    the callbacks related to the mouse (whereas the other elements created have a behavior where
+    the representation is updated based on the zoom level).
+
+    :param alpha: 255 means opaque, 0 means transparent.
+    '''
+    return _CustomQGraphicsPathItem(
+        parent_item=parent_item,
+        pen=pen,
+        fill_color=fill_color,
+        alpha=alpha,
+        graphics_widget=graphics_widget)
 
 
 # ==================================================================================================
