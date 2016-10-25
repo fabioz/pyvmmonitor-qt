@@ -24,29 +24,37 @@ class ReplaceWidget(FindWidget):
 
         self.button_size = self.fontMetrics().width(u'Replace All') + 20
 
-        form_layout = QtGui.QFormLayout()
+        from pyvmmonitor_qt.qt.QtWidgets import QFormLayout
+        form_layout = QFormLayout()
         form_layout.addRow('Fin&d', self._create_find_control())
         form_layout.addRow('Rep&lace', self._create_replace_control())
 
-        layout = QtGui.QHBoxLayout()
+        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+        layout = QHBoxLayout()
         layout.addLayout(form_layout)
 
-        close_button = QtGui.QPushButton('Close')
+        from pyvmmonitor_qt.qt.QtWidgets import QPushButton
+        close_button = QPushButton('Close')
         layout.addWidget(close_button, 1, QtCore.Qt.AlignRight)
         close_button.clicked.connect(self.hide)
 
         self.setLayout(layout)
 
     def _create_replace_control(self):
-        control = QtGui.QWidget(self)
+        from pyvmmonitor_qt.qt.QtWidgets import QWidget
+        from pyvmmonitor_qt.qt.QtWidgets import QPushButton
+        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+        from pyvmmonitor_qt.qt.QtWidgets import QLineEdit
 
-        self.replace_edit = QtGui.QLineEdit()
-        self.replace_button = QtGui.QPushButton('&Replace')
+        control = QWidget(self)
+
+        self.replace_edit = QLineEdit()
+        self.replace_button = QPushButton('&Replace')
         self.replace_button.setFixedWidth(self.button_size)
-        self.replace_all_button = QtGui.QPushButton('Replace &All')
+        self.replace_all_button = QPushButton('Replace &All')
         self.replace_all_button.setFixedWidth(self.button_size)
 
-        layout = QtGui.QHBoxLayout()
+        layout = QHBoxLayout()
         layout.addWidget(self.replace_edit)
         layout.addWidget(self.replace_button)
         layout.addWidget(self.replace_all_button)

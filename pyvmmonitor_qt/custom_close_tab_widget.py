@@ -5,7 +5,7 @@ import weakref
 
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.qt.QtGui import QWidget, QStackedWidget, QTabBar, QVBoxLayout, QPushButton,\
+from pyvmmonitor_qt.qt.QtWidgets import QWidget, QStackedWidget, QTabBar, QVBoxLayout, QPushButton,\
     QStyle
 
 

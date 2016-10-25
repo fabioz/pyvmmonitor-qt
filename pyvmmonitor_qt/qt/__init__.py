@@ -30,11 +30,15 @@ if qt_api is None:
             import PyQt4
             qt_api = 'pyqt'
         except ImportError:
-            raise ImportError('Cannot import PySide or PyQt4')
+            try:
+                import PySide2
+                qt_api = 'pyside2'
+            except ImportError:
+                raise ImportError('Cannot import PySide, PySide2 or PyQt4')
 
 elif qt_api == 'pyqt':
     prepare_pyqt4()
 
-elif qt_api != 'pyside':
-    raise RuntimeError("Invalid Qt API %r, valid values are: 'pyqt' or 'pyside'"
+elif qt_api not in('pyside', 'pyside2'):
+    raise RuntimeError("Invalid Qt API %r, valid values are: 'pyqt', 'pyside' or 'pyside2'"
                        % qt_api)

@@ -3,10 +3,10 @@ from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
 def test_marching_ants(qtapi):
-    from pyvmmonitor_qt.qt.QtGui import QGraphicsView
+    from pyvmmonitor_qt.qt.QtWidgets import QGraphicsView
     view = QGraphicsView()
     view.show()
-    from pyvmmonitor_qt.qt.QtGui import QGraphicsScene
+    from pyvmmonitor_qt.qt.QtWidgets import QGraphicsScene
     scene = QGraphicsScene(view)
     view.setScene(scene)
 
@@ -16,9 +16,9 @@ def test_marching_ants(qtapi):
 
     from pyvmmonitor_qt.qt.QtGui import QPolygonF
     from pyvmmonitor_qt.qt.QtCore import QPointF
-    from pyvmmonitor_qt.qt.QtGui import QGraphicsPolygonItem
 
     polygon = ((0, 0), (40, 0), (40, 20))
+    from pyvmmonitor_qt.qt.QtWidgets import QGraphicsPolygonItem
     item1 = QGraphicsPolygonItem(QPolygonF([QPointF(*tup) for tup in polygon]))
     item2 = QGraphicsPolygonItem(QPolygonF([QPointF(*tup) for tup in polygon]))
 

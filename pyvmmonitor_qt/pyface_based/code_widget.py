@@ -10,11 +10,11 @@
 #------------------------------------------------------------------------------
 
 # Standard library imports
-import math
 import sys
 
-from pyvmmonitor_qt.qt import QtCore, QtGui
+from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtGui import QTextCursor
+from pyvmmonitor_qt.qt.QtWidgets import QPlainTextEdit, QWidget
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
 from .find_widget import FindWidget
@@ -23,7 +23,7 @@ from .pygments_highlighter import PygmentsHighlighter
 from .replace_widget import ReplaceWidget
 
 
-class CodeWidget(QtGui.QPlainTextEdit):
+class CodeWidget(QPlainTextEdit):
 
     """ A widget for viewing and editing code.
     """
@@ -34,6 +34,9 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
     def __init__(self, parent, should_highlight_current_line=True, font=None,
                  lexer=None):
+        from pyvmmonitor_qt.qt.QtGui import QColor
+        from pyvmmonitor_qt.qt.QtGui import QFont
+
         super(CodeWidget, self).__init__(parent)
 
         self.highlighter = PygmentsHighlighter(self.document(), lexer)
@@ -42,7 +45,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
         if font is None:
             # Set a decent fixed width font for this platform.
-            font = QtGui.QFont()
+            font = QFont()
             if sys.platform == 'win32':
                 # Prefer Consolas, but fall back to Courier if necessary.
                 font.setFamily('Consolas')
@@ -52,14 +55,14 @@ class CodeWidget(QtGui.QPlainTextEdit):
                 font.setFamily('Monaco')
             else:
                 font.setFamily('Monospace')
-            font.setStyleHint(QtGui.QFont.TypeWriter)
+            font.setStyleHint(QFont.TypeWriter)
         self.set_font(font)
 
         # Whether we should highlight the current line or not.
         self.should_highlight_current_line = should_highlight_current_line
 
         # What that highlight color should be.
-        self.line_highlight_color = QtGui.QColor(QtCore.Qt.yellow).lighter(160)
+        self.line_highlight_color = QColor(QtCore.Qt.yellow).lighter(160)
 
         # Auto-indentation behavior
         self.auto_indent = True
@@ -81,15 +84,16 @@ class CodeWidget(QtGui.QPlainTextEdit):
         self.highlight_current_line()
 
         # Don't wrap text
-        self.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
+        self.setLineWrapMode(QPlainTextEdit.NoWrap)
 
         # Key bindings
-        self.indent_key = QtGui.QKeySequence(QtCore.Qt.Key_Tab)
-        self.unindent_key = QtGui.QKeySequence(QtCore.Qt.SHIFT + QtCore.Qt.Key_Backtab)
-        self.comment_key = QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_Slash)
-        self.backspace_key = QtGui.QKeySequence(QtCore.Qt.Key_Backspace)
-        self.goto_line_key = QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_G)
-        self.home_key = QtGui.QKeySequence(QtCore.Qt.Key_Home)
+        from pyvmmonitor_qt.qt.QtGui import QKeySequence
+        self.indent_key = QKeySequence(QtCore.Qt.Key_Tab)
+        self.unindent_key = QKeySequence(QtCore.Qt.SHIFT + QtCore.Qt.Key_Backtab)
+        self.comment_key = QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_Slash)
+        self.backspace_key = QKeySequence(QtCore.Qt.Key_Backspace)
+        self.goto_line_key = QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_G)
+        self.home_key = QKeySequence(QtCore.Qt.Key_Home)
 
     @handle_exception_in_method
     def set_code(self, code, keep_undo_redo=True):
@@ -105,7 +109,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
         self.document().setModified(False)
 
-    get_code = QtGui.QPlainTextEdit.toPlainText
+    get_code = QPlainTextEdit.toPlainText
 
     def get_line_until_cursor(self):
         cursor = self.textCursor()
@@ -132,7 +136,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
         """ Sets the line we want to go to.
         """
         if line_number is None:
-            from pyvmmonitor_qt.qt.QtGui import QInputDialog
+            from pyvmmonitor_qt.qt.QtWidgets import QInputDialog
             line_number, ok = QInputDialog.getInt(
                 self, "Go to Line", "Enter line number", 1, 1, self.blockCount(), 1)
         else:
@@ -177,7 +181,11 @@ class CodeWidget(QtGui.QPlainTextEdit):
     def get_selected_text(self):
         """ Return the currently selected text.
         """
-        return unicode(self.textCursor().selectedText())
+        from pyvmmonitor_qt import compat
+        if compat.PY2:
+            return unicode(self.textCursor().selectedText())
+        else:
+            return str(self.textCursor().selectedText())
 
     def set_font(self, font):
         """ Set the new QFont.
@@ -225,10 +233,13 @@ class CodeWidget(QtGui.QPlainTextEdit):
         """ Highlight the line with the cursor.
         """
         if self.should_highlight_current_line:
-            selection = QtGui.QTextEdit.ExtraSelection()
+            from pyvmmonitor_qt.qt.QtWidgets import QTextEdit
+            from pyvmmonitor_qt.qt.QtGui import QTextFormat
+
+            selection = QTextEdit.ExtraSelection()
             selection.format.setBackground(self.line_highlight_color)
             selection.format.setProperty(
-                QtGui.QTextFormat.FullWidthSelection, True)
+                QTextFormat.FullWidthSelection, True)
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             self.setExtraSelections([selection])
@@ -367,17 +378,17 @@ class CodeWidget(QtGui.QPlainTextEdit):
             self._show_selected_blocks(sel_blocks)
 
     def line_comment(self, cursor, position):
-        cursor.movePosition(QtGui.QTextCursor.StartOfBlock)
-        cursor.movePosition(QtGui.QTextCursor.Right,
-                            QtGui.QTextCursor.MoveAnchor, position)
+        cursor.movePosition(QTextCursor.StartOfBlock)
+        cursor.movePosition(QTextCursor.Right,
+                            QTextCursor.MoveAnchor, position)
         cursor.insertText(self.comment_character)
 
     def line_uncomment(self, cursor, position=0):
-        cursor.movePosition(QtGui.QTextCursor.StartOfBlock)
+        cursor.movePosition(QTextCursor.StartOfBlock)
         text = cursor.block().text()
         new_text = text[:position] + text[position + 1:]
-        cursor.movePosition(QtGui.QTextCursor.EndOfBlock,
-                            QtGui.QTextCursor.KeepAnchor)
+        cursor.movePosition(QTextCursor.EndOfBlock,
+                            QTextCursor.KeepAnchor)
         cursor.removeSelectedText()
         cursor.insertText(new_text)
 
@@ -396,11 +407,11 @@ class CodeWidget(QtGui.QPlainTextEdit):
         if self.tabs_as_spaces:
             tab = '    '
 
-        cursor.movePosition(QtGui.QTextCursor.StartOfBlock)
+        cursor.movePosition(QTextCursor.StartOfBlock)
         if cursor.block().text().startswith(tab):
             new_text = cursor.block().text()[len(tab):]
-            cursor.movePosition(QtGui.QTextCursor.EndOfBlock,
-                                QtGui.QTextCursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.EndOfBlock,
+                                QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
             cursor.insertText(new_text)
             return len(tab)
@@ -411,8 +422,12 @@ class CodeWidget(QtGui.QPlainTextEdit):
         """ Return the word under the cursor.
         """
         cursor = self.textCursor()
-        cursor.select(QtGui.QTextCursor.WordUnderCursor)
-        return unicode(cursor.selectedText())
+        cursor.select(QTextCursor.WordUnderCursor)
+        from pyvmmonitor_qt import compat
+        if compat.PY2:
+            return unicode(cursor.selectedText())
+        else:
+            return str(cursor.selectedText())
 
     ###########################################################################
     # QWidget interface
@@ -426,7 +441,8 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
     @handle_exception_in_method
     def keyPressEvent(self, event):
-        key_sequence = QtGui.QKeySequence(event.key() + int(event.modifiers()))
+        from pyvmmonitor_qt.qt.QtGui import QKeySequence
+        key_sequence = QKeySequence(event.key() + int(event.modifiers()))
 
         self.keyPressEvent_action(event)  # FIXME: see above
 
@@ -435,20 +451,20 @@ class CodeWidget(QtGui.QPlainTextEdit):
         # beginning of the document. Likewise, if the cursor is somewhere in the
         # last line, the "down" key causes it to go to the end.
         cursor = self.textCursor()
-        if key_sequence.matches(QtGui.QKeySequence(QtCore.Qt.Key_Up)):
-            cursor.movePosition(QtGui.QTextCursor.StartOfLine)
+        if key_sequence.matches(QKeySequence(QtCore.Qt.Key_Up)):
+            cursor.movePosition(QTextCursor.StartOfLine)
             if cursor.atStart():
                 self.setTextCursor(cursor)
                 event.accept()
-        elif key_sequence.matches(QtGui.QKeySequence(QtCore.Qt.Key_Down)):
-            cursor.movePosition(QtGui.QTextCursor.EndOfLine)
+        elif key_sequence.matches(QKeySequence(QtCore.Qt.Key_Down)):
+            cursor.movePosition(QTextCursor.EndOfLine)
             if cursor.atEnd():
                 self.setTextCursor(cursor)
                 event.accept()
 
         elif self.auto_indent and \
-                key_sequence.matches(QtGui.QKeySequence(QtCore.Qt.Key_Return)) or \
-                key_sequence.matches(QtGui.QKeySequence(QtCore.Qt.Key_Enter)):
+                key_sequence.matches(QKeySequence(QtCore.Qt.Key_Return)) or \
+                key_sequence.matches(QKeySequence(QtCore.Qt.Key_Enter)):
             event.accept()
             return self.autoindent_newline()
         elif key_sequence.matches(self.indent_key):
@@ -478,7 +494,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
         cursor = self.textCursor()
         line_to_cursor = self.get_line_until_cursor()
 
-        cursor.movePosition(QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.MoveAnchor)
+        cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
         if line_to_cursor.strip() or not line_to_cursor:
             current_line = self.get_current_line()
             i = 0
@@ -493,7 +509,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
     @handle_exception_in_method
     def resizeEvent(self, event):
-        QtGui.QPlainTextEdit.resizeEvent(self, event)
+        QPlainTextEdit.resizeEvent(self, event)
         contents = self.contentsRect()
         self.line_number_widget.setGeometry(
             QtCore.QRect(
@@ -515,14 +531,18 @@ class CodeWidget(QtGui.QPlainTextEdit):
 
     @handle_exception_in_method
     def sizeHint(self):
+        from pyvmmonitor_qt.qt.QtWidgets import QStyleOptionHeader
+        from pyvmmonitor_qt.qt.QtWidgets import QStyle
+        from pyvmmonitor_qt.qt.QtGui import QFontMetrics
+
         # Suggest a size that is 80 characters wide and 40 lines tall.
         style = self.style()
-        opt = QtGui.QStyleOptionHeader()
-        font_metrics = QtGui.QFontMetrics(self.document().defaultFont())
+        opt = QStyleOptionHeader()
+        font_metrics = QFontMetrics(self.document().defaultFont())
         width = font_metrics.width(' ') * 80
         width += self.line_number_widget.sizeHint().width()
         width += self.status_widget.sizeHint().width()
-        width += style.pixelMetric(QtGui.QStyle.PM_ScrollBarExtent, opt, self)
+        width += style.pixelMetric(QStyle.PM_ScrollBarExtent, opt, self)
         height = font_metrics.height() * 40
         return QtCore.QSize(width, height)
 
@@ -545,30 +565,30 @@ class CodeWidget(QtGui.QPlainTextEdit):
         cursor = self.textCursor()
         cursor.clearSelection()
         cursor.setPosition(selected_blocks[0].position())
-        cursor.movePosition(QtGui.QTextCursor.StartOfBlock)
-        cursor.movePosition(QtGui.QTextCursor.NextBlock,
-                            QtGui.QTextCursor.KeepAnchor, len(selected_blocks))
-        cursor.movePosition(QtGui.QTextCursor.EndOfBlock,
-                            QtGui.QTextCursor.KeepAnchor)
+        cursor.movePosition(QTextCursor.StartOfBlock)
+        cursor.movePosition(QTextCursor.NextBlock,
+                            QTextCursor.KeepAnchor, len(selected_blocks))
+        cursor.movePosition(QTextCursor.EndOfBlock,
+                            QTextCursor.KeepAnchor)
 
         self.setTextCursor(cursor)
 
     def _get_selected_blocks(self):
         cursor = self.textCursor()
         if cursor.position() > cursor.anchor():
-            move_op = QtGui.QTextCursor.PreviousBlock
+            move_op = QTextCursor.PreviousBlock
             start_pos = cursor.anchor()
             end_pos = cursor.position()
         else:
-            move_op = QtGui.QTextCursor.NextBlock
+            move_op = QTextCursor.NextBlock
             start_pos = cursor.position()
             end_pos = cursor.anchor()
 
         cursor.setPosition(start_pos)
-        cursor.movePosition(QtGui.QTextCursor.StartOfBlock)
+        cursor.movePosition(QTextCursor.StartOfBlock)
         blocks = [cursor.block()]
 
-        while cursor.movePosition(QtGui.QTextCursor.NextBlock):
+        while cursor.movePosition(QTextCursor.NextBlock):
             block = cursor.block()
             if block.position() < end_pos:
                 blocks.append(block)
@@ -589,7 +609,7 @@ class CodeWidget(QtGui.QPlainTextEdit):
             return column == self._get_indent_position(cursor.block().text())
 
 
-class AdvancedCodeWidget(QtGui.QWidget):
+class AdvancedCodeWidget(QWidget):
 
     """ Advanced widget for viewing and editing code, with support
         for search & replace
@@ -627,7 +647,8 @@ class AdvancedCodeWidget(QtGui.QWidget):
         self.replace.replace_button.clicked.connect(self.replace_next)
         self.replace.replace_all_button.clicked.connect(self.replace_all)
 
-        layout = QtGui.QVBoxLayout()
+        from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.code)
@@ -703,13 +724,14 @@ class AdvancedCodeWidget(QtGui.QWidget):
         document = self.code.document()
         find_cursor = None
 
-        flags = QtGui.QTextDocument.FindFlags(0)
+        from pyvmmonitor_qt.qt.QtGui import QTextDocument
+        flags = QTextDocument.FindFlags(0)
         if self.active_find_widget.case_action.isChecked():
-            flags |= QtGui.QTextDocument.FindCaseSensitively
+            flags |= QTextDocument.FindCaseSensitively
         if self.active_find_widget.word_action.isChecked():
-            flags |= QtGui.QTextDocument.FindWholeWords
+            flags |= QTextDocument.FindWholeWords
         if direction == 'backward':
-            flags |= QtGui.QTextDocument.FindBackward
+            flags |= QTextDocument.FindBackward
 
         find_cursor = document.find(search_text, self.code.textCursor(), flags)
         if find_cursor.isNull() and wrap:
@@ -725,9 +747,9 @@ class AdvancedCodeWidget(QtGui.QWidget):
                 find_cursor.insertText(replace)
                 find_cursor.endEditBlock()
                 find_cursor.movePosition(
-                    QtGui.QTextCursor.Left, QtGui.QTextCursor.MoveAnchor, len(replace))
+                    QTextCursor.Left, QTextCursor.MoveAnchor, len(replace))
                 find_cursor.movePosition(
-                    QtGui.QTextCursor.Right, QtGui.QTextCursor.KeepAnchor, len(replace))
+                    QTextCursor.Right, QTextCursor.KeepAnchor, len(replace))
                 self.code.setTextCursor(find_cursor)
             else:
                 self.code.setTextCursor(find_cursor)
@@ -739,7 +761,8 @@ class AdvancedCodeWidget(QtGui.QWidget):
     def find_next(self):
         if not self.active_find_widget:
             self.enable_find()
-        search_text = unicode(self.active_find_widget.line_edit.text())
+        from pyvmmonitor_qt import compat
+        search_text = compat.unicode(self.active_find_widget.line_edit.text())
         cursor = self.find_in_document(search_text=search_text)
 
         if cursor:
@@ -749,7 +772,8 @@ class AdvancedCodeWidget(QtGui.QWidget):
     def find_prev(self):
         if not self.active_find_widget:
             self.enable_find()
-        search_text = unicode(self.active_find_widget.line_edit.text())
+        from pyvmmonitor_qt import compat
+        search_text = compat.unicode(self.active_find_widget.line_edit.text())
         cursor = self.find_in_document(search_text=search_text,
                                        direction='backward')
         if cursor:
@@ -770,6 +794,8 @@ class AdvancedCodeWidget(QtGui.QWidget):
         return 0
 
     def replace_all(self):
+        from pyvmmonitor_qt import compat
+        unicode = compat.unicode
         search_text = unicode(self.replace.line_edit.text())
         replace_text = unicode(self.replace.replace_edit.text())
 
@@ -799,13 +825,14 @@ class AdvancedCodeWidget(QtGui.QWidget):
 
     @handle_exception_in_method
     def keyPressEvent(self, event):
-        key_sequence = QtGui.QKeySequence(event.key() + int(event.modifiers()))
+        from pyvmmonitor_qt.qt.QtGui import QKeySequence
+        key_sequence = QKeySequence(event.key() + int(event.modifiers()))
 
-        if key_sequence.matches(QtGui.QKeySequence.Find):
+        if key_sequence.matches(QKeySequence.Find):
             self.enable_find()
-        elif key_sequence.matches(QtGui.QKeySequence.Replace):
+        elif key_sequence.matches(QKeySequence.Replace):
             self.enable_replace()
-        elif key_sequence.matches(QtGui.QKeySequence(QtCore.Qt.Key_Escape)):
+        elif key_sequence.matches(QKeySequence(QtCore.Qt.Key_Escape)):
             if self.active_find_widget:
                 self.find.hide()
                 self.replace.hide()
@@ -838,7 +865,8 @@ if __name__ == '__main__':
 
     import sys
 
-    app = QtGui.QApplication(sys.argv)
+    from pyvmmonitor_qt.qt.QtWidgets import QApplication
+    app = QApplication(sys.argv)
     window = AdvancedCodeWidget(None)
 
     if len(sys.argv) > 1:
