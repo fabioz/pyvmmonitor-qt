@@ -20,31 +20,9 @@ from pyvmmonitor_core.html import escape_html
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
-from pyvmmonitor_qt.qt import QtGui, QtCore, qt_api
-from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex, QPointF
-from pyvmmonitor_qt.qt.QtGui import (
-    QMdiArea,
-    QTabWidget,
-    QMessageBox,
-    QTextEdit,
-    QApplication,
-    QLabel,
-    QCursor,
-    QAbstractItemView,
-    QToolBar,
-    QWidget,
-    QSizePolicy, QItemSelection, QItemSelectionModel, QDialog, QTextCursor, QSpacerItem,
-    QTextBrowser, QHBoxLayout, QIcon, QStyle, QFileDialog)
-
-
-# Modules moved (keep backward compatibility for now).
-from .qt_app import obtain_qapp  # @NoMove
-
-from .qt_collect import (  # @NoMove
-    GarbageCollector, QtGarbageCollector, start_collect_only_in_ui_thread)  # @NoMove
-from .qt_tree_utils import scroll_pos, expanded_nodes_tree  # @NoMove
-from .qt_event_loop import process_queue, execute_on_next_event_loop, process_events  # @NoMove
-from pyvmmonitor_qt.stylesheet import apply_default_stylesheet  # @NoMove
+from pyvmmonitor_qt.qt import QtCore, qt_api
+from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex
+from pyvmmonitor_qt.qt.QtWidgets import QDialog
 
 
 # ==================================================================================================
@@ -76,6 +54,7 @@ class _TimerAlive(object):
 
                     if _timers_alive.get(func) is self:
                         # Still only execute it in the next cycle (with proper stacking).
+                        from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
                         execute_on_next_event_loop(func)
                 finally:
                     _timers_alive.pop(self, None)
@@ -108,6 +87,7 @@ def execute_after_millis(millis, func):
             timer.timeout.connect(timer_alive)
             timer.start(millis)
     if not is_in_main_thread():
+        from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
         execute_on_next_event_loop(register_timer)
     else:
         register_timer()
@@ -160,7 +140,11 @@ def iter_widget_captions_and_items(
         ),
         only_show_expanded=False,
         add_plus_to_new_level=True):
+
     from pyvmmonitor_qt.custom_close_tab_widget import CustomCloseTabWidget
+    from pyvmmonitor_qt.qt.QtWidgets import QMdiArea
+    from pyvmmonitor_qt.qt.QtWidgets import QTabWidget
+    from pyvmmonitor_qt.qt.QtWidgets import QAbstractItemView
 
     if isinstance(widget, QMdiArea):
         for sub in widget.subWindowList():
@@ -268,6 +252,13 @@ if qt_api == 'pyside':
                 return
             sys.stderr.write(msg_string)
         PySide.QtCore.qInstallMsgHandler(handler)
+
+elif qt_api == 'pyside2':
+    from PySide2 import shiboken2
+
+    def is_qobject_alive(obj):
+        return shiboken2.isValid(obj)
+
 else:
     def is_qobject_alive(obj):
         raise AssertionError('Not supported')
@@ -383,7 +374,7 @@ def show_message(
         detailed_message='',
         title='Error',
         parent=None,
-        icon=QMessageBox.Critical):
+        icon=None):
     '''
     :param icon:
         QMessageBox.NoIcon
@@ -392,6 +383,9 @@ def show_message(
         QMessageBox.Warning
         QMessageBox.Critical
     '''
+    from pyvmmonitor_qt.qt.QtWidgets import QMessageBox
+    if icon is None:
+        icon = QMessageBox.Critical
     if isinstance(icon, compat.bytes):
         icon = icon.decode('utf-8', 'replace')
 
@@ -414,14 +408,17 @@ def show_message(
         # (in the UI thread).
         def func():
             show_message(message, detailed_message, title, parent, icon)
+        from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
         execute_on_next_event_loop(func)
         return
 
     if parent is None:
         parent = get_main_window()
 
+    from pyvmmonitor_qt.qt_app import obtain_qapp
     get_icon = obtain_qapp().style().standardIcon
 
+    from pyvmmonitor_qt.qt.QtWidgets import QStyle
     if icon == QMessageBox.Information:
         icon = get_icon(QStyle.SP_MessageBoxInformation)
     elif icon == QMessageBox.Critical:
@@ -431,6 +428,7 @@ def show_message(
     elif icon == QMessageBox.Question:
         icon = get_icon(QStyle.SP_MessageBoxQuestion)
     else:
+        from pyvmmonitor_qt.qt.QtGui import QIcon
         icon = QIcon()
     message_box = _ResizeMessageBox(parent, title, message, detailed_message, icon)
 
@@ -446,13 +444,15 @@ def create_message_box_with_custom_ok_cancel(
         button_reject_text=u'Try with option 2'):
     if parent is None:
         parent = get_main_window()
-    dialog = QtGui.QMessageBox(parent())
+
+    from pyvmmonitor_qt.qt.QtWidgets import QMessageBox
+    dialog = QMessageBox(parent())
     dialog.setWindowTitle(window_title)
     dialog.setText(text)
 
     dialog.setInformativeText(informative_text)
-    button_accept = dialog.addButton(button_accept_text, QtGui.QMessageBox.AcceptRole)
-    button_reject = dialog.addButton(button_reject_text, QtGui.QMessageBox.RejectRole)
+    button_accept = dialog.addButton(button_accept_text, QMessageBox.AcceptRole)
+    button_reject = dialog.addButton(button_reject_text, QMessageBox.RejectRole)
     dialog.setDefaultButton(button_accept)
     return dialog
     # dialog.exec_()
@@ -466,9 +466,9 @@ class CustomMessageDialog(QDialog):
         else:
             QDialog.__init__(self, parent)
 
-        from pyvmmonitor_qt.qt.QtGui import QVBoxLayout
         self.setWindowTitle(title)
 
+        from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
         self._layout = QVBoxLayout()
         if create_contents:
             create_contents(self)
@@ -485,6 +485,7 @@ class CustomMessageDialog(QDialog):
         pass
 
     def create_label(self, txt='', layout=None):
+        from pyvmmonitor_qt.qt.QtWidgets import QLabel
         widget = QLabel(self)
         widget.setText(txt)
         if layout is None:
@@ -493,6 +494,7 @@ class CustomMessageDialog(QDialog):
         return widget
 
     def create_text_browser(self, txt='', open_links=False):
+        from pyvmmonitor_qt.qt.QtWidgets import QTextBrowser
         text_browser = QTextBrowser(self)
         text_browser.setOpenExternalLinks(open_links)
         text_browser.setOpenLinks(open_links)
@@ -502,6 +504,7 @@ class CustomMessageDialog(QDialog):
         return text_browser
 
     def create_text(self, txt='', read_only=False, line_wrap=True, is_html=True, font=None):
+        from pyvmmonitor_qt.qt.QtWidgets import QTextEdit
         widget = QTextEdit(self)
         widget.setReadOnly(read_only)
         if line_wrap:
@@ -519,13 +522,15 @@ class CustomMessageDialog(QDialog):
         return widget
 
     def create_spacer(self):
-        spacer = QSpacerItem(0, 0, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        from pyvmmonitor_qt.qt.QtWidgets import QSpacerItem
+        from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
         self._layout.addItem(spacer)
         return spacer
 
     def create_buttons(self, show_ok=True, show_cancel=True):
-        from pyvmmonitor_qt.qt.QtGui import QDialogButtonBox
         assert show_ok or show_cancel
+        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
 
         if show_ok and show_cancel:
             flags = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -541,7 +546,7 @@ class CustomMessageDialog(QDialog):
         self._layout.addWidget(bbox)
 
     def create_close_button(self):
-        from pyvmmonitor_qt.qt.QtGui import QDialogButtonBox
+        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
         flags = QDialogButtonBox.Close
 
         self.bbox = bbox = QDialogButtonBox(flags)
@@ -553,6 +558,7 @@ class CustomMessageDialog(QDialog):
 class _ResizeMessageBox(CustomMessageDialog):
 
     def __init__(self, parent, title, message, detailed_message, icon):
+        from pyvmmonitor_qt.qt.QtGui import QCursor
         CustomMessageDialog.__init__(self, parent)
 
         title = compat.as_unicode(title)
@@ -566,6 +572,9 @@ class _ResizeMessageBox(CustomMessageDialog):
         self._initial_pos = QCursor.pos()
         self._use_initial_pos = True
         self.setWindowTitle(title)
+
+        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+        from pyvmmonitor_qt.qt.QtWidgets import QLabel
 
         self._hor_layout = QHBoxLayout()
         if icon is not None:
@@ -582,8 +591,7 @@ class _ResizeMessageBox(CustomMessageDialog):
         label.setTextInteractionFlags(Qt.TextBrowserInteraction)
         label.setOpenExternalLinks(True)
 
-        from pyvmmonitor_qt.qt.QtGui import QDialogButtonBox
-
+        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
         self.bbox = bbox = QDialogButtonBox()
         if detailed_message:
             self.bt_copy = bbox.addButton(u'Copy to clipboard', QDialogButtonBox.ApplyRole)
@@ -608,6 +616,7 @@ class _ResizeMessageBox(CustomMessageDialog):
         self.adjustSize()
 
     def _clicked_button(self, bt):
+        from pyvmmonitor_qt.qt.QtWidgets import QApplication
         if bt == self.bt_copy:
             QApplication.clipboard().setText(self._copy_text)
             self.bt_copy.setText('Copied to clipboard')
@@ -634,6 +643,10 @@ def create_right_aligned_toolbar(parent):
     '''
     Creates a toolbar with an expanding widget in the beginning.
     '''
+    from pyvmmonitor_qt.qt.QtWidgets import QToolBar
+    from pyvmmonitor_qt.qt.QtWidgets import QWidget
+    from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
+
     toolbar = QToolBar(parent)
     spacer = QWidget(toolbar)
     spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -645,8 +658,8 @@ class MenuCreator(object):
     '''Helper class to create menus.'''
 
     def __init__(self, parent=None, parent_menu=None, caption=None):
+        from pyvmmonitor_qt.qt.QtWidgets import QMenu
         self.parent = parent
-        from pyvmmonitor_qt.qt.QtGui import QMenu
         self.menu = QMenu(parent)
         if parent_menu is not None:
             parent_menu.addMenu(self.menu)
@@ -677,14 +690,17 @@ def count_widget_children(qwidget):
 
 
 def create_toolbuttton_with_menu(parent, menu, icon=None):
-    toolbutton = QtGui.QToolButton(parent)
-    toolbutton.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
+    from pyvmmonitor_qt.qt.QtWidgets import QToolButton
+    from pyvmmonitor_qt.qt.QtWidgets import QAction
+
+    toolbutton = QToolButton(parent)
+    toolbutton.setPopupMode(QToolButton.MenuButtonPopup)
 
     if isinstance(icon, (compat.bytes, compat.unicode)):
         from pyvmmonitor_qt.stylesheet import CreateStyledQAction
         default_action = CreateStyledQAction(parent, icon)
     else:
-        default_action = QtGui.QAction(parent)
+        default_action = QAction(parent)
         if icon is not None:
             default_action.setIcon(icon)
 
@@ -724,6 +740,9 @@ def select_rows(tree, rows, parent_index=None):
     last_col = model.columnCount() - 1
     selection = tree.selectionModel()
 
+    from pyvmmonitor_qt.qt.QtCore import QItemSelectionModel
+    from pyvmmonitor_qt.qt.QtCore import QItemSelection
+
     for i, row in enumerate(rows):
         selection_mode = QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows if i == 0 \
             else QItemSelectionModel.Rows
@@ -745,13 +764,15 @@ def show_message_with_copy_to_clipboard(
     if parent is None:
         parent = get_main_window()
 
+    from pyvmmonitor_qt.qt.QtWidgets import QApplication
+
     def copy():
         QApplication.clipboard().setText(msg)
         dialog.bt_copy.setText('Copied to clipboard')
 
     def create_contents(dialog):
         dialog.create_text(msg, read_only=read_only, line_wrap=False, is_html=False, font=font)
-        from pyvmmonitor_qt.qt.QtGui import QDialogButtonBox
+        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
         dialog.bbox = bbox = QDialogButtonBox()
 
         dialog.bt_copy = bbox.addButton('Copy to clipboard', QDialogButtonBox.AcceptRole)
@@ -818,6 +839,8 @@ class LaunchExecutableDialog(CustomMessageDialog):
         from pyvmmonitor_core import exec_external
         p = self._popen = exec_external.ExecExternal(self.cmd, env=self.env)
         threading.Thread(target=p.call).start()
+        from pyvmmonitor_qt.qt.QtGui import QTextCursor
+        from pyvmmonitor_qt.qt_event_loop import process_events
 
         self.setVisible(True)
         try:
@@ -862,10 +885,11 @@ class LaunchExecutableDialog(CustomMessageDialog):
             self.setVisible(False)
 
     def _create_contents(self):
+        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
+
         self.create_label('Process output')
         self._edit = self.create_text(read_only=True, line_wrap=True, is_html=False)
 
-        from pyvmmonitor_qt.qt.QtGui import QDialogButtonBox
         self.bbox = bbox = QDialogButtonBox()
         self.bt_cancel = bbox.addButton('Cancel', QDialogButtonBox.RejectRole)
         bbox.rejected.connect(self.reject)
@@ -936,11 +960,13 @@ def assert_condition_within_timeout(condition, timeout=2.):
                 (timeout, c))
 
         # process_events()
+        from pyvmmonitor_qt.qt_event_loop import process_queue
         process_queue()
         time.sleep(1 / 50.)
 
 
 def ask_save_filename(parent, caption, initial_dir, files_filter):
+    from pyvmmonitor_qt.qt.QtWidgets import QFileDialog
     return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter)
 
 
@@ -1010,23 +1036,24 @@ def qimage_as_numpy(image):
     '''
     Provide a way to get a QImage as a numpy array.
     '''
-    if not isinstance(image, QtGui.QImage):
+    from pyvmmonitor_qt.qt.QtGui import QImage
+    if not isinstance(image, QImage):
         raise TypeError("image argument must be a QImage instance")
 
     shape = image.height(), image.width()
     strides0 = image.bytesPerLine()
 
     image_format = image.format()
-    if image_format == QtGui.QImage.Format_Indexed8:
+    if image_format == QImage.Format_Indexed8:
         dtype = "|u1"
         strides1 = 1
     elif image_format in (
-            QtGui.QImage.Format_RGB32,
-            QtGui.QImage.Format_ARGB32,
-            QtGui.QImage.Format_ARGB32_Premultiplied):
+            QImage.Format_RGB32,
+            QImage.Format_ARGB32,
+            QImage.Format_ARGB32_Premultiplied):
         dtype = "|u4"
         strides1 = 4
-    elif image_format == QtGui.QImage.Format_Invalid:
+    elif image_format == QImage.Format_Invalid:
         raise ValueError("qimage_as_numpy got invalid QImage")
     else:
         raise ValueError("qimage_as_numpy can only handle 8- or 32-bit QImages")
@@ -1045,25 +1072,26 @@ def qimage_as_numpy(image):
     return result
 
 
-# ==================================================================================================
-# main -- manual testing
-# ==================================================================================================
-if __name__ == '__main__':
-    obtain_qapp()
-#     show_message_with_copy_to_clipboard('tuesot', 'usneothuaosnetuho usnatuh ounoth uao')
-
-#     l = QLabel('bar')
-#     l.show()
-#     l.move(QApplication.desktop().availableGeometry(1).center() - l.rect().center())
+# # ======================================================================
+# # main -- manual testing
+# # ======================================================================
+# if __name__ == '__main__':
+#     from pyvmmonitor_qt.qt_app import obtain_qapp
+#     obtain_qapp()
+# #     show_message_with_copy_to_clipboard('tuesot', 'usneothuaosnetuho usnatuh ounoth uao')
 #
-#     show_message('what do you want')
+# #     l = QLabel('bar')
+# #     l.show()
+# #     l.move(QApplication.desktop().availableGeometry(1).center() - l.rect().center())
+# #
+# #     show_message('what do you want')
+# #
 #
-
-    _ADDITIONAL_EXCEPTION_MSG = '<br/>Report at: <a href="http://google.com">foo</a>'
-
-    def m1():
-        raise AssertionError('foo error <a href="foo">foo</a>')
-    try:
-        m1()
-    except:
-        show_exception()
+#     _ADDITIONAL_EXCEPTION_MSG = '<br/>Report at: <a href="http://google.com">foo</a>'
+#
+#     def m1():
+#         raise AssertionError('foo error <a href="foo">foo</a>')
+#     try:
+#         m1()
+#     except:
+#         show_exception()

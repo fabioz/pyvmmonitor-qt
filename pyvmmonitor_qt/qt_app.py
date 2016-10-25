@@ -1,6 +1,5 @@
 import sys
 
-from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
 
 
@@ -11,9 +10,10 @@ def obtain_qapp(apply_stylesheet=True):
     global _app
 
     if _app is None:
-        _app = QtGui.QApplication.instance()
+        from pyvmmonitor_qt.qt.QtWidgets import QApplication
+        _app = QApplication.instance()
         if _app is None:
-            _app = QtGui.QApplication(sys.argv)
+            _app = QApplication(sys.argv)
 
         if apply_stylesheet:
             apply_default_stylesheet(_app)

@@ -7,17 +7,16 @@ import time
 from pygments.styles.monokai import MonokaiStyle
 
 from pyvmmonitor_qt import compat, qt_utils
-from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
-from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
-from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
-from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QColor
 from pyvmmonitor_qt.qt.QtTest import QTest
 
 
 def test_python_code_text_edit_current_line(qtapi):
+    from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+    from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
+
     PygmentsHighlighter.style = MonokaiStyle
     edit = CodeWidget(parent=None)
     edit.line_highlight_color = QColor(90, 90, 90)
@@ -38,6 +37,9 @@ c = 30'''
 
 
 def test_python_code_text_edit(qtapi):
+    from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+    from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
+
     PygmentsHighlighter.style = MonokaiStyle
     edit = CodeWidget(parent=None)
     qtapi.add_widget(edit)
@@ -81,6 +83,9 @@ def test_python_code_text_edit(qtapi):
 
 
 def test_python_code_text_edit_save(qtapi, tmpdir):
+    from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
+    from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+
     p = tmpdir.mkdir("sub").join("hello.py")
     initial_code = '''class Error(object):
     pass'''
@@ -113,8 +118,10 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
     p.write(initial_code)
 
     import mock
-    with mock.patch('pyvmmonitor_qt.qt.QtGui.QMessageBox.exec_') as m:
-        m.return_value = QtGui.QMessageBox.AcceptRole
+    from pyvmmonitor_qt.qt import QtWidgets
+
+    with mock.patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
+        m.return_value = QtWidgets.QMessageBox.AcceptRole
         edit.save()
 
         # I.e.: reloaded
@@ -122,8 +129,8 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write(new_code)
-    with mock.patch('pyvmmonitor_qt.qt.QtGui.QMessageBox.exec_') as m:
-        m.return_value = QtGui.QMessageBox.RejectRole
+    with mock.patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
+        m.return_value = QtWidgets.QMessageBox.RejectRole
         edit.save()
 
         # I.e.: not reloaded (overwrite)
@@ -159,6 +166,9 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
 
 
 def test_python_code_text_edit_dirty(qtapi, tmpdir):
+    from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
+    from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+
     p = tmpdir.mkdir("sub").join("hello.py")
     initial_code = '''class Error(object):
     pass'''

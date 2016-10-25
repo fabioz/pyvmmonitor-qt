@@ -1,7 +1,13 @@
 from . import qt_api
 
 if qt_api == 'pyqt':
-    from PyQt4.QtTest import *
+    from PyQt4 import QtTest
+
+elif qt_api == 'pyside2':
+    from PySide2 import QtTest
 
 else:
-    from PySide.QtTest import *
+    from PySide import QtTest
+
+
+QTest = QtTest.QTest

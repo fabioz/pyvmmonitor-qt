@@ -50,7 +50,7 @@ def test_svg(qtapi, view):
 
 
 def test_zoom_on_wheel(qtapi, view):
-    from pyvmmonitor_qt.qt.QtGui import QGraphicsLineItem
+    from pyvmmonitor_qt.qt.QtWidgets import QGraphicsLineItem
     from pyvmmonitor_qt.qt.QtGui import QColor
     from pyvmmonitor_qt.qt.QtGui import QPen
     from pyvmmonitor_qt.qt.QtCore import Qt

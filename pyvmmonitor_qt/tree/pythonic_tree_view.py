@@ -258,13 +258,14 @@ class PythonicQTreeView(object):
     __slots__ = ['__weakref__', '_sort_model', '_fast', '_root_items', 'tree', '_model']
 
     def __init__(self, tree):
-        from pyvmmonitor_qt.qt.QtGui import QAbstractItemView
 
         self.tree = tree
         model = self._model = _CustomModel(tree)
+        from pyvmmonitor_qt.qt.QtWidgets import QAbstractItemView
+        from pyvmmonitor_qt.qt.QtCore import QSortFilterProxyModel
+
         tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         tree.setSelectionBehavior(QAbstractItemView.SelectRows)
-        from pyvmmonitor_qt.qt.QtGui import QSortFilterProxyModel
 
         self._sort_model = QSortFilterProxyModel()
         self._sort_model.setSourceModel(model)
@@ -473,8 +474,9 @@ class PythonicQTreeView(object):
         return new_selection
 
     def set_selection(self, obj_ids, clear_selection=True):
-        from pyvmmonitor_qt.qt import QtGui
         from pyvmmonitor_qt.qt.QtCore import QModelIndex
+        from pyvmmonitor_qt.qt.QtCore import QItemSelection
+        from pyvmmonitor_qt.qt.QtCore import QItemSelectionModel
 
         assert thread_utils.is_in_main_thread()
         selection_model = self.tree.selectionModel()
@@ -488,7 +490,7 @@ class PythonicQTreeView(object):
                 if index is not None:
                     index = self._sort_model.mapFromSource(index)
                     if selection is None:
-                        selection = QtGui.QItemSelection(index, index)
+                        selection = QItemSelection(index, index)
                     else:
                         selection.select(index, index)
 
@@ -496,12 +498,12 @@ class PythonicQTreeView(object):
             if not clear_selection:
                 selection_model.select(
                     selection,
-                    QtGui.QItemSelectionModel.Select | QtGui.QItemSelectionModel.Rows)
+                    QItemSelectionModel.Select | QItemSelectionModel.Rows)
             else:
                 selection_model.select(
                     selection,
-                    QtGui.QItemSelectionModel.ClearAndSelect | QtGui.QItemSelectionModel.Current |
-                    QtGui.QItemSelectionModel.Rows)
+                    QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Current |
+                    QItemSelectionModel.Rows)
         else:
             if clear_selection:
-                selection_model.select(QModelIndex(), QtGui.QItemSelectionModel.Clear)
+                selection_model.select(QModelIndex(), QItemSelectionModel.Clear)

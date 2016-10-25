@@ -5,8 +5,8 @@ from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import Qt, QRectF, QPointF
-from pyvmmonitor_qt.qt.QtGui import QGraphicsEllipseItem, QColor, QPen, QBrush, QGraphicsPathItem
-from pyvmmonitor_qt.qt.QtGui import QGraphicsRectItem
+from pyvmmonitor_qt.qt.QtGui import QColor, QPen, QBrush
+from pyvmmonitor_qt.qt.QtWidgets import QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsPathItem
 from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
 from pyvmmonitor_qt.qt_transform import calculate_size_for_value_in_px
 

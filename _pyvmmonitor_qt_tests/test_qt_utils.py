@@ -7,9 +7,9 @@ import weakref
 
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
-from pyvmmonitor_qt.qt.QtGui import QTreeView, QStandardItemModel, QStandardItem, QMenu
-from pyvmmonitor_qt.qt_utils import execute_after_millis, process_events,\
-    expanded_nodes_tree, count_widget_children
+from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
+from pyvmmonitor_qt.qt_utils import execute_after_millis,\
+    count_widget_children
 
 
 def test_execute_in_millis(qtapi):
@@ -25,6 +25,7 @@ def test_execute_in_millis(qtapi):
     execute_after_millis(100, later)
     execute_after_millis(100, later)
 
+    from pyvmmonitor_qt.qt_event_loop import process_events
     processed = 0
     while len(called_at) == 0:
         processed += 1
@@ -46,6 +47,9 @@ def create_item(txt):
 
 
 def test_expanded_items(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
+    from pyvmmonitor_qt.qt_tree_utils import expanded_nodes_tree
+
     qtree_view = QTreeView()
     qtapi.add_widget(qtree_view)
     model = QStandardItemModel()
@@ -119,6 +123,7 @@ def test_menu_creator(qtapi):
 
     menu = menu_creator.create_menu()
     qtapi.add_widget(menu)
+    from pyvmmonitor_qt.qt.QtWidgets import QMenu
     assert isinstance(menu, QMenu)
     # I'd like to check what's there, but it seems QMenu doesn't have that API.
 
@@ -132,7 +137,7 @@ def test_menu_creator(qtapi):
 
 
 def test_count_children(qtapi):
-    from pyvmmonitor_qt.qt.QtGui import QWidget
+    from pyvmmonitor_qt.qt.QtWidgets import QWidget
     qwidget = QWidget()
     qwidget2 = QWidget(qwidget)
     qwidget3 = QWidget(qwidget2)

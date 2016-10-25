@@ -3,7 +3,7 @@ import functools
 from pyvmmonitor_core import abstract
 from pyvmmonitor_core.weak_utils import WeakList
 from pyvmmonitor_qt import compat, qt_utils
-from pyvmmonitor_qt.qt.QtGui import QSpinBox, QComboBox, QDoubleSpinBox
+from pyvmmonitor_qt.qt.QtWidgets import QSpinBox, QComboBox, QDoubleSpinBox
 from pyvmmonitor_qt.qt_event_loop import NextEventLoopUpdater
 
 

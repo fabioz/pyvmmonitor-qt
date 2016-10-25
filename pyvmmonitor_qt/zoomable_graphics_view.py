@@ -5,7 +5,7 @@
 import enum
 
 from pyvmmonitor_qt.qt.QtCore import Qt
-from pyvmmonitor_qt.qt.QtGui import QGraphicsView
+from pyvmmonitor_qt.qt.QtWidgets import QGraphicsView
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
 
@@ -36,7 +36,7 @@ class ZoomableGraphicsView(QGraphicsView):
     BACKGROUND_MODE = BackgroundMode.TILED_TRANSPARENT_BACKGROUND
 
     def __init__(self, *args, **kwargs):
-        from pyvmmonitor_qt.qt.QtGui import QGraphicsScene
+        from pyvmmonitor_qt.qt.QtWidgets import QGraphicsScene
         from pyvmmonitor_core.callback import Callback
         self.on_zoom = Callback()
         self._old_size = None
@@ -46,11 +46,9 @@ class ZoomableGraphicsView(QGraphicsView):
         self._scene = scene
 
         qglwidget = None
-        from PySide.QtOpenGL import QGLFormat
-        if QGLFormat.openGLVersionFlags() & QGLFormat.OpenGL_Version_2_0:
-            from PySide.QtOpenGL import QGLWidget
-            from PySide.QtOpenGL import QGL
-            qglwidget = QGLWidget(QGLFormat(QGL.SampleBuffers))
+        from pyvmmonitor_qt.qt.QtOpenGL import is_good_opengl_version, create_gl_widget
+        if is_good_opengl_version():
+            qglwidget = create_gl_widget()
             self.setViewport(qglwidget)
 
         from pyvmmonitor_qt.qt_utils import set_painter_antialiased

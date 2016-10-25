@@ -11,11 +11,11 @@
 
 import math
 
-from pyvmmonitor_qt.qt import QtCore, QtGui
+from pyvmmonitor_qt.qt import QtCore, QtGui, QtWidgets
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method, painter_on
 
 
-class GutterWidget(QtGui.QWidget):
+class GutterWidget(QtWidgets.QWidget):
 
     min_width = 5
     background_color = QtGui.QColor(220, 220, 220)

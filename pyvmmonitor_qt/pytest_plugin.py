@@ -5,9 +5,6 @@ import types
 
 import pytest
 
-from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.qt_utils import obtain_qapp, start_collect_only_in_ui_thread
-
 
 def _list_widgets(qtbot):
     from pytestqt.qtbot import _iter_widgets
@@ -16,6 +13,9 @@ def _list_widgets(qtbot):
 
 @pytest.yield_fixture
 def qtapi(qtbot):
+    from pyvmmonitor_qt.qt_app import obtain_qapp
+    from pyvmmonitor_qt.qt_collect import start_collect_only_in_ui_thread
+
     obtain_qapp()  # Will make sure that the default stylesheet is also applied
     start_collect_only_in_ui_thread()  # Make sure we'll only collect items in the main thread
 
@@ -47,4 +47,5 @@ def qtapi(qtbot):
         if hasattr(w, 'clear_cycles'):
             w.clear_cycles()
 
-    qt_utils.process_events(collect=True)
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)

@@ -4,7 +4,6 @@
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import WeakSet
 from pyvmmonitor_qt import compat
-from pyvmmonitor_qt.qt.QtGui import QPalette, QAction, QIcon, QPushButton
 
 
 _applied_stylesheet = False
@@ -101,6 +100,9 @@ def apply_default_stylesheet(app, force=False):
 
         app.setStyleSheet(STYLESHEET)
 
+        from pyvmmonitor_qt.qt.QtGui import QPalette
+        from pyvmmonitor_qt.qt.QtGui import QIcon
+
         pal = QPalette(app.palette())
         foreground = get_app_stylesheet().get_foreground()
         pal.setColor(QPalette.Link, foreground)
@@ -128,6 +130,9 @@ def CreateStyledQAction(
         shortcut=None,
         status_tip=None,
         connect_to=None):
+    from pyvmmonitor_qt.qt.QtGui import QIcon
+    from pyvmmonitor_qt.qt.QtWidgets import QAction
+
     icon = QIcon(icon_name)
     ret = QAction(icon, text, parent)
     _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
@@ -144,6 +149,9 @@ def CreateStyledQAction(
 
 
 def CreateStyledQPushButton(parent, icon_name, text=''):
+    from pyvmmonitor_qt.qt.QtWidgets import QPushButton
+    from pyvmmonitor_qt.qt.QtGui import QIcon
+
     ret = QPushButton(parent)
     ret.setIcon(QIcon(icon_name))
     _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)

@@ -4,14 +4,15 @@
 
 import pytest
 
-from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
-from pyvmmonitor_qt.qt.QtCore import Qt
-from pyvmmonitor_qt.qt.QtGui import QTreeView, QColor, QBrush
-from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView, TreeNode
 
 
 def test_tree_view(qtapi):
+    from pyvmmonitor_qt import qt_utils
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
+    from pyvmmonitor_qt.tree.pythonic_tree_view import TreeNode
+
     tree = QTreeView()
     tree = PythonicQTreeView(tree)
 
@@ -54,14 +55,17 @@ def test_tree_view(qtapi):
     assert node.is_checked()
     assert not node.is_checked(1)
 
-    qt_utils.process_events()
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events()
     assert node.is_expanded()
     assert node.is_checked()
     assert not node.is_checked(1)
 
 
 def test_iter_nodes(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -86,7 +90,9 @@ a.b.d'''
 
 
 def test_tree_view_expand_remove(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -95,13 +101,16 @@ def test_tree_view_expand_remove(qtapi):
     qtapi.add_widget(tree.tree)
     tree['a'] = [10, 20]
     tree['a'].expand()
-    assert qt_utils.count_items(tree.tree) == 1
+    from pyvmmonitor_qt.qt_utils import count_items
+    assert count_items(tree.tree) == 1
     del tree['a']
-    assert qt_utils.count_items(tree.tree) == 0
+    assert count_items(tree.tree) == 0
 
 
 def test_hierarchy_different_from_ids(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -116,14 +125,17 @@ def test_hierarchy_different_from_ids(qtapi):
         contents.append(node.obj_id)
     assert ''.join(contents) == 'a.b.c.d'
 
-    assert qt_utils.count_items(tree.tree) == 2
+    from pyvmmonitor_qt.qt_utils import count_items
+    assert count_items(tree.tree) == 2
     assert len(tree) == 2
     del tree['a']
-    assert qt_utils.count_items(tree.tree) == 0
+    assert count_items(tree.tree) == 0
 
 
 def test_clear(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -138,6 +150,7 @@ def test_clear(qtapi):
         contents.append(node.obj_id)
     assert ''.join(contents) == 'a.b.c.d'
 
+    from pyvmmonitor_qt import qt_utils
     assert qt_utils.count_items(tree.tree) == 2
     tree.clear()
     assert qt_utils.count_items(tree.tree) == 0
@@ -147,10 +160,15 @@ def test_clear(qtapi):
 
 
 def test_color(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
     tree.tree.show()
     tree['a'] = [10, 20]
+    from pyvmmonitor_qt.qt.QtGui import QBrush
+    from pyvmmonitor_qt.qt.QtGui import QColor
+    from pyvmmonitor_qt.qt.QtCore import Qt
     tree['a'].set_foreground_brush(QBrush(QColor(Qt.red)))
 
     assert tree['a'].get_foreground_brush(0).color() == QColor(Qt.red)
@@ -161,7 +179,9 @@ def test_color(qtapi):
 
 
 def test_selection(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -183,7 +203,9 @@ def test_sort_order(qtapi):
     By default there's no sorting (it's kept by insertion order), but it's possible to turn on the
     sorting to be used and set the sort key.
     '''
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
 
     tree.tree.show()
@@ -236,6 +258,8 @@ def test_sort_order(qtapi):
 
 
 def test_icon(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
 
     # Example on how to deal with a mouse click.
     class MyQTreeView(QTreeView):
@@ -268,6 +292,7 @@ def test_icon(qtapi):
 
     from pyvmmonitor_qt.qt.QtGui import QPixmap
     pixmap = QPixmap(30, 30)
+    from pyvmmonitor_qt.qt.QtCore import Qt
     pixmap.fill(Qt.red)
 
     # Should show a red square for column 1
@@ -278,7 +303,9 @@ def test_icon(qtapi):
 
 
 def test_custom_widget(qtapi):
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     tree = QTreeView()
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
     tree = PythonicQTreeView(tree)
     tree.columns = ['Caption', 'Action']
     tree.tree.show()
@@ -288,7 +315,8 @@ def test_custom_widget(qtapi):
     tree['b'] = ('b', '')
 
     from pyvmmonitor_qt.qt.QtGui import QPixmap
-    from pyvmmonitor_qt.qt.QtGui import QPushButton
+    from pyvmmonitor_qt.qt.QtWidgets import QPushButton
+    from pyvmmonitor_qt.qt.QtCore import Qt
 
     bt = QPushButton(None)
     icon = QPixmap(20, 20)

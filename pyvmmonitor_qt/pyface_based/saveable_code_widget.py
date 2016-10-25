@@ -8,7 +8,6 @@ import re
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.pyface_based.code_widget import AdvancedCodeWidget
-from pyvmmonitor_qt.qt import QtGui
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
 
@@ -79,9 +78,10 @@ class SaveableAdvancedCodeWidget(AdvancedCodeWidget):
 
     @handle_exception_in_method
     def keyPressEvent(self, event):
-        key_sequence = QtGui.QKeySequence(event.key() + int(event.modifiers()))
+        from pyvmmonitor_qt.qt.QtGui import QKeySequence
+        key_sequence = QKeySequence(event.key() + int(event.modifiers()))
 
-        if key_sequence.matches(QtGui.QKeySequence.Save):
+        if key_sequence.matches(QKeySequence.Save):
             self.save()
 
         return super(SaveableAdvancedCodeWidget, self).keyPressEvent(event)
@@ -137,14 +137,15 @@ class SaveableAdvancedCodeWidget(AdvancedCodeWidget):
         mtime = os.path.getmtime(filename)
         if mtime != self._file_mtime:
 
-            dlg = QtGui.QMessageBox(self)
+            from pyvmmonitor_qt.qt.QtWidgets import QMessageBox
+            dlg = QMessageBox(self)
             dlg.setWindowTitle('File changed outside editor')
             dlg.setText('The file was changed outside of the editor:\n' + filename)
 
             dlg.setInformativeText('What do you want to do?')
-            reload_role = QtGui.QMessageBox.AcceptRole
+            reload_role = QMessageBox.AcceptRole
             reload_button = dlg.addButton('Reload', reload_role)
-            dlg.addButton('Overwrite file with editor contents', QtGui.QMessageBox.RejectRole)
+            dlg.addButton('Overwrite file with editor contents', QMessageBox.RejectRole)
             dlg.setDefaultButton(reload_button)
 
             self._file_mtime = mtime
