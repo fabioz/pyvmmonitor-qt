@@ -136,6 +136,9 @@ class DoubleSpinBox(SpinBox):
     def set_value_range(self, value_range):
         self.qwidget.setRange(*value_range)
 
+    def set_step(self, step_value):
+        self.qwidget.setSingleStep(step_value)
+
 
 class Combo(BaseLinkedEdition):
 
