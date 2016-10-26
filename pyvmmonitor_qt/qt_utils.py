@@ -959,7 +959,9 @@ def assert_condition_within_timeout(condition, timeout=2.):
                 u'Could not reach condition before timeout: %s (condition return: %s)' %
                 (timeout, c))
 
+        # from pyvmmonitor_qt.qt_event_loop import process_events
         # process_events()
+
         from pyvmmonitor_qt.qt_event_loop import process_queue
         process_queue()
         time.sleep(1 / 50.)
@@ -986,8 +988,12 @@ def set_painter_antialiased(painter, antialias, widget):
                     QPainter.HighQualityAntialiasing)
     # painter.setRenderHint(QPainter.NonCosmeticDefaultPen, False)
     use_opengl = hasattr(widget, 'makeCurrent')
-    if use_opengl:
+    try:
         from OpenGL import GL
+    except ImportError:
+        use_opengl = False
+
+    if use_opengl:
         widget.makeCurrent()
 
     if antialias:

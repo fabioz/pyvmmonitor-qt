@@ -2,14 +2,13 @@
 #
 # Copyright: Brainwy Software
 
-import enum
-
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtWidgets import QGraphicsView
 from pyvmmonitor_qt.qt_utils import handle_exception_in_method
 
 
-class BackgroundMode(enum.Enum):
+# Should be an enum.Enum, but we don't want the additional dep in Python 2.7
+class BackgroundMode(object):
 
     WIDGET_BACKGROUND = 0
     TILED_TRANSPARENT_BACKGROUND = 1

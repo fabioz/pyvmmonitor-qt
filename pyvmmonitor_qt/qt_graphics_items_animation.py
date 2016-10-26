@@ -5,7 +5,7 @@ from pyvmmonitor_core.disposable import Disposable
 class _MarchingAnts(Disposable):
 
     def __init__(self, timer):
-        super().__init__()
+        Disposable.__init__(self)
         self._marching_ants_handlers = set()
         self._timer = timer
 
@@ -127,7 +127,7 @@ class GraphicsItemsAnimation(Disposable):
     '''
 
     def __init__(self, timeout=200):
-        super().__init__()
+        Disposable.__init__(self)
         from pyvmmonitor_qt.qt.QtCore import QTimer
 
         self._timer = QTimer()

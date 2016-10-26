@@ -9,8 +9,9 @@ from pyvmmonitor_qt.qt.QtCore import QObject, QEvent
 # ==================================================================================================
 class _ExecuteOnLoopEvent(QEvent):
 
-    def __init__(self):
+    def __init__(self, handle_future_events):
         QEvent.__init__(self, QEvent.User)
+        self.handle_future_events = handle_future_events
 
 
 class _Receiver(QObject):
@@ -24,23 +25,27 @@ class _Receiver(QObject):
     def event(self, ev):
         if isinstance(ev, _ExecuteOnLoopEvent):
             try:
-                with _lock:
-                    found = len(self.funcs)
-                    if not found:
-                        return True
-
-                for _i in compat.xrange(found):
-                    # Note: we execute all currently registered functions, but new functions
-                    # scheduled in such a function are only called in a new loop (to avoid
-                    # a possible event recursion).
+                while True:
                     with _lock:
-                        if not self.funcs:
+                        found = len(self.funcs)
+                        if not found:
                             return True
-                        else:
-                            func, _ = self.funcs.popitem(last=False)
 
-                    # Execute it without the lock
-                    func()
+                    for _i in compat.xrange(found):
+                        # Note: we execute all currently registered functions, but new functions
+                        # scheduled in such a function are only called in a new loop (to avoid
+                        # a possible event recursion).
+                        with _lock:
+                            if not self.funcs:
+                                return True
+                            else:
+                                func, _ = self.funcs.popitem(last=False)
+
+                        # Execute it without the lock
+                        func()
+
+                    if not ev.handle_future_events:
+                        break
             except:
                 from .qt_utils import show_exception
                 show_exception()
@@ -52,11 +57,11 @@ _lock = threading.Lock()
 _receiver = _Receiver()
 
 
-def process_queue():
-    _receiver.event(_ExecuteOnLoopEvent())
+def process_queue(handle_future_events=False):
+    _receiver.event(_ExecuteOnLoopEvent(handle_future_events))
 
 
-def process_events(collect=False):
+def process_events(collect=False, handle_future_events=False):
     from pyvmmonitor_core.thread_utils import is_in_main_thread
     from pyvmmonitor_qt.qt.QtCore import QTimer
     from .qt_app import obtain_qapp
@@ -74,6 +79,9 @@ def process_events(collect=False):
         timer.start(0)
         app.exec_()
 
+    if handle_future_events:
+        process_queue(handle_future_events=True)
+
 
 def execute_on_next_event_loop(func):
     # Note: keeps a strong reference and stacks the same call to be run only once.
@@ -83,7 +91,7 @@ def execute_on_next_event_loop(func):
         _receiver.funcs.add(func)
 
     from .qt_app import obtain_qapp
-    obtain_qapp().postEvent(_receiver, _ExecuteOnLoopEvent())
+    obtain_qapp().postEvent(_receiver, _ExecuteOnLoopEvent(False))
 
 
 class NextEventLoopUpdater(object):

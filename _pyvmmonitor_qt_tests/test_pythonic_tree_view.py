@@ -1,20 +1,29 @@
 # License: LGPL
 #
 # Copyright: Brainwy Software
+from __future__ import unicode_literals
 
 import pytest
 
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-def test_tree_view(qtapi):
-    from pyvmmonitor_qt import qt_utils
+@pytest.yield_fixture
+def tree():
     from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    from pyvmmonitor_qt.tree.pythonic_tree_view import TreeNode
-
     tree = QTreeView()
     tree = PythonicQTreeView(tree)
+    yield tree
+    tree.tree.deleteLater()
+    tree = None
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)
+
+
+def test_tree_view(qtapi, tree):
+    from pyvmmonitor_qt import qt_utils
+    from pyvmmonitor_qt.tree.pythonic_tree_view import TreeNode
 
     tree.tree.show()
 
@@ -62,12 +71,7 @@ def test_tree_view(qtapi):
     assert not node.is_checked(1)
 
 
-def test_iter_nodes(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
+def test_iter_nodes(qtapi, tree):
     tree.tree.show()
 
     tree['a'] = 10
@@ -89,12 +93,7 @@ a.b.d'''
     assert len(list(tree.iternodes('a'))) == 0
 
 
-def test_tree_view_expand_remove(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
+def test_tree_view_expand_remove(qtapi, tree):
     tree.tree.show()
 
     tree.columns = ['col1', 'col2']
@@ -107,12 +106,7 @@ def test_tree_view_expand_remove(qtapi):
     assert count_items(tree.tree) == 0
 
 
-def test_hierarchy_different_from_ids(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
+def test_hierarchy_different_from_ids(qtapi, tree):
     tree.tree.show()
 
     tree.columns = ['col1', 'col2']
@@ -132,12 +126,7 @@ def test_hierarchy_different_from_ids(qtapi):
     assert count_items(tree.tree) == 0
 
 
-def test_clear(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
+def test_clear(qtapi, tree):
     tree.tree.show()
 
     tree.columns = ['col1', 'col2']
@@ -159,11 +148,7 @@ def test_clear(qtapi):
     assert qt_utils.count_items(tree.tree) == 2
 
 
-def test_color(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
+def test_color(qtapi, tree):
     tree.tree.show()
     tree['a'] = [10, 20]
     from pyvmmonitor_qt.qt.QtGui import QBrush
@@ -178,12 +163,7 @@ def test_color(qtapi):
     assert tree['a'].get_background_brush(0).color() == QColor(Qt.gray)
 
 
-def test_selection(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
+def test_selection(qtapi, tree):
     tree.tree.show()
 
     tree.columns = ['col1', 'col2']
@@ -198,16 +178,11 @@ def test_selection(qtapi):
     assert tree.get_selection() == ['a', 'a.b.c.d']
 
 
-def test_sort_order(qtapi):
+def test_sort_order(qtapi, tree):
     '''
     By default there's no sorting (it's kept by insertion order), but it's possible to turn on the
     sorting to be used and set the sort key.
     '''
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
-
     tree.tree.show()
 
     tree['a'] = 'a'
@@ -300,13 +275,11 @@ def test_icon(qtapi):
 
     # __eq__ works properly for QImage but not QPixmap.
     assert tree['a'].item_role(Qt.DecorationRole, 1).toImage() == pixmap.toImage()
+    tree.tree.hide()
+    tree.tree.deleteLater()
 
 
-def test_custom_widget(qtapi):
-    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
-    tree = QTreeView()
-    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
-    tree = PythonicQTreeView(tree)
+def test_custom_widget(qtapi, tree):
     tree.columns = ['Caption', 'Action']
     tree.tree.show()
 

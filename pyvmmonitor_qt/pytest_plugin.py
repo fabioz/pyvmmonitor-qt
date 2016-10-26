@@ -30,7 +30,7 @@ def qtapi(qtbot):
             for w in widget_and_visibility:
                 w[0].setVisible(True)
 
-        from pyvmmonitor_qt.qt.QtGui import QApplication
+        from pyvmmonitor_qt.qt.QtWidgets import QApplication
         QApplication.instance().exec_()
 
         for widget, visible in widget_and_visibility:

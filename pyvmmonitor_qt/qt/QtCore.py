@@ -20,6 +20,8 @@ elif qt_api == 'pyside':
     from PySide import QtCore
     # Needed for the auto-generated resources
     qRegisterResourceData = QtCore.qRegisterResourceData
+    qUnregisterResourceData = QtCore.qUnregisterResourceData
+
     from PySide import QtGui
     QSortFilterProxyModel = QtGui.QSortFilterProxyModel
     QItemSelection = QtGui.QItemSelection
