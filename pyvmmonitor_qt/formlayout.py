@@ -805,7 +805,7 @@ def fedit(data, title="", comment="", icon=None, parent=None, apply=None, restor
 
 if __name__ == "__main__":
 
-    from pyvmmonitor_qt.qt_utils import obtain_qapp
+    from pyvmmonitor_qt.qt_app import obtain_qapp
     obtain_qapp()
 
     # I.e.: this is our way of testing :)

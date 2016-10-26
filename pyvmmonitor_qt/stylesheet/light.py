@@ -2,7 +2,7 @@
 #
 # Copyright: Brainwy Software
 from pyvmmonitor_qt.qt.QtGui import QColor, QPalette
-from pyvmmonitor_qt.qt_utils import obtain_qapp
+from pyvmmonitor_qt.qt_app import obtain_qapp
 
 
 class AppStylesheet(object):
