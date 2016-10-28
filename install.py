@@ -47,7 +47,7 @@ def generate(target_name):
          ))
     stdout = stdout.replace(
         'from PySide import QtCore',
-        'from pyvmmonitor_qt.qt import QtCore, QtSvg')
+        'from pyvmmonitor_qt.qt import QtCore, QtSvg, QtXml, load_plugin_dirs;load_plugin_dirs()')
     stdout = stdout.replace('"\\', 'b"\\')
     with open(f, 'w') as stream:
         stream.write(stdout)
