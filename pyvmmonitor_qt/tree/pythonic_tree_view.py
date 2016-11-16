@@ -48,7 +48,7 @@ from contextlib import contextmanager
 
 from pyvmmonitor_core import thread_utils, compat
 from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.qt.QtCore import Qt
+from pyvmmonitor_qt.qt.QtCore import Qt, QSortFilterProxyModel
 from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
 
 _SORT_KEY_ROLE = Qt.UserRole + 9
@@ -253,21 +253,47 @@ class TreeNode(object):
         return self._items[col].data(Qt.BackgroundRole)
 
 
+class FilterProxyModelCheckingChildren(QSortFilterProxyModel):
+
+    def __init__(self, *args, **kwargs):
+        QSortFilterProxyModel.__init__(self, *args, **kwargs)
+        self._filter_text = ''
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        if self._filter_text in index.data(Qt.DisplayRole).lower():
+            return True
+        return False
+
+    def set_filter_text(self, filter_text):
+        self._filter_text = filter_text.lower()
+        self.invalidateFilter()
+
+    def get_filter_text(self):
+        return self._filter_text
+
+
 class PythonicQTreeView(object):
 
-    __slots__ = ['__weakref__', '_sort_model', '_fast', '_root_items', 'tree', '_model']
+    __slots__ = [
+        '__weakref__',
+        '_sort_model',
+        '_fast',
+        '_root_items',
+        'tree',
+        '_model',
+    ]
 
     def __init__(self, tree):
 
         self.tree = tree
         model = self._model = _CustomModel(tree)
         from pyvmmonitor_qt.qt.QtWidgets import QAbstractItemView
-        from pyvmmonitor_qt.qt.QtCore import QSortFilterProxyModel
 
         tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         tree.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self._sort_model = QSortFilterProxyModel()
+        self._sort_model = FilterProxyModelCheckingChildren()
         self._sort_model.setSourceModel(model)
 
         tree.setModel(self._sort_model)
@@ -282,6 +308,14 @@ class PythonicQTreeView(object):
             cols=cols,
             only_show_expanded=only_show_expanded
         )
+
+    @property
+    def filter_text(self):
+        return self._sort_model.get_filter_text()
+
+    @filter_text.setter
+    def filter_text(self, filter_text):
+        self._sort_model.set_filter_text(filter_text)
 
     @property
     def sort_strategy(self):

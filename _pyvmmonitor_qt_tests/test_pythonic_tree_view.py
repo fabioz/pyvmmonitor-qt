@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import pytest
 
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
+from pyvmmonitor_qt.qt.QtWidgets import QWidget
 
 
 @pytest.yield_fixture
@@ -15,7 +16,9 @@ def tree():
     tree = QTreeView()
     tree = PythonicQTreeView(tree)
     yield tree
-    tree.tree.deleteLater()
+    from pyvmmonitor_qt import qt_utils
+    if qt_utils.is_qobject_alive(tree.tree):
+        tree.tree.deleteLater()
     tree = None
     from pyvmmonitor_qt.qt_event_loop import process_events
     process_events(collect=True)
@@ -301,3 +304,65 @@ def test_custom_widget(qtapi, tree):
     # Should show a button at column 1
     tree['a'].set_item_custom_widget(1, bt)
     assert tree['a'].item_custom_widget(1) == bt
+
+
+class FilteredTreeViewWidget(QWidget):
+
+    def __init__(self, pythonic_tree_view=None):
+        QWidget.__init__(self)
+        from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
+        self._vbox = QVBoxLayout(self)
+
+        from pyvmmonitor_qt.qt.QtWidgets import QLineEdit
+        self._edit_text_filter = QLineEdit(self)
+        self._vbox.addWidget(self._edit_text_filter)
+
+        if pythonic_tree_view is None:
+            from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
+            from pyvmmonitor_qt.qt.QtWidgets import QTreeView
+            tree = QTreeView(self)
+            pythonic_tree_view = PythonicQTreeView(tree)
+        else:
+            pythonic_tree_view.tree.setParent(self)
+
+        self._vbox.addWidget(pythonic_tree_view.tree)
+        self.setLayout(self._vbox)
+        self._pythonic_tree_view = pythonic_tree_view
+
+        self._edit_text_filter.textChanged.connect(self._on_filter_text_changed)
+
+    def _on_filter_text_changed(self, *args, **kwargs):
+        self._pythonic_tree_view.filter_text = self.filter_text
+
+    @property
+    def filter_text(self):
+        return self._edit_text_filter.text()
+
+    @filter_text.setter
+    def filter_text(self, text):
+        self._edit_text_filter.setText(text)
+        self._pythonic_tree_view.filter_text = text
+
+    @property
+    def tree(self):
+        return self._pythonic_tree_view.tree
+
+    @property
+    def pythonic_tree_view(self):
+        return self._pythonic_tree_view
+
+
+def test_filtering(qtapi, tree):
+
+    tree.columns = ['Caption', 'Action']
+
+    tree['a'] = 'aa', 'aab'
+    tree['a.b'] = 'bb', 'bbb'
+
+    filtered_tree = FilteredTreeViewWidget(tree)
+    filtered_tree.filter_text = 'a'
+    from pyvmmonitor_qt.qt_utils import list_wiget_item_captions
+    assert list_wiget_item_captions(filtered_tree.tree) == ['aa']
+
+    filtered_tree.filter_text = ''
+    assert list_wiget_item_captions(filtered_tree.tree) == ['aa', '+bb']
