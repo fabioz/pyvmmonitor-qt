@@ -1,3 +1,5 @@
+import contextlib
+
 from pyvmmonitor_core.nodes_tree import NodesTree, Node
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
@@ -76,8 +78,8 @@ def expanded_nodes_tree(widget, nodes_tree=None, data=QtCore.Qt.DisplayRole):
         return _get_expanded_nodes_tree(widget, data=data)
 
 
-def scroll_pos(tree, val=None):
-    vertical_scrollbar = tree.verticalScrollBar()
+def scroll_pos(widget, val=None):
+    vertical_scrollbar = widget.verticalScrollBar()
     if not val:
         return vertical_scrollbar.value()
     else:
@@ -88,7 +90,7 @@ def scroll_pos(tree, val=None):
         else:
             weak = get_weakref(vertical_scrollbar)
             # We'll wait for the range to change to apply it (i.e.: if we're restoring the
-            # contents of a tree, it may take a while until it actually receives a range).
+            # contents of a widget, it may take a while until it actually receives a range).
 
             def _on_range_changed(self, *args, **kwargs):
                 vertical_scrollbar = weak()  # Don't create a cycle
@@ -98,3 +100,20 @@ def scroll_pos(tree, val=None):
                 vertical_scrollbar.rangeChanged.disconnect(_on_range_changed)
                 vertical_scrollbar.setValue(val)
             vertical_scrollbar.rangeChanged.connect(_on_range_changed)
+
+
+@contextlib.contextmanager
+def preserve_tree_expanded_nodes(widget):
+    nodes_tree = expanded_nodes_tree(widget)
+    yield
+    expanded_nodes_tree(widget, nodes_tree)
+
+
+@contextlib.contextmanager
+def preserve_tree_scroll_pos(widget):
+    '''
+    Helper which will try to preserve the scroll pos of the tree.
+    '''
+    pos = scroll_pos(widget)
+    yield
+    scroll_pos(widget, pos)
