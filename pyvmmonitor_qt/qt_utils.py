@@ -75,7 +75,7 @@ def execute_after_millis(millis, func):
                     try:
                         timer.stop()
                         timer.start(millis)
-                    except:
+                    except Exception:
                         pass
                     return  # Restart it!
 
@@ -233,6 +233,7 @@ def count_items(widget):
         i += 1
     return i
 
+
 if qt_api == 'pyside':
     try:
         from PySide import shiboken
@@ -322,7 +323,7 @@ def handle_exception_in_method_return_val(return_val):
         def wrapper(*args, **kwargs):
             try:
                 return method(*args, **kwargs)
-            except:
+            except Exception:
                 if traceback is not None:
                     traceback.print_exc()
                 if sys is not None:
@@ -342,7 +343,7 @@ def handle_exception_in_method(method):
     def wrapper(*args, **kwargs):
         try:
             return method(*args, **kwargs)
-        except:
+        except Exception:
             if traceback is not None:
                 traceback.print_exc()
             if sys is not None:
@@ -820,7 +821,7 @@ class LaunchExecutableDialog(CustomMessageDialog):
         CustomMessageDialog.__init__(
             self, parent, title=title, size=size, flags=flags)
         if stop_condition is None:
-            stop_condition = lambda: False
+            def stop_condition(): return False
         self.stop_condition = stop_condition
         if not cmd:
             cmd = []
@@ -1038,9 +1039,17 @@ def painter_on(device, antialias, widget=None):
             painter.end()
 
 
+@contextmanager
 def qimage_as_numpy(image):
     '''
     Provide a way to get a QImage as a numpy array.
+
+    Used as a context manager because if the qimage dies the numpy array is invalid.
+
+    i.e.:
+
+    with qimage_as_numpy(image) as numpy_array:
+        ...
     '''
     from pyvmmonitor_qt.qt.QtGui import QImage
     if not isinstance(image, QImage):
@@ -1075,7 +1084,7 @@ def qimage_as_numpy(image):
     import numpy
     result = numpy.asarray(image)
     del image.__array_interface__
-    return result
+    yield result
 
 
 # # ======================================================================
