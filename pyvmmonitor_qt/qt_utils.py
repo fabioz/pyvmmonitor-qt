@@ -1025,6 +1025,16 @@ def create_painter_path_from_points(points, clockwise=None):
     return path
 
 
+def create_qpolygon_from_points(points, clockwise=None):
+    from pyvmmonitor_qt.qt.QtGui import QPolygonF
+    from pyvmmonitor_qt.qt.QtCore import QPointF
+    if clockwise is not None:
+        from pyvmmonitor_core import math_utils
+        if clockwise != math_utils.is_clockwise(points):
+            points = reversed(points)
+    return QPolygonF([QPointF(*point) for point in points])
+
+
 @contextmanager
 def painter_on(device, antialias, widget=None):
     if device.width() <= 0 or device.height() <= 0:
