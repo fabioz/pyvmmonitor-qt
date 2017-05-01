@@ -102,11 +102,11 @@ class QtWeakMethod(object):
         self.qobject = get_weakref(qobject)
         self.method_name = method_name
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         obj = self.qobject()
         if obj is None or not is_qobject_alive(obj):
             return
-        getattr(obj, self.method_name)()
+        return getattr(obj, self.method_name)(*args, **kwargs)
 
     def __hash__(self, *args, **kwargs):
         return hash(self.method_name)

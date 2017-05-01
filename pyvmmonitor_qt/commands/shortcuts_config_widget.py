@@ -2,12 +2,6 @@ from __future__ import unicode_literals, absolute_import
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
 
 
-class IShortcutsManager(object):
-
-    def __init__(self):
-        pass
-
-
 class ShortcutsConfigWidget(QWidget):
 
     def __init__(self, shortcuts_manager):
