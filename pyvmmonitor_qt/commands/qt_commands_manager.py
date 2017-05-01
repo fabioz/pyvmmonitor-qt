@@ -15,14 +15,24 @@ class IQtCommandsManager(ICommandsManager):
         :param str scheme:
         :param str command_id:
         :param QKeySequence|str shortcut:
-            Either the QKeySequence to be used or a string to be used to create the QKeySequence.
+            Either the QKeySequence to be used, a string to be used to create the QKeySequence
+            or a MouseShortcut.
         '''
 
     def remove_shortcut(self, scheme, command_id, shortcut):
-        pass
+        '''
+        :param str scheme:
+        :param str command_id:
+        :param shortcut:
+            Either the QKeySequence to be used, a string to be used to create the QKeySequence
+            or a MouseShortcut.
+        '''
 
     def mouse_shortcut_activated(self, mouse_shortcut):
-        pass
+        '''
+        Users should call to activate some mouse shortcut (which can't be handled by QShortcut).
+        :param MouseShortcut mouse_shortcut:
+        '''
 
 
 class MouseShortcut(object):
@@ -238,6 +248,7 @@ class _DefaultQtCommandsManager(object):
             self._qshortcuts[cache_key] = qshortcut
         return cache_key, qshortcut
 
+    @implements(IQtCommandsManager.add_shortcuts_scheme)
     def add_shortcuts_scheme(self, scheme_name):
         from pyvmmonitor_qt.qt_utils import QtWeakMethod
 
@@ -246,6 +257,7 @@ class _DefaultQtCommandsManager(object):
         self._scheme_name_to_scheme[scheme_name] = _Scheme(
             self, QtWeakMethod(self, '_obtain_qshortcut'))
 
+    @implements(IQtCommandsManager.activate_scheme)
     def activate_scheme(self, scheme_name):
         if scheme_name not in self._scheme_name_to_scheme:
             raise KeyError('Scheme: %s not available.' % (scheme_name,))
@@ -260,20 +272,17 @@ class _DefaultQtCommandsManager(object):
         curr_scheme = self._scheme_name_to_scheme[self._active_scheme]
         curr_scheme.activate(widget=self._widget())
 
+    @implements(IQtCommandsManager.set_shortcut)
     def set_shortcut(self, scheme, command_id, shortcut):
-        '''
-        :param str scheme:
-        :param str command_id:
-        :param QKeySequence|str shortcut:
-            Either the QKeySequence to be used or a string to be used to create the QKeySequence.
-        '''
         self._scheme_name_to_scheme[scheme].set_shortcut(
             command_id, shortcut, enable=scheme == self._active_scheme, widget=self._widget())
 
+    @implements(IQtCommandsManager.remove_shortcut)
     def remove_shortcut(self, scheme, command_id, shortcut):
         self._scheme_name_to_scheme[scheme].remove_shortcut(
             command_id, shortcut, enable=scheme == self._active_scheme, widget=self._widget())
 
+    @implements(IQtCommandsManager.mouse_shortcut_activated)
     def mouse_shortcut_activated(self, mouse_shortcut):
         qshortcut = self._qshortcuts.get(mouse_shortcut)
         if qshortcut is not None and qshortcut.__class__ == _MouseQShortcut:

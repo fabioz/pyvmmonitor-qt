@@ -112,7 +112,7 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
         qt_commands_manager.set_command_handler('zoom_out', on_zoom_out)
 
         qt_commands_manager.set_shortcut(DEFAULT_SCHEME, 'zoom_out', CTRL_MOUSE_WHEEL_DOWN)
-        qt_commands_manager.mouse_key_activated(CTRL_MOUSE_WHEEL_DOWN)
+        qt_commands_manager.mouse_shortcut_activated(CTRL_MOUSE_WHEEL_DOWN)
         assert activated == ['on_zoom_out']
         del activated[:]
 
@@ -120,14 +120,14 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
         qtapi.keyPress(main_window, 'd', Qt.CTRL)
         assert activated == ['on_zoom_out']
         del activated[:]
-        qt_commands_manager.mouse_key_activated(CTRL_MOUSE_WHEEL_DOWN)
+        qt_commands_manager.mouse_shortcut_activated(CTRL_MOUSE_WHEEL_DOWN)
         assert activated == ['on_zoom_out']
         del activated[:]
 
         qt_commands_manager.add_shortcuts_scheme('MyScheme')
         qt_commands_manager.activate_scheme('MyScheme')
         qtapi.keyPress(main_window, 'd', Qt.CTRL)
-        qt_commands_manager.mouse_key_activated(CTRL_MOUSE_WHEEL_DOWN)
+        qt_commands_manager.mouse_shortcut_activated(CTRL_MOUSE_WHEEL_DOWN)
         assert activated == []
     finally:
         main_window = None
