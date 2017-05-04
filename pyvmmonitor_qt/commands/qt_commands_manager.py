@@ -1,8 +1,12 @@
 from pyvmmonitor_core import interface, implements
-from pyvmmonitor_core.commands_manager import ICommandsManager, DEFAULT_SCOPE
+from pyvmmonitor_core.commands_manager import ICommandsManager
+
+DEFAULT_SCHEME = 'Default'
 
 
 class IQtCommandsManager(ICommandsManager):
+
+    DEFAULT_SCHEME = DEFAULT_SCHEME
 
     def add_shortcuts_scheme(self, scheme_name):
         pass
@@ -203,9 +207,6 @@ class _Scheme(object):
             commands_manager.activate(command_info.command_id)
 
 
-DEFAULT_SCHEME = 'Default'
-
-
 @interface.check_implements(IQtCommandsManager)
 class _DefaultQtCommandsManager(object):
 
@@ -302,11 +303,17 @@ class _DefaultQtCommandsManager(object):
         return self._commands_manager.deactivate_scope(scope)
 
     @implements(ICommandsManager.register_command)
-    def register_command(self, command_id, command_name):
-        return self._commands_manager.register_command(command_id, command_name)
+    def register_command(self, command_id, command_name, icon=None, status_tip=None):
+        return self._commands_manager.register_command(
+            command_id, command_name, icon=icon, status_tip=status_tip)
+
+    @implements(ICommandsManager.get_command_info)
+    def get_command_info(self, command_id):
+        return self._commands_manager.get_command_info(command_id)
 
     @implements(ICommandsManager.set_command_handler)
-    def set_command_handler(self, command_id, command_handler, scope=DEFAULT_SCOPE):
+    def set_command_handler(
+            self, command_id, command_handler, scope=ICommandsManager.DEFAULT_SCOPE):
         return self._commands_manager.set_command_handler(command_id, command_handler, scope)
 
     @implements(ICommandsManager.activate)
