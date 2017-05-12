@@ -431,6 +431,12 @@ def show_message(
     else:
         from pyvmmonitor_qt.qt.QtGui import QIcon
         icon = QIcon()
+
+    return __show_dialog_and_exec(parent, title, message, detailed_message, icon)
+
+
+def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
+    # Internal API: Just available to be mocked in tests!
     message_box = _ResizeMessageBox(parent, title, message, detailed_message, icon)
 
     return message_box.exec_()

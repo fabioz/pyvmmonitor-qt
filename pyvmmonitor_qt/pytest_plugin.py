@@ -11,6 +11,20 @@ def _list_widgets(qtbot):
     return list(_iter_widgets(qtbot._request.node))
 
 
+def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
+    raise AssertionError('Error: trying to show dialog with: %s\n\n%s\n\n%s' % (
+        title, message, detailed_message))
+
+
+@pytest.yield_fixture(autouse=True)
+def mock_show_error(qtbot):
+    from pyvmmonitor_qt import qt_utils
+    original = qt_utils.__show_dialog_and_exec
+    qt_utils.__show_dialog_and_exec = __show_dialog_and_exec
+    yield
+    qt_utils.__show_dialog_and_exec = original
+
+
 @pytest.yield_fixture
 def qtapi(qtbot):
     from pyvmmonitor_qt.qt_app import obtain_qapp
