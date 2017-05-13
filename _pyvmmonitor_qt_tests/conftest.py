@@ -1,4 +1,4 @@
 pytest_plugins = [
-    b'pytestqt.plugin',
-    b'pyvmmonitor_qt.pytest_plugin',
+    str('pytestqt.plugin'),
+    str('pyvmmonitor_qt.pytest_plugin'),
 ]
