@@ -17,7 +17,7 @@ def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
 
 
 @pytest.yield_fixture(autouse=True)
-def mock_show_error(qtbot):
+def mock_show_error():
     from pyvmmonitor_qt import qt_utils
     original = qt_utils.__show_dialog_and_exec
     qt_utils.__show_dialog_and_exec = __show_dialog_and_exec

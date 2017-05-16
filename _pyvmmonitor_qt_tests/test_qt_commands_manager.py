@@ -1,3 +1,4 @@
+import sys
 import weakref
 
 import pytest
@@ -25,6 +26,9 @@ def _test_shortcuts_widget(qtapi, _commands_manager):
     widget.show()
 
 
+@pytest.mark.skipif(
+    sys.platform == 'darwin',
+    reason='keyPress not activating accelerator as it should.')
 def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import create_default_qt_commands_manager
     from pyvmmonitor_qt.commands.qt_commands_manager import DEFAULT_SCHEME
@@ -37,6 +41,7 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
         activated = []
 
         def on_copy():
+            print('on_copy')
             activated.append('on_copy')
 
         qt_commands_manager = create_default_qt_commands_manager(main_window)
@@ -91,6 +96,9 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
         main_window = None
 
 
+@pytest.mark.skipif(
+    sys.platform == 'darwin',
+    reason='keyPress not activating accelerator as it should.')
 def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import create_default_qt_commands_manager
     from pyvmmonitor_qt.commands.qt_commands_manager import DEFAULT_SCHEME
