@@ -1,19 +1,12 @@
 import threading
 
 from pyvmmonitor_core import compat
-from pyvmmonitor_qt.qt.QtCore import QObject, QEvent
+from pyvmmonitor_qt.qt.QtCore import QObject
 
 
 # ==================================================================================================
 # Helpers to execute on the next event loop
 # ==================================================================================================
-class _ExecuteOnLoopEvent(QEvent):
-
-    def __init__(self, handle_future_events):
-        QEvent.__init__(self, QEvent.User)
-        self.handle_future_events = handle_future_events
-
-
 class _Receiver(QObject):
 
     def __init__(self):
@@ -22,35 +15,39 @@ class _Receiver(QObject):
 
         self.funcs = OrderedSet()
 
-    def event(self, ev):
-        if isinstance(ev, _ExecuteOnLoopEvent):
-            try:
-                while True:
+    def timerEvent(self, ev):
+        self.killTimer(ev.timerId())
+        self.handle_events()
+
+    def handle_events(self, handle_future_events=False):
+        try:
+            while True:
+                with _lock:
+                    found = len(self.funcs)
+                    if not found:
+                        return True
+
+                for _i in compat.xrange(found):
+                    # Note: we execute all currently registered functions, but new functions
+                    # scheduled in such a function are only called in a new loop (to avoid
+                    # a possible event recursion).
                     with _lock:
-                        found = len(self.funcs)
-                        if not found:
+                        if not self.funcs:
                             return True
+                        else:
+                            func, _ = self.funcs.popitem(last=False)
 
-                    for _i in compat.xrange(found):
-                        # Note: we execute all currently registered functions, but new functions
-                        # scheduled in such a function are only called in a new loop (to avoid
-                        # a possible event recursion).
-                        with _lock:
-                            if not self.funcs:
-                                return True
-                            else:
-                                func, _ = self.funcs.popitem(last=False)
+                    # Execute it without the lock
+                    func()
 
-                        # Execute it without the lock
-                        func()
+                if not handle_future_events:
+                    break
 
-                    if not ev.handle_future_events:
-                        break
-            except:
-                from .qt_utils import show_exception
-                show_exception()
-            return True
-        return False
+        except Exception:
+            from .qt_utils import show_exception
+            show_exception()
+        return True
+
 
 _lock = threading.Lock()
 
@@ -58,7 +55,7 @@ _receiver = _Receiver()
 
 
 def process_queue(handle_future_events=False):
-    _receiver.event(_ExecuteOnLoopEvent(handle_future_events))
+    _receiver.handle_events(handle_future_events)
 
 
 def process_events(collect=False, handle_future_events=False):
@@ -79,8 +76,7 @@ def process_events(collect=False, handle_future_events=False):
         timer.start(0)
         app.exec_()
 
-    if handle_future_events:
-        process_queue(handle_future_events=True)
+    process_queue(handle_future_events=handle_future_events)
 
 
 def execute_on_next_event_loop(func):
@@ -90,8 +86,7 @@ def execute_on_next_event_loop(func):
         _receiver.funcs.discard(func)
         _receiver.funcs.add(func)
 
-    from .qt_app import obtain_qapp
-    obtain_qapp().postEvent(_receiver, _ExecuteOnLoopEvent(False))
+    _receiver.startTimer(0)
 
 
 class NextEventLoopUpdater(object):
@@ -119,7 +114,7 @@ class NextEventLoopUpdater(object):
                     if method is not None:
                         try:
                             method()
-                        except:
+                        except Exception:
                             from .qt_utils import show_exception
                             show_exception()
                         finally:
