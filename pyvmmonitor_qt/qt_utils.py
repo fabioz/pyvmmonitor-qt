@@ -283,7 +283,7 @@ def get_main_window():
 _ADDITIONAL_EXCEPTION_MSG = ''  # Unicode
 
 
-def show_exception():
+def show_exception(*exc_info):
     '''
     Meant to be used when showing an exception.
 
@@ -296,17 +296,24 @@ def show_exception():
     '''
     fp = compat.StringIO()
 
-    traceback.print_exc(file=fp)
-    # Print to console
-    stack_trace = fp.getvalue()
+    try:
+        if not exc_info:
+            exc_info = sys.exc_info()
 
-    sys.stderr.write(stack_trace)
+        traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], file=fp)
+        # Print to console
+        stack_trace = fp.getvalue()
 
-    if isinstance(stack_trace, compat.bytes):
-        stack_trace = stack_trace.decode(sys.getfilesystemencoding(), 'replace')
+        sys.stderr.write(stack_trace)
 
-    info = sys.exc_info()
-    message = escape_html(str(info[1]))
+        if isinstance(stack_trace, compat.bytes):
+            stack_trace = stack_trace.decode(sys.getfilesystemencoding(), 'replace')
+
+        message = escape_html(str(exc_info[1]))
+    finally:
+        # Make sure we don't hold a reference to it.
+        exc_info = None
+
     if _ADDITIONAL_EXCEPTION_MSG:
         message += u'\n\n' + _ADDITIONAL_EXCEPTION_MSG
     show_message(message, stack_trace, parent=get_main_window())
@@ -354,8 +361,8 @@ def handle_exception_in_method(method):
     return wrapper
 
 
-def _except_hook(*args, **kwargs):
-    show_exception()
+def _except_hook(*exc_info):
+    show_exception(*exc_info)
 
 
 def install_except_hook():
