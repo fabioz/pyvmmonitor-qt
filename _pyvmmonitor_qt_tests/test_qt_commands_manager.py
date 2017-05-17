@@ -41,7 +41,6 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
         activated = []
 
         def on_copy():
-            print('on_copy')
             activated.append('on_copy')
 
         qt_commands_manager = create_default_qt_commands_manager(main_window)
