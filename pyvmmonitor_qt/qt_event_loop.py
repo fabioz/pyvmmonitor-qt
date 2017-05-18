@@ -2,8 +2,7 @@ import threading
 
 from pyvmmonitor_core import compat
 from pyvmmonitor_core.log_utils import get_logger
-from pyvmmonitor_qt.qt.QtCore import QObject
-
+from pyvmmonitor_qt.qt.QtCore import QObject, QEvent
 
 logger = get_logger(__name__)
 
@@ -18,12 +17,14 @@ class _Receiver(QObject):
         from pyvmmonitor_core.ordered_set import OrderedSet
 
         self.funcs = OrderedSet()
+        self.last_event = None
 
-    def timerEvent(self, ev):
-        self.killTimer(ev.timerId())
-        self.handle_events()
+    def event(self, ev):
+        if ev is self.last_event:
+            return self.handle_events(False)
+        return False
 
-    def handle_events(self, handle_future_events=False):
+    def handle_events(self, handle_future_events):
         try:
             while True:
                 with _lock:
@@ -82,7 +83,8 @@ def process_events(collect=False, handle_future_events=False):
         timer.start(0)
         app.exec_()
 
-    process_queue(handle_future_events=handle_future_events)
+    if handle_future_events:
+        process_queue(handle_future_events=True)
 
 
 def execute_on_next_event_loop(func):
@@ -93,7 +95,9 @@ def execute_on_next_event_loop(func):
         _receiver.funcs.discard(func)
         _receiver.funcs.add(func)
 
-    _receiver.startTimer(0)
+    from .qt_app import obtain_qapp
+    _receiver.last_event = QEvent(QEvent.User)
+    obtain_qapp().postEvent(_receiver, _receiver.last_event)
 
 
 class NextEventLoopUpdater(object):
