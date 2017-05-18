@@ -1,7 +1,11 @@
 import threading
 
 from pyvmmonitor_core import compat
+from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_qt.qt.QtCore import QObject
+
+
+logger = get_logger(__name__)
 
 
 # ==================================================================================================
@@ -38,6 +42,7 @@ class _Receiver(QObject):
                             func, _ = self.funcs.popitem(last=False)
 
                     # Execute it without the lock
+                    logger.debug('reached_event_loop:executing:%s', func)
                     func()
 
                 if not handle_future_events:
@@ -55,6 +60,7 @@ _receiver = _Receiver()
 
 
 def process_queue(handle_future_events=False):
+    logger.debug('process_queue:handle_future_events:%s', handle_future_events)
     _receiver.handle_events(handle_future_events)
 
 
@@ -80,6 +86,7 @@ def process_events(collect=False, handle_future_events=False):
 
 
 def execute_on_next_event_loop(func):
+    logger.debug('execute_on_next_event_loop:%s', func)
     # Note: keeps a strong reference and stacks the same call to be run only once.
     with _lock:
         # Remove and add so that it gets to the end of the list

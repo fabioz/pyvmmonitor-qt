@@ -17,6 +17,7 @@ import warnings
 import weakref
 
 from pyvmmonitor_core.html import escape_html
+from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
@@ -24,6 +25,8 @@ from pyvmmonitor_qt.qt import QtCore, qt_api
 from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex
 from pyvmmonitor_qt.qt.QtWidgets import QDialog
 
+
+logger = get_logger(__name__)
 
 # ==================================================================================================
 # Helpers to execute after some time
@@ -316,6 +319,10 @@ def show_exception(*exc_info):
 
     if _ADDITIONAL_EXCEPTION_MSG:
         message += u'\n\n' + _ADDITIONAL_EXCEPTION_MSG
+
+    logger.error(message)
+    logger.error(stack_trace)
+
     show_message(message, stack_trace, parent=get_main_window())
 
 
