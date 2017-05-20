@@ -16,6 +16,7 @@ import traceback
 import warnings
 import weakref
 
+from pyvmmonitor_core import overrides
 from pyvmmonitor_core.html import escape_html
 from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_core.thread_utils import is_in_main_thread
@@ -828,14 +829,14 @@ class LaunchExecutableDialog(CustomMessageDialog):
             stop_condition=None):
         '''
         :param close_on_finish: if False we'll keep on a busy loop until the user
-        presses Cancel/Close or 'stopped' is set to True.
+        presses Cancel/Close or stop_condition returns True.
 
         :param stop_condition: callable()->bool
             If it returns True we'll consider that the process stopped and close the dialog.
         '''
         self._close_on_finish = close_on_finish
         if flags is None:
-            flags = Qt.CustomizeWindowHint | Qt.WindowTitleHint
+            flags = Qt.CustomizeWindowHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint
         if parent is None:
             parent = get_main_window()
         CustomMessageDialog.__init__(
@@ -853,57 +854,49 @@ class LaunchExecutableDialog(CustomMessageDialog):
     def set_cmd(self, cmd):
         self.cmd = cmd
 
-    def reject(self, *args, **kwargs):
-        self.stopped = True
+    @overrides(CustomMessageDialog.timerEvent)
+    def timerEvent(self, ev):
+        from pyvmmonitor_qt.qt.QtGui import QTextCursor
 
+        p = self._popen
+        if p is None:
+            self._set_finished()
+            return
+
+        edit = self._edit
+        output = p.get_output()
+        if output:
+            edit.moveCursor(QTextCursor.End)
+            edit.insertPlainText(output)
+            edit.moveCursor(QTextCursor.End)
+
+        if p.finished or self.stop_condition():
+            self._set_finished()
+
+    def _set_finished(self):
+        self.bt_cancel.setText('Close (Finished)')
+        if self._close_on_finish or self.stop_condition():
+            self.reject()
+
+    @handle_exception_in_method
     def exec_(self):
         from pyvmmonitor_core import exec_external
         p = self._popen = exec_external.ExecExternal(self.cmd, env=self.env)
         threading.Thread(target=p.call).start()
-        from pyvmmonitor_qt.qt.QtGui import QTextCursor
-        from pyvmmonitor_qt.qt_event_loop import process_events
 
-        self.setVisible(True)
+        timer_id = self.startTimer(1. / 30.)
         try:
-            edit = self._edit
-            while not p.finished:
-                output = p.get_output()
-                if output:
-                    edit.moveCursor(QTextCursor.End)
-                    edit.insertPlainText(output)
-                    edit.moveCursor(QTextCursor.End)
-
-                if self.stop_condition():
-                    self.stopped = True
-
-                if self.stopped:
-                    break
-
-                process_events()
-                sleep(1. / 30.)
-
-            output = p.get_output()
-            if output:
-                edit.moveCursor(QTextCursor.End)
-                edit.insertPlainText(output)
-                edit.moveCursor(QTextCursor.End)
-
-            self.bt_cancel.setText('Close (Finished)')
-
-            if not self._close_on_finish:
-
-                while not self.stopped:
-                    if self.stop_condition():
-                        self.stopped = True
-
-                    process_events()
-                    sleep(1. / 30.)
-
-            if not p.finished:
-                p.cancel()
-
+            return super(LaunchExecutableDialog, self).exec_()
         finally:
-            self.setVisible(False)
+            try:
+                if not p.finished:
+                    p.cancel()
+            finally:
+                self.killTimer(timer_id)
+                self._popen = None
+
+    def get_text(self):
+        return self._edit.toPlainText()
 
     def _create_contents(self):
         from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox

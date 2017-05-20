@@ -5,11 +5,15 @@ import io
 import time
 import weakref
 
+from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
 from pyvmmonitor_qt.qt_utils import execute_after_millis,\
     count_widget_children
+
+
+logger = get_logger(__name__)
 
 
 def test_execute_in_millis(qtapi):
@@ -157,3 +161,52 @@ for i in xrange(10):
 '''
     dialog.set_cmd([sys.executable, '-c', code, ])
     dialog.exec_()
+
+
+def test_execute_process_no_auto_close(qtapi):
+    from pyvmmonitor_qt.qt_utils import LaunchExecutableDialog
+    from pyvmmonitor_qt.qt.QtCore import QTimer
+
+    dialog = LaunchExecutableDialog(None, close_on_finish=False)
+    import sys
+    code = '''
+import time
+for i in xrange(10):
+    print('Curr: %s' % i)
+'''
+    dialog.set_cmd([sys.executable, '-c', code, ])
+
+    curr_time = time.time()
+    found_text = [False]
+    last_found = ['']
+
+    def on_timeout(*args, **kwargs):
+        txt = dialog.get_text()
+        last_found[0] = txt
+        if txt.strip().splitlines() == '''
+Curr: 0
+Curr: 1
+Curr: 2
+Curr: 3
+Curr: 4
+Curr: 5
+Curr: 6
+Curr: 7
+Curr: 8
+Curr: 9
+'''.strip().splitlines():
+            found_text[0] = True
+            dialog.reject()
+
+        if time.time() - curr_time > 2:
+            logger.critical('Timed Out waiting for condition. Current text:\n%s' % (txt,))
+            dialog.reject()
+
+    timer = QTimer()
+    timer.timeout.connect(on_timeout)
+    timer.start(1. / 30.)
+
+    dialog.exec_()
+    timer.stop()
+    assert found_text[0], 'Did not find text on dialog (timed out). Current text:\n%s' % (
+        last_found[0],)
