@@ -4,6 +4,7 @@
 import types
 
 import pytest
+from pytestqt.plugin import qtbot  # @UnusedImport
 
 
 def _list_widgets(qtbot):
