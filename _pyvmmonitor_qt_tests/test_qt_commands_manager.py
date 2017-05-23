@@ -27,7 +27,7 @@ def _test_shortcuts_widget(qtapi, _commands_manager):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'darwin',
+    sys.platform != 'win32',
     reason='keyPress not activating accelerator as it should.')
 def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import create_default_qt_commands_manager
@@ -96,7 +96,7 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'darwin',
+    sys.platform != 'win32',
     reason='keyPress not activating accelerator as it should.')
 def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import create_default_qt_commands_manager
