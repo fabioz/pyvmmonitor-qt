@@ -20,10 +20,10 @@ def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
 @pytest.yield_fixture(autouse=True)
 def mock_show_error():
     from pyvmmonitor_qt import qt_utils
-    original = qt_utils.__show_dialog_and_exec
-    qt_utils.__show_dialog_and_exec = __show_dialog_and_exec
+    original = qt_utils.__show_dialog_and_exec.__code__
+    qt_utils.__show_dialog_and_exec.__code__ = __show_dialog_and_exec.__code__
     yield
-    qt_utils.__show_dialog_and_exec = original
+    qt_utils.__show_dialog_and_exec.__code__ = original
 
 
 @pytest.yield_fixture
