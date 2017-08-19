@@ -554,6 +554,9 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
         return self._center
 
     def _update_with_graphics_widget(self, force=False):
+        from pyvmmonitor_qt import qt_utils
+        if not qt_utils.is_qobject_alive(self):
+            return
         _update_with_graphics_widget_item(self, force=force)
 
     @overrides(QGraphicsEllipseItem.paint)

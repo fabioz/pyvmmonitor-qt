@@ -156,7 +156,7 @@ def test_execute_process(qtapi):
     import sys
     code = '''
 import time
-for i in xrange(10):
+for i in range(10):
     print('Curr: %s' % i)
 '''
     dialog.set_cmd([sys.executable, '-c', code, ])
@@ -171,7 +171,7 @@ def test_execute_process_no_auto_close(qtapi):
     import sys
     code = '''
 import time
-for i in xrange(10):
+for i in range(10):
     print('Curr: %s' % i)
 '''
     dialog.set_cmd([sys.executable, '-c', code, ])
