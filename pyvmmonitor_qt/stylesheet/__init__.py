@@ -29,6 +29,7 @@ def get_app_stylesheet():
 
     return AppStylesheet()
 
+
 _is_dark_to_resource_modules = {}
 _currently_applied_resource_modules = set()
 
@@ -59,6 +60,7 @@ class _Resource(object):
 
 def register_resource_module(resource_module_name, is_dark):
     _is_dark_to_resource_modules.setdefault(is_dark, set()).add(_Resource(resource_module_name))
+
 
 register_resource_module('pyvmmonitor_qt.stylesheet.dark_resources', is_dark=True)
 register_resource_module('pyvmmonitor_qt.stylesheet.light_resources', is_dark=False)
@@ -120,6 +122,7 @@ def apply_default_stylesheet(app, force=False):
 def is_light_theme():
     return not _USE_THEME.startswith('DARK')
 
+
 _styled_qt_objects = {}
 
 
@@ -130,6 +133,9 @@ def CreateStyledQAction(
         shortcut=None,
         status_tip=None,
         connect_to=None):
+    '''
+    :param icon_name: Name to find icon (i.e.: :appbar.page.edit.svg)
+    '''
     from pyvmmonitor_qt.qt.QtGui import QIcon
     from pyvmmonitor_qt.qt.QtWidgets import QAction
 
@@ -149,6 +155,9 @@ def CreateStyledQAction(
 
 
 def CreateStyledQPushButton(parent, icon_name, text=''):
+    '''
+    :param icon_name: Name to find icon (i.e.: :appbar.page.edit.svg)
+    '''
     from pyvmmonitor_qt.qt.QtWidgets import QPushButton
     from pyvmmonitor_qt.qt.QtGui import QIcon
 
