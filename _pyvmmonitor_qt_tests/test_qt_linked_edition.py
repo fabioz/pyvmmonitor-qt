@@ -41,7 +41,7 @@ class _PropsObject(object):
 
 class _Data(_PropsObject):
 
-    _PropsObject.declare_props(val=10, font='Arial')
+    _PropsObject.declare_props(val=10, font='Arial', text='Text')
 
     def register_modified(self, on_modified):
         self._on_modified_callback.register(on_modified)
@@ -206,3 +206,36 @@ def test_int_edit_linked_edition(qtapi):
         assert data.val == 40
     finally:
         int_edition.dispose()
+
+
+def test_multi_line_edit_linked_edition(qtapi):
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    edition = qt_linked_edition.MultiLineText(None, 'text')
+    try:
+        edition.qwidget.show()
+        process_events()
+
+        with pytest.raises(AttributeError):
+            edition.invalid_attribute = 20
+
+        data = _Data()
+        edition.set_data([data])
+        assert edition.qwidget.toPlainText() == 'Text'
+
+        data.text = 'foo'
+        assert edition.qwidget.toPlainText() == 'Text'
+        process_queue()  # Only update when queue is processed
+        assert edition.qwidget.toPlainText() == 'foo'
+
+        changed = [0]
+
+        def on_text_changed():
+            changed[0] += 1
+
+        edition.qwidget.textChanged.connect(on_text_changed)
+        edition.qwidget.setPlainText('bar')
+        process_events()
+        assert changed[0] == 1
+        assert data.text == 'bar'
+    finally:
+        edition.dispose()

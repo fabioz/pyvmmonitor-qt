@@ -8,22 +8,44 @@ from pyvmmonitor_qt.qt.QtWidgets import QSpinBox, QComboBox, QDoubleSpinBox
 from pyvmmonitor_qt.qt_event_loop import NextEventLoopUpdater
 
 
-def _does_expected_change(func):
+def _does_expected_ui_change(func):
     @functools.wraps(func)
     def _expected_change(self, *args, **kwargs):
-        self._in_expected_change += 1
+        self._in_expected_ui_change += 1
         try:
             func(self, *args, **kwargs)
         finally:
-            self._in_expected_change -= 1
+            self._in_expected_ui_change -= 1
 
     return _expected_change
 
 
-def _skip_on_expected_change(func):
+def _skip_on_expected_ui_change(func):
     @functools.wraps(func)
     def _skip_on_change(self, *args, **kwargs):
-        if self._in_expected_change:
+        if self._in_expected_ui_change:
+            return
+        func(self, *args, **kwargs)
+
+    return _skip_on_change
+
+
+def _does_expected_data_change(func):
+    @functools.wraps(func)
+    def _expected_change(self, *args, **kwargs):
+        self._in_expected_data_change += 1
+        try:
+            func(self, *args, **kwargs)
+        finally:
+            self._in_expected_data_change -= 1
+
+    return _expected_change
+
+
+def _skip_on_expected_data_change(func):
+    @functools.wraps(func)
+    def _skip_on_change(self, *args, **kwargs):
+        if self._in_expected_data_change:
             return
         func(self, *args, **kwargs)
 
@@ -34,19 +56,21 @@ class BaseLinkedEdition(object):
 
     __slots__ = [
         '__weakref__',
-        '_in_expected_change',
+        '_in_expected_ui_change',
+        '_in_expected_data_change',
         '_link_to_attribute',
         'data',
         '_updater',
         'qwidget']
 
     def __init__(self, link_to_attribute):
-        self._in_expected_change = 0
+        self._in_expected_ui_change = 0
+        self._in_expected_data_change = 0
         self._link_to_attribute = link_to_attribute
         self.data = WeakList()
         self._updater = NextEventLoopUpdater(self.update_ui)
 
-    @_does_expected_change
+    @_does_expected_ui_change
     def update_ui(self):
         if self.qwidget is not None:
             if not qt_utils.is_qobject_alive(self.qwidget):
@@ -71,9 +95,18 @@ class BaseLinkedEdition(object):
             for d in self.data:
                 d.unregister_modified(self._on_data_changed)
 
+    @_skip_on_expected_data_change
     def _on_data_changed(self, obj, attrs):
         if self._link_to_attribute in attrs:
             self._updater.invalidate()
+
+    @_does_expected_data_change
+    def _set_attr(self, value):
+        for obj in self.data:
+            try:
+                setattr(obj, self._link_to_attribute, value)
+            except Exception:
+                raise AttributeError('Unable to set: %s' % (self._link_to_attribute))
 
     def dispose(self):
         self._unlink()
@@ -148,16 +181,16 @@ class IntEdition(BaseLinkedEdition):
             self.qwidget.setText(str(getattr(data, self._link_to_attribute)))
             return
 
-    @_skip_on_expected_change
+    @_skip_on_expected_ui_change
     def _on_text_changed(self, value):
         try:
             value = int(value)
         except ValueError:
             return
 
-        for obj in self.data:
-            setattr(obj, self._link_to_attribute, value)
+        self._set_attr(value)
 
+    @_does_expected_data_change
     def _apply_delta(self, delta):
         for obj in self.data:
             setattr(obj, self._link_to_attribute, getattr(obj, self._link_to_attribute) + delta)
@@ -199,7 +232,7 @@ class SpinBox(BaseLinkedEdition):
             self.qwidget.setValue(getattr(data, self._link_to_attribute))
             return
 
-    @_skip_on_expected_change
+    @_skip_on_expected_ui_change
     def _on_text_changed(self, value):
         for obj in self.data:
             setattr(obj, self._link_to_attribute, value)
@@ -259,7 +292,7 @@ class Combo(BaseLinkedEdition):
 
         return False
 
-    @_skip_on_expected_change
+    @_skip_on_expected_ui_change
     def _on_index_changed(self, index):
         current_text = self.qwidget.currentText()
         try:
@@ -267,11 +300,7 @@ class Combo(BaseLinkedEdition):
         except KeyError:
             pass
         else:
-            for obj in self.data:
-                try:
-                    setattr(obj, self._link_to_attribute, value)
-                except Exception:
-                    raise AttributeError('Unable to set: %s' % (self._link_to_attribute))
+            self._set_attr(value)
 
     def get_current_text(self):
         return self.qwidget.currentText()
@@ -306,22 +335,21 @@ class SelectSingleIntCombo(Combo):
             self.qwidget.setEditable(True)
             self.qwidget.editTextChanged.connect(self._edit_text_changed)
 
-    @_skip_on_expected_change
+    @_skip_on_expected_ui_change
     def _edit_text_changed(self, text):
         try:
             value = int(text)
         except ValueError:
             return  # Invalid text... should we make it red to signal?
 
-        for data in self.data:
-            setattr(data, self._link_to_attribute, value)
+        self._set_attr(value)
 
-        self._in_expected_change += 1
+        self._in_expected_ui_change += 1
         try:
             self._update_index()
             self.qwidget.setEditText(text)
         finally:
-            self._in_expected_change -= 1
+            self._in_expected_ui_change -= 1
 
     def _update_index(self):
         last_index = None
@@ -363,7 +391,6 @@ class FontFamily(BaseLinkedEdition):
         '''
         from pyvmmonitor_qt.qt.QtWidgets import QFontComboBox
         BaseLinkedEdition.__init__(self, link_to_attribute)
-        self._link_to_attribute = link_to_attribute
         qwidget = self.qwidget = QFontComboBox(parent_widget)
         qwidget.currentFontChanged.connect(self._on_font_changed)
 
@@ -386,14 +413,10 @@ class FontFamily(BaseLinkedEdition):
 
         return False
 
-    @_skip_on_expected_change
+    @_skip_on_expected_ui_change
     def _on_font_changed(self, font):
         font_family = font.family()
-        for obj in self.data:
-            try:
-                setattr(obj, self._link_to_attribute, font_family)
-            except Exception:
-                raise AttributeError('Unable to set: %s' % (self._link_to_attribute))
+        self._set_attr(font_family)
 
     def get_current_font_family(self):
         return self.qwidget.currentFont().family()
@@ -402,3 +425,25 @@ class FontFamily(BaseLinkedEdition):
         self.qwidget.setCurrentFont(self._get_qfont(font_family))
 
     current_font_family = property(get_current_font_family, set_current_font_family)
+
+
+class MultiLineText(BaseLinkedEdition):
+
+    __slots__ = []
+
+    def __init__(self, parent_widget, link_to_attribute):
+        from pyvmmonitor_qt.qt.QtWidgets import QPlainTextEdit
+        BaseLinkedEdition.__init__(self, link_to_attribute)
+        qwidget = self.qwidget = QPlainTextEdit(parent_widget)
+        qwidget.textChanged.connect(self._on_text_changed)
+
+    @overrides(BaseLinkedEdition._on_update_ui)
+    def _on_update_ui(self):
+        for obj in self.data:
+            self.qwidget.setPlainText(getattr(obj, self._link_to_attribute))
+            return
+
+    @_skip_on_expected_ui_change
+    def _on_text_changed(self):
+        text = self.qwidget.toPlainText()
+        self._set_attr(text)
