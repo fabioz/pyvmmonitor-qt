@@ -41,7 +41,7 @@ class _PropsObject(object):
 
 class _Data(_PropsObject):
 
-    _PropsObject.declare_props(val=10)
+    _PropsObject.declare_props(val=10, font='Arial')
 
     def register_modified(self, on_modified):
         self._on_modified_callback.register(on_modified)
@@ -69,6 +69,42 @@ def test_combo_qt_linked_edition(qtapi):
         assert combo.current_text == 'Val 20'
         process_queue()
         assert combo.current_text == 'Val 1'
+
+        with pytest.raises(AttributeError):
+            combo.invalid_attribute = 20
+    finally:
+        combo.dispose()
+
+
+def test_combo_values_qt_linked_edition(qtapi):
+
+    from pyvmmonitor_core.compat import unicode
+    combo = qt_linked_edition.SelectSingleIntCombo(None, 'val', values=[1, 3, 5])
+
+    try:
+        combo.qwidget.show()
+        data = _Data()
+        combo.set_data([data])
+
+        assert combo.current_text == '10'
+        assert combo.qwidget.currentIndex() == 2
+        assert data.val == 10
+
+        combo.qwidget.setEditText(unicode('4'))
+        assert combo.qwidget.currentIndex() == 1
+        assert combo.current_text == '4'
+        assert data.val == 4
+
+        combo.qwidget.setEditText(unicode('rara'))
+
+        assert combo.qwidget.currentIndex() == 1
+        assert combo.current_text == 'rara'
+        assert data.val == 4
+
+        combo.qwidget.setEditText(unicode('22'))
+        assert combo.qwidget.currentIndex() == 2
+        assert combo.current_text == '22'
+        assert data.val == 22
 
         with pytest.raises(AttributeError):
             combo.invalid_attribute = 20
@@ -119,3 +155,54 @@ def test_double_spin_box_qt_linked_edition(qtapi):
             spin.invalid_attribute = 20
     finally:
         spin.dispose()
+
+
+def test_font_family_qt_linked_edition(qtapi):
+
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    font_family = qt_linked_edition.FontFamily(None, 'font')
+    try:
+        font_family.qwidget.show()
+        process_events()
+
+        with pytest.raises(AttributeError):
+            font_family.invalid_attribute = 20
+
+        data = _Data()
+        font_family.set_data([data])
+        assert font_family.qwidget.currentFont().family() == 'Arial'
+
+        data.font = 'Times'
+        assert font_family.qwidget.currentFont().family() == 'Arial'
+        process_queue()  # Only update when queue is processed
+        assert font_family.qwidget.currentFont().family() == 'Times'
+
+        font_family.set_current_font_family('Verdana')
+        assert font_family.qwidget.currentFont().family() == 'Verdana'
+    finally:
+        font_family.dispose()
+
+
+def test_int_edit_linked_edition(qtapi):
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    int_edition = qt_linked_edition.IntEdition(None, 'val')
+    try:
+        int_edition.qwidget.show()
+        process_events()
+
+        with pytest.raises(AttributeError):
+            int_edition.invalid_attribute = 20
+
+        data = _Data()
+        int_edition.set_data([data])
+        assert int_edition.qwidget.text() == '10'
+
+        data.val = 30
+        assert int_edition.qwidget.text() == '10'
+        process_queue()  # Only update when queue is processed
+        assert int_edition.qwidget.text() == '30'
+
+        int_edition.qwidget.setText('40')
+        assert data.val == 40
+    finally:
+        int_edition.dispose()

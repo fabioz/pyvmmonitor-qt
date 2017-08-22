@@ -480,6 +480,14 @@ def create_message_box_with_custom_ok_cancel(
     # dialog.exec_()
 
 
+def add_expanding_spacer_to_layout(layout):
+    from pyvmmonitor_qt.qt.QtWidgets import QSpacerItem
+    from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
+    spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
+    layout.addItem(spacer)
+    return spacer
+
+
 class CustomMessageDialog(QDialog):
 
     def __init__(self, parent, create_contents=None, title=' ', size=(640, 540), flags=None):
@@ -544,11 +552,7 @@ class CustomMessageDialog(QDialog):
         return widget
 
     def create_spacer(self):
-        from pyvmmonitor_qt.qt.QtWidgets import QSpacerItem
-        from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
-        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self._layout.addItem(spacer)
-        return spacer
+        return add_expanding_spacer_to_layout(self._layout)
 
     def create_buttons(self, show_ok=True, show_cancel=True):
         assert show_ok or show_cancel
