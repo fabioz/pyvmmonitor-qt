@@ -6,15 +6,15 @@
 # Examples: https://qt.gitorious.org/pyvmmonitor_qt.qt/pyvmmonitor_qt.qt-examples
 from __future__ import unicode_literals
 
-from contextlib import contextmanager
-from functools import wraps
 import sys
 import threading
-from time import sleep
 import time
 import traceback
 import warnings
 import weakref
+from contextlib import contextmanager
+from functools import wraps
+from time import sleep
 
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.html import escape_html
@@ -23,9 +23,8 @@ from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.qt import QtCore, qt_api
-from pyvmmonitor_qt.qt.QtCore import QTimer, Qt, QModelIndex
+from pyvmmonitor_qt.qt.QtCore import QModelIndex, Qt, QTimer
 from pyvmmonitor_qt.qt.QtWidgets import QDialog
-
 
 logger = get_logger(__name__)
 
@@ -305,6 +304,7 @@ def show_exception(*exc_info):
             exc_info = sys.exc_info()
 
         traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], file=fp)
+
         # Print to console
         stack_trace = fp.getvalue()
 
@@ -315,6 +315,11 @@ def show_exception(*exc_info):
 
         message = escape_html(str(exc_info[1]))
     finally:
+        # After reporting it, clear the traceback so that we don't hold
+        # frames alive longer than needed (when tests failed, having this
+        # meant that we could crash at exit time because we kept frames alive
+        # longer than needed).
+        exc_info[1].__traceback__ = None
         # Make sure we don't hold a reference to it.
         exc_info = None
 
