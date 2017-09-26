@@ -1,12 +1,15 @@
+from contextlib import contextmanager
+
 from PySide.QtSvg import QGraphicsSvgItem
 
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
-from pyvmmonitor_qt.qt.QtCore import Qt, QRectF, QPointF
-from pyvmmonitor_qt.qt.QtGui import QColor, QPen, QBrush
-from pyvmmonitor_qt.qt.QtWidgets import QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsPathItem
+from pyvmmonitor_qt.qt.QtCore import QPointF, QRectF, Qt
+from pyvmmonitor_qt.qt.QtGui import QBrush, QColor, QPen
+from pyvmmonitor_qt.qt.QtWidgets import (QGraphicsEllipseItem,
+                                         QGraphicsPathItem, QGraphicsRectItem)
 from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
 from pyvmmonitor_qt.qt_transform import calculate_size_for_value_in_px
 
@@ -100,6 +103,8 @@ def _init_item(
     item.on_mouse_move = Callback()
     item.on_mouse_release = Callback()
 
+    item._delay_update = 0
+
     if hasattr(item, 'setPen'):
         set_graphics_item_colors(item, pen, fill_color, alpha)
 
@@ -145,6 +150,9 @@ def _set_pixels_displacement_item(item, pixels_displacement):
 
 
 def _update_with_graphics_widget_item(item, force=False):
+    if item._delay_update:
+        return
+
     g = item._graphics_widget()
     if g is not None:
         _update_info(item, g, force=force)
@@ -271,6 +279,14 @@ class _CustomGraphicsSquareItem(QGraphicsRectItem):
             pixels_displacement,
             graphics_widget)
 
+    @contextmanager
+    def delayed_update(self):
+        self._delay_update += 1
+        yield
+        self._delay_update -= 1
+        if self._delay_update == 0:
+            self._update_with_graphics_widget()
+
     def mousePressEvent(self, event):
         _mouse_press_event_item(self, event)
 
@@ -388,6 +404,14 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
         if svg_renderer is not None:
             self._renderer = svg_renderer
             self.setSharedRenderer(svg_renderer)
+
+    @contextmanager
+    def delayed_update(self):
+        self._delay_update += 1
+        yield
+        self._delay_update -= 1
+        if self._delay_update == 0:
+            self._update_with_graphics_widget()
 
     def setPen(self, pen):
         self._pen = pen
@@ -526,6 +550,14 @@ class _CustomGraphicsEllipseItem(QGraphicsEllipseItem):
             pixels_displacement,
             graphics_widget)
 
+    @contextmanager
+    def delayed_update(self):
+        self._delay_update += 1
+        yield
+        self._delay_update -= 1
+        if self._delay_update == 0:
+            self._update_with_graphics_widget()
+
     def mousePressEvent(self, event):
         _mouse_press_event_item(self, event)
 
@@ -615,6 +647,14 @@ class _CustomQGraphicsPathItem(QGraphicsPathItem):
             alpha=alpha,
             pixels_displacement=(0, 0),
             graphics_widget=graphics_widget)
+
+    @contextmanager
+    def delayed_update(self):
+        self._delay_update += 1
+        yield
+        self._delay_update -= 1
+        if self._delay_update == 0:
+            self._update_with_graphics_widget()
 
     def get_center(self):
         rect = self.path().controlPointRect()

@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 Transform = namedtuple('Transform', 'm11 m12 m13 m21 m22 m23 m31 m32 m33')
 
 
@@ -41,26 +42,20 @@ def tuple_to_qtransform(tup):
 
 
 def iter_transform_list_tuple(points, qtransform):
-    from pyvmmonitor_qt.qt.QtCore import QPointF
     for point in points:
-        p = qtransform.map(QPointF(*point))
-        yield p.x(), p.y()
+        yield qtransform.map(*point)
 
 
 def transform_tuple(point, qtransform):
-    from pyvmmonitor_qt.qt.QtCore import QPointF
-
-    p = qtransform.map(QPointF(*point))
-    return p.x(), p.y()
+    return qtransform.map(*point)
 
 
 def calc_angle_in_radians_from_qtransform(qtransform):
-    from pyvmmonitor_qt.qt.QtCore import QPointF
     from pyvmmonitor_core.math_utils import calc_angle_in_radians
 
-    p0 = qtransform.map(QPointF(0, 0))
-    p1 = qtransform.map(QPointF(0, 1))  # Note: compute based on y, not on x.
-    return calc_angle_in_radians((p0.x(), p0.y()), (p1.x(), p1.y()))
+    p0 = qtransform.map(0., 0.)
+    p1 = qtransform.map(0., 1.)  # Note: compute based on y, not on x.
+    return calc_angle_in_radians(p0, p1)
 
 
 def calculate_size_for_value_in_px(transform, value_in_px):
