@@ -46,10 +46,10 @@ from __future__ import unicode_literals
 
 from contextlib import contextmanager
 
-from pyvmmonitor_core import thread_utils, compat
+from pyvmmonitor_core import compat, thread_utils
 from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.qt.QtCore import Qt, QSortFilterProxyModel
-from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
+from pyvmmonitor_qt.qt.QtCore import QSortFilterProxyModel, Qt
+from pyvmmonitor_qt.qt.QtGui import QStandardItem, QStandardItemModel
 
 _SORT_KEY_ROLE = Qt.UserRole + 9
 _NODE_ROLE = Qt.UserRole + 21
@@ -284,7 +284,12 @@ class PythonicQTreeView(object):
         '_model',
     ]
 
-    def __init__(self, tree):
+    def __init__(self, tree, editable=False):
+        '''
+        :param QTreeView tree:
+        :param bool editable:
+            Determines if the tree items should be editable.
+        '''
 
         self.tree = tree
         model = self._model = _CustomModel(tree)
@@ -299,6 +304,11 @@ class PythonicQTreeView(object):
         tree.setModel(self._sort_model)
         self._fast = {}
         self._root_items = set()
+        if not editable:
+            # Set all items not editable
+            # Otherwise, it could be set individually with:
+            # QStandardItem.setEditable(False)
+            tree.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def list_item_captions(self, prefix='', cols=(0,), only_show_expanded=False):
         return qt_utils.list_wiget_item_captions(
