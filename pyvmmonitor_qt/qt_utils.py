@@ -990,9 +990,12 @@ def assert_condition_within_timeout(condition, timeout=2.):
         time.sleep(1 / 50.)
 
 
-def ask_save_filename(parent, caption, initial_dir, files_filter):
+def ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter=None):
     from pyvmmonitor_qt.qt.QtWidgets import QFileDialog
-    return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter)
+    if selected_filter is None:
+        if files_filter is not None:
+            selected_filter = files_filter.split(';;')[0]
+    return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter, selected_filter)
 
 
 def set_painter_antialiased(painter, antialias, widget):
