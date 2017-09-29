@@ -1,8 +1,10 @@
 
 <RCC>
   <qresource>
+    <file>appbar.arrow.down.svg</file>
     <file>appbar.arrow.left.png</file>
     <file>appbar.arrow.right.png</file>
+    <file>appbar.arrow.up.svg</file>
     <file>appbar.connect.png</file>
     <file>appbar.cursor.move.svg</file>
     <file>appbar.dropper.svg</file>
