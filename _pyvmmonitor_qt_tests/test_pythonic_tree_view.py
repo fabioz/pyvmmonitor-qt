@@ -235,6 +235,27 @@ def test_sort_order(qtapi, tree):
     assert tree.list_item_captions() == 'a a b b b c g'.split()
 
 
+def test_insert_order(qtapi, tree):
+    tree.tree.show()
+
+    tree['a'] = 'a'
+    tree['c'] = 'c'
+    tree['b'] = 'b'
+    assert tree.list_item_captions() == 'a c b'.split()
+
+    tree.add_node('a', 'a.x', 'x')
+
+    assert tree.list_item_captions() == 'a +x c b'.split()
+
+    tree.add_node('a', 'a.y', 'y', index=0)
+
+    assert tree.list_item_captions() == 'a +y +x c b'.split()
+
+    tree.add_node(None, 'z', 'z', index=1)
+
+    assert tree.list_item_captions() == 'a +y +x z c b'.split()
+
+
 def test_icon(qtapi):
     from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView

@@ -151,9 +151,13 @@ class TreeNode(object):
         self.obj_id = obj_id
         return self._create_items()
 
-    def _append_row(self, node):
+    def _append_row(self, node, index=-1):
         self._children.add(node)
-        self._items[0].appendRow(node._items)
+        if index == -1:
+            self._items[0].appendRow(node._items)
+        else:
+            assert index >= 0
+            self._items[0].insertRow(index, node._items)
 
     def _detach(self, parent_node, parent_item):
         assert not self._children, \
@@ -404,7 +408,7 @@ class PythonicQTreeView(object):
 
         self.add_node(parent_node, obj_id, node)
 
-    def add_node(self, parent_node, obj_id, node):
+    def add_node(self, parent_node, obj_id, node, index=-1):
         '''
         Adds a node to the tree below the passed parent.
 
@@ -418,6 +422,9 @@ class PythonicQTreeView(object):
         :param object|TreeNode node:
             Either the instanced TreeNode to be added or the data for which a TreeNode
             should be created.
+
+        :param int index:
+            The index at which the child node should be added.
         '''
         if isinstance(parent_node, compat.unicode):
             parent_node = self._fast[parent_node]
@@ -429,11 +436,15 @@ class PythonicQTreeView(object):
         assert obj_id not in self._fast
         if parent_node is None:
             items = node._attach_to_tree(self, obj_id)
-            self._model.appendRow(items)
+            if index == -1:
+                self._model.appendRow(items)
+            else:
+                assert index >= 0
+                self._model.insertRow(index, items)
             self._root_items.add(node)
         else:
             items = node._attach_to_tree(self, obj_id)
-            parent_node._append_row(node)
+            parent_node._append_row(node, index=index)
 
         node._parent = parent_node
         self._fast[obj_id] = node
