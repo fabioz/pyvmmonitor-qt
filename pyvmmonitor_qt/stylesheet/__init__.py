@@ -5,7 +5,6 @@ from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import WeakSet
 from pyvmmonitor_qt import compat
 
-
 _applied_stylesheet = False
 
 THEMES = ['DARK', 'NATIVE', 'DARK_ORANGE']
@@ -162,6 +161,8 @@ def CreateStyledQPushButton(parent, icon_name, text=''):
     from pyvmmonitor_qt.qt.QtGui import QIcon
 
     ret = QPushButton(parent)
+    if text:
+        ret.setText(text)
     ret.setIcon(QIcon(icon_name))
     _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
     return ret
