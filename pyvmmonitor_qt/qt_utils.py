@@ -480,11 +480,14 @@ def create_message_box_with_custom_ok_cancel(
     # dialog.exec_()
 
 
-def add_expanding_spacer_to_layout(layout):
+def add_expanding_spacer_to_layout(layout, row=None, col=None):
     from pyvmmonitor_qt.qt.QtWidgets import QSpacerItem
     from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
     spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
-    layout.addItem(spacer)
+    if row is None and col is None:
+        layout.addItem(spacer)
+    else:
+        layout.addItem(spacer, row, col)
     return spacer
 
 
