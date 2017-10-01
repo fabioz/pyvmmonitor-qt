@@ -1,23 +1,17 @@
 # License: LGPL
 #
 # Copyright: Brainwy Software
-
-# Note: search on http://qt-project.org/search?search=qmdiarea
-# Examples: https://qt.gitorious.org/pyvmmonitor_qt.qt/pyvmmonitor_qt.qt-examples
 from __future__ import unicode_literals
 
 import sys
 import threading
 import time
 import traceback
-import warnings
 import weakref
 from contextlib import contextmanager
 from functools import wraps
-from time import sleep
 
 from pyvmmonitor_core import overrides
-from pyvmmonitor_core.html import escape_html
 from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
@@ -313,6 +307,7 @@ def show_exception(*exc_info):
         if isinstance(stack_trace, compat.bytes):
             stack_trace = stack_trace.decode(sys.getfilesystemencoding(), 'replace')
 
+        from pyvmmonitor_core.html import escape_html
         message = escape_html(str(exc_info[1]))
     finally:
         # After reporting it, clear the traceback so that we don't hold
@@ -421,7 +416,7 @@ def show_message(
         elif icon == 'question':
             icon = QMessageBox.Question
         else:
-            warnings.warn('Invalid icon: %s' % (icon,))
+            logger.warn('Invalid icon: %s' % (icon,))
             icon = QMessageBox.NoIcon
 
     if not is_in_main_thread():
