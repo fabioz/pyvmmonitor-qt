@@ -1,4 +1,4 @@
-from pyvmmonitor_core import interface, implements
+from pyvmmonitor_core import implements, interface
 from pyvmmonitor_core.commands_manager import ICommandsManager
 
 DEFAULT_SCHEME = 'Default'
@@ -319,6 +319,10 @@ class _DefaultQtCommandsManager(object):
     @implements(ICommandsManager.activate)
     def activate(self, command_id, **kwargs):
         return self._commands_manager.activate(command_id, **kwargs)
+
+    @implements(ICommandsManager.list_command_ids)
+    def list_command_ids(self):
+        return self._commands_manager.list_command_ids()
 
 
 def create_default_qt_commands_manager(widget, commands_manager=None):
