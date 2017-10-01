@@ -696,6 +696,10 @@ class MenuCreator(object):
         if caption is not None:
             self.menu.setTitle(caption)
 
+    def add_qaction(self, qaction):
+        self.menu.addAction(qaction)
+        return qaction
+
     def add_action(self, caption, callback=None, checkable=False):
         action = self.menu.addAction(caption)
         if callback is not None:
