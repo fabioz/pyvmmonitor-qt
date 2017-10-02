@@ -1036,6 +1036,18 @@ def set_painter_antialiased(painter, antialias, widget):
             GL.glDisable(GL.GL_LINE_SMOOTH)
 
 
+def create_qpolygon_from_points(points, clockwise=None):
+    from pyvmmonitor_qt.qt.QtGui import QPolygonF
+    from pyvmmonitor_qt.qt.QtCore import QPointF
+    if clockwise is not None:
+        from pyvmmonitor_core import math_utils
+        if clockwise != math_utils.is_clockwise(points):
+            points = reversed(points)
+
+    polygon = QPolygonF(QPolygonF([QPointF(p[0], p[1]) for p in points]))
+    return polygon
+
+
 def create_painter_path_from_points(points, clockwise=None):
     if clockwise is not None:
         from pyvmmonitor_core import math_utils
