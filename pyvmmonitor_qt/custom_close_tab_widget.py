@@ -5,8 +5,8 @@ import weakref
 
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt import qt_utils
-from pyvmmonitor_qt.qt.QtWidgets import QWidget, QStackedWidget, QTabBar, QVBoxLayout, QPushButton,\
-    QStyle
+from pyvmmonitor_qt.qt.QtWidgets import (QPushButton, QStackedWidget, QStyle,
+                                         QTabBar, QVBoxLayout, QWidget)
 
 
 class CustomCloseTabWidget(QWidget):
@@ -33,7 +33,7 @@ class CustomCloseTabWidget(QWidget):
     def _tab_changed(self, i):
         try:
             widget = self._widgets[i]
-        except:
+        except Exception:
             return  # Not there
 
         self._stack.setCurrentWidget(widget)
