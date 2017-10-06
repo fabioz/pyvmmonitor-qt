@@ -118,6 +118,7 @@ class QtWeakMethod(object):
         return not self == o
 
 
+
 # ==================================================================================================
 # QTreeView helpers
 # ==================================================================================================
@@ -230,7 +231,6 @@ def count_items(widget):
         i += 1
     return i
 
-
 if qt_api == 'pyside':
     try:
         from PySide import shiboken
@@ -258,9 +258,9 @@ elif qt_api == 'pyside2':
         return shiboken2.isValid(obj)
 
 else:
+
     def is_qobject_alive(obj):
         raise AssertionError('Not supported')
-
 
 _main_window = get_weakref(None)
 
@@ -275,7 +275,6 @@ def get_main_window():
     if m is None or not is_qobject_alive(m):
         return None
     return m
-
 
 _ADDITIONAL_EXCEPTION_MSG = ''  # Unicode
 
@@ -328,12 +327,14 @@ def show_exception(*exc_info):
 
 
 def handle_exception_in_method_return_val(return_val):
+
     def handle_exception_in_method(method):
         '''
         All qt function which are called by qt itself should have a
         handle_exception_in_method decorator so that we can see the exceptions
         properly (PySide will loose the exception if we don't).
         '''
+
         @wraps(method)
         def wrapper(*args, **kwargs):
             try:
@@ -354,6 +355,7 @@ def handle_exception_in_method(method):
     handle_exception_in_method decorator so that we can see the exceptions
     properly (PySide will loose the exception if we don't).
     '''
+
     @wraps(method)
     def wrapper(*args, **kwargs):
         try:
@@ -420,6 +422,7 @@ def show_message(
             icon = QMessageBox.NoIcon
 
     if not is_in_main_thread():
+
         # Important: if we're not in the main thread, we have to schedule to run it later
         # (in the UI thread).
         def func():
@@ -853,6 +856,7 @@ class LaunchExecutableDialog(CustomMessageDialog):
         CustomMessageDialog.__init__(
             self, parent, title=title, size=size, flags=flags)
         if stop_condition is None:
+
             def stop_condition(): return False
         self.stop_condition = stop_condition
         if not cmd:
@@ -940,6 +944,7 @@ def expand(tree, caption):
 
 
 class _ObjData(object):
+
     def __init__(self, obj):
         self.obj = obj
 
@@ -1036,18 +1041,6 @@ def set_painter_antialiased(painter, antialias, widget):
             GL.glDisable(GL.GL_LINE_SMOOTH)
 
 
-def create_qpolygon_from_points(points, clockwise=None):
-    from pyvmmonitor_qt.qt.QtGui import QPolygonF
-    from pyvmmonitor_qt.qt.QtCore import QPointF
-    if clockwise is not None:
-        from pyvmmonitor_core import math_utils
-        if clockwise != math_utils.is_clockwise(points):
-            points = reversed(points)
-
-    polygon = QPolygonF(QPolygonF([QPointF(p[0], p[1]) for p in points]))
-    return polygon
-
-
 def create_painter_path_from_points(points, clockwise=None):
     if clockwise is not None:
         from pyvmmonitor_core import math_utils
@@ -1134,7 +1127,6 @@ def qimage_as_numpy(image):
     result = numpy.asarray(image)
     del image.__array_interface__
     yield result
-
 
 # # ======================================================================
 # # main -- manual testing

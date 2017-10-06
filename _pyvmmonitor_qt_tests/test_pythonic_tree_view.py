@@ -260,6 +260,7 @@ def test_icon(qtapi):
     from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
 
+
     # Example on how to deal with a mouse click.
     class MyQTreeView(QTreeView):
 
