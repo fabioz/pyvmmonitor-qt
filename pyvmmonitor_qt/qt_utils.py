@@ -423,6 +423,7 @@ def show_message(
 
     if not is_in_main_thread():
 
+
         # Important: if we're not in the main thread, we have to schedule to run it later
         # (in the UI thread).
         def func():
@@ -1127,6 +1128,30 @@ def qimage_as_numpy(image):
     result = numpy.asarray(image)
     del image.__array_interface__
     yield result
+
+
+def set_background_color(widget, qcolor):
+    '''
+    :param QWidget widget:
+    :param QColor qcolor:
+    '''
+    from pyvmmonitor_qt.qt.QtGui import QPalette
+    pal = widget.palette()
+
+    pal.setColor(QPalette.Background, qcolor)
+    widget.setPalette(pal)
+
+
+def set_foreground_color(widget, qcolor):
+    '''
+    :param QWidget widget:
+    :param QColor qcolor:
+    '''
+    from pyvmmonitor_qt.qt.QtGui import QPalette
+    pal = widget.palette()
+
+    pal.setColor(QPalette.Foreground, qcolor)
+    widget.setPalette(pal)
 
 # # ======================================================================
 # # main -- manual testing
