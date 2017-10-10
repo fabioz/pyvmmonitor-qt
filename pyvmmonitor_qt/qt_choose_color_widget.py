@@ -8,7 +8,7 @@ from __future__ import division
 import functools
 import logging
 
-from pyvmmonitor_core import overrides
+from pyvmmonitor_core import abstract, overrides
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.props import PropsObject
 from pyvmmonitor_qt.qt.QtCore import Qt
@@ -105,62 +105,56 @@ class _LabelGradientAndInt(QWidget):
         return (value - limits[0]) / float(limits[1] - limits[0])
 
 
-class HSVWidget(QWidget):
+class _BaseColorsWidget(QWidget):
 
     def __init__(self, parent, model):
         from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
         QWidget.__init__(self, parent)
         self._in_expected_ui_change = 0
-
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
         assert model is not None
         self._model = model
 
-        hue_colors = [
-            (hue / 360., QColor.fromHsvF(hue / 360., 1.0, 1.0)) for hue in range(0, 360, 10)]
-        self._hue_widget = _LabelGradientAndInt(self, 'H', hue_colors, (0, 360))
-        self._sat_widget = _LabelGradientAndInt(self, 'S')
-        self._v_widget = _LabelGradientAndInt(self, 'V')
+        self._create_label_widgets()
 
-        self._hue_widget.on_value_changed.register(self._update_hue)
-        self._sat_widget.on_value_changed.register(self._update_sat)
-        self._v_widget.on_value_changed.register(self._update_v)
+        self._widget_0.on_value_changed.register(self._update_w0)
+        self._widget_1.on_value_changed.register(self._update_w1)
+        self._widget_2.on_value_changed.register(self._update_2)
 
-        self._layout.addWidget(self._hue_widget)
-        self._layout.addWidget(self._sat_widget)
-        self._layout.addWidget(self._v_widget)
+        self._layout.addWidget(self._widget_0)
+        self._layout.addWidget(self._widget_1)
+        self._layout.addWidget(self._widget_2)
 
         self._update_widgets()
         model.register_modified(self._on_model_changed)
+
+    @abstract
+    def _create_label_widgets(self):
+        pass
 
     @property
     def model(self):
         return self._model
 
-    def _update_hue(self, h):
-        assert 0 <= h <= 1
-        color = self._model.color
-        old_h, s, v = color.hueF(), color.saturationF(), color.valueF()
-        if old_h != h:
-            color = QColor.fromHsvF(h, s, v)
-            self._model.color = color
-
-    def _update_sat(self, s):
-        assert 0 <= s <= 1
-        color = self._model.color
-        h, old_s, v = color.hueF(), color.saturationF(), color.valueF()
-        if old_s != s:
-            color = QColor.fromHsvF(h, s, v)
-            self._model.color = color
-
-    def _update_v(self, v):
+    def _update_from_widget(self, v, index):
         assert 0 <= v <= 1
         color = self._model.color
-        h, s, old_v = color.hueF(), color.saturationF(), color.valueF()
-        if old_v != v:
-            color = QColor.fromHsvF(h, s, v)
+        old_values = self._get_color_params(color)
+        if old_values[index] != v:
+            new_values = list(old_values)
+            new_values[index] = v
+            color = self._create_color_from_params(new_values)
             self._model.color = color
+
+    def _update_w0(self, v):
+        self._update_from_widget(v, 0)
+
+    def _update_w1(self, v):
+        self._update_from_widget(v, 1)
+
+    def _update_2(self, v):
+        self._update_from_widget(v, 2)
 
     @_skip_on_expected_ui_change
     def _on_model_changed(self, obj, attrs):
@@ -170,17 +164,77 @@ class HSVWidget(QWidget):
     @_does_expected_ui_change
     def _update_widgets(self):
         color = self._model.color
-        h, s, v = color.hueF(), color.saturationF(), color.valueF()
-        self._sat_widget.set_gradient_stops(
-            [(x / 100, QColor.fromHsvF(h, x / 100., v)) for x in range(100)])
-        self._v_widget.set_gradient_stops(
-            [(x / 100, QColor.fromHsvF(h, s, x / 100.)) for x in range(100)])
+        h, s, v = self._get_color_params(color)
 
-        self._hue_widget.set_normalized_value(h)
-        self._sat_widget.set_normalized_value(s)
-        self._v_widget.set_normalized_value(v)
+        self._widget_0.set_normalized_value(h)
+        self._widget_1.set_normalized_value(s)
+        self._widget_2.set_normalized_value(v)
 
         self.update()
+
+
+class HSVWidget(_BaseColorsWidget):
+
+    def _create_label_widgets(self):
+        hue_colors = [
+            (hue / 360., QColor.fromHsvF(hue / 360., 1.0, 1.0)) for hue in range(361)]
+        self._widget_0 = _LabelGradientAndInt(self, 'H', hue_colors, (0, 360))
+        self._widget_1 = _LabelGradientAndInt(self, 'S')
+        self._widget_2 = _LabelGradientAndInt(self, 'V')
+
+    def _get_color_params(self, color):
+        return color.hueF(), color.saturationF(), color.valueF()
+
+    def _create_color_from_params(self, params):
+        return QColor.fromHsvF(*params)
+
+    @_does_expected_ui_change
+    def _update_widgets(self):
+        _BaseColorsWidget._update_widgets(self)
+        color = self._model.color
+        h, s, v = self._get_color_params(color)
+        self._widget_1.set_gradient_stops(
+            [(x / 100, QColor.fromHsvF(h, x / 100., v)) for x in range(101)])
+        self._widget_2.set_gradient_stops(
+            [(x / 100, QColor.fromHsvF(h, s, x / 100.)) for x in range(101)])
+
+    @property
+    def _hue_widget(self):  # Just for testing
+        return self._widget_0
+
+
+class RGBWidget(_BaseColorsWidget):
+
+    def _create_label_widgets(self):
+        colors = [
+            (c / 255., QColor.fromHsvF(c / 255., 1.0, 1.0)) for c in range(256)]
+        self._widget_0 = _LabelGradientAndInt(self, 'R', colors, (0, 255))
+        self._widget_1 = _LabelGradientAndInt(self, 'G', colors, (0, 255))
+        self._widget_2 = _LabelGradientAndInt(self, 'B', colors, (0, 255))
+
+    def _get_color_params(self, color):
+        return color.redF(), color.greenF(), color.blueF()
+
+    def _create_color_from_params(self, params):
+        return QColor.fromRgbF(*params)
+
+    @_does_expected_ui_change
+    def _update_widgets(self):
+        _BaseColorsWidget._update_widgets(self)
+        color = self._model.color
+        r, g, b = self._get_color_params(color)
+        self._widget_0.set_gradient_stops(
+            [(x / 255, QColor.fromRgbF(x / 255., g, b)) for x in range(256)])
+
+        self._widget_1.set_gradient_stops(
+            [(x / 255, QColor.fromRgbF(r, x / 255., b)) for x in range(256)])
+
+        self._widget_2.set_gradient_stops(
+            [(x / 255, QColor.fromRgbF(r, g, x / 255.)) for x in range(256)])
+
+    @property
+    def _r_widget(self):  # Just for testing
+        return self._widget_0
 
 
 class _ColorWheelWidget(QPixmapWidget):
@@ -199,14 +253,6 @@ class _ColorWheelWidget(QPixmapWidget):
     def _on_model_changed(self, obj, attrs):
         if 'color' in attrs:
             self.update()
-
-    @property
-    def color(self):
-        raise AssertionError('deprecated')
-
-    @color.setter
-    def color(self, color):
-        raise AssertionError('deprecated')
 
     @property
     def _pointer_size(self):
@@ -422,9 +468,6 @@ class ChooseColorWidget(QWidget):
     @property
     def color_wheel_widget(self):
         return self._color_wheel_widget
-
-    def set_color(self, qcolor):
-        raise AssertionError('deprecated')
 
 
 if __name__ == '__main__':

@@ -36,6 +36,35 @@ def test_hsv_widget(qtapi, hsv_widget):
 
 
 @pytest.fixture
+def rgb_widget():
+    from pyvmmonitor_qt.qt_choose_color_widget import RGBWidget
+    from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
+    rgbwidget = RGBWidget(parent=None, model=ChooseColorModel())
+    rgbwidget.show()
+    yield rgbwidget
+    rgbwidget.deleteLater()
+    rgbwidget = None
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)
+
+
+def test_rgb_widget(qtapi, rgb_widget):
+    from pyvmmonitor_qt.qt.QtGui import QColor
+    assert rgb_widget.model is not None
+
+    color = rgb_widget.model.color = QColor.fromRgbF(0.5, 0.5, 0.5)
+    # Note: qt doesn't really store the original float for the later redF (it's re-normalized
+    # based on 0-255.
+    assert rgb_widget._r_widget._slider.value == 255 * color.redF()
+
+    color = rgb_widget.model.color = QColor.fromRgbF(0.1, 0.5, 0.5)
+    assert rgb_widget._r_widget._slider.value == 255 * color.redF()
+
+    rgb_widget._r_widget._slider.value = 255 * .4
+    assert rgb_widget.model.color == QColor.fromRgbF(0.4, 0.5, 0.5)
+
+
+@pytest.fixture
 def choose_color_widget():
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorWidget
