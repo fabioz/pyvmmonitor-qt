@@ -1,3 +1,10 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
+
+
 def test_qt_imports():
     from pyvmmonitor_qt.qt import QtCore
     from pyvmmonitor_qt.qt import QtGui

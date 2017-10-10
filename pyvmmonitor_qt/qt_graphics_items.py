@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from contextlib import contextmanager
 
 from PySide.QtSvg import QGraphicsSvgItem
@@ -256,6 +261,7 @@ def _before_hover_leave_event(item, event):
 # _CustomGraphicsSquareItem
 # ==================================================================================================
 class _CustomGraphicsSquareItem(QGraphicsRectItem):
+
     def __init__(
             self,
             parent_item,
@@ -372,6 +378,7 @@ class _CustomGraphicsSquareItem(QGraphicsRectItem):
 # _CustomGraphicsSvgItem
 # ==================================================================================================
 class _CustomGraphicsSvgItem(QGraphicsSvgItem):
+
     def __init__(
         self,
         parent_item,
@@ -486,7 +493,7 @@ class _CustomGraphicsSvgItem(QGraphicsSvgItem):
                 painter.setBrush(self._brush)
                 painter.fillRect(QRectF(0, 0, width, height), self._brush)
 
-        #: :type painter: QPainter
+        # : :type painter: QPainter
         QGraphicsSvgItem.paint(self, painter, option, widget)
 
     def hoverEnterEvent(self, event):

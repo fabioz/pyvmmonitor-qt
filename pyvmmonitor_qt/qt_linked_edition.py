@@ -1,14 +1,20 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import functools
 
 from pyvmmonitor_core import abstract, overrides
 from pyvmmonitor_core.weak_utils import WeakList
 from pyvmmonitor_qt import compat, qt_utils
 from pyvmmonitor_qt.qt.QtCore import QObject
-from pyvmmonitor_qt.qt.QtWidgets import QSpinBox, QComboBox, QDoubleSpinBox
+from pyvmmonitor_qt.qt.QtWidgets import QComboBox, QDoubleSpinBox, QSpinBox
 from pyvmmonitor_qt.qt_event_loop import NextEventLoopUpdater
 
 
 def _does_expected_ui_change(func):
+
     @functools.wraps(func)
     def _expected_change(self, *args, **kwargs):
         self._in_expected_ui_change += 1
@@ -21,6 +27,7 @@ def _does_expected_ui_change(func):
 
 
 def _skip_on_expected_ui_change(func):
+
     @functools.wraps(func)
     def _skip_on_change(self, *args, **kwargs):
         if self._in_expected_ui_change:
@@ -31,6 +38,7 @@ def _skip_on_expected_ui_change(func):
 
 
 def _does_expected_data_change(func):
+
     @functools.wraps(func)
     def _expected_change(self, *args, **kwargs):
         self._in_expected_data_change += 1
@@ -43,6 +51,7 @@ def _does_expected_data_change(func):
 
 
 def _skip_on_expected_data_change(func):
+
     @functools.wraps(func)
     def _skip_on_change(self, *args, **kwargs):
         if self._in_expected_data_change:

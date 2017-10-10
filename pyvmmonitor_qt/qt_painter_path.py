@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 
 
 def create_painter_path_from_points(points, clockwise=None):

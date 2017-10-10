@@ -1,6 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import weakref
 
 from pyvmmonitor_core.callback import Callback

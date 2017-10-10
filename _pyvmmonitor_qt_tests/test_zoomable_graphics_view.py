@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import pytest
 
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport

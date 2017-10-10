@@ -1,6 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from pyvmmonitor_qt.custom_close_tab_widget import CustomCloseTabWidget
 from pyvmmonitor_qt.pytest_plugin import qtapi
 from pyvmmonitor_qt.qt.QtWidgets import QLabel
@@ -32,6 +34,7 @@ def test_custom_close_tab_widget(qtapi):
     def on_remove(i):
         custom.removeTab(i)
     custom.on_remove_requested.register(on_remove)
+
 
 #     qtapi.d()
     while custom.count() > 0:

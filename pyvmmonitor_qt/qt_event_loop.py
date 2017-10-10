@@ -1,8 +1,13 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import threading
 
 from pyvmmonitor_core import compat
 from pyvmmonitor_core.log_utils import get_logger
-from pyvmmonitor_qt.qt.QtCore import QObject, QEvent
+from pyvmmonitor_qt.qt.QtCore import QEvent, QObject
 
 logger = get_logger(__name__)
 

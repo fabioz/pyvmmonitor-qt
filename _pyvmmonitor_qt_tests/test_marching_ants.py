@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from pyvmmonitor_qt import qt_event_loop
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 

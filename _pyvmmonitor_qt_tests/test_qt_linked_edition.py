@@ -1,5 +1,10 @@
-from collections import OrderedDict
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import sys
+from collections import OrderedDict
 
 import pytest
 

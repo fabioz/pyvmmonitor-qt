@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from pyvmmonitor_core import implements, interface
 from pyvmmonitor_core.commands_manager import ICommandsManager
 
@@ -67,8 +72,8 @@ CTRL_ALT_MOUSE_WHEEL_DOWN = MouseShortcut('Ctrl', 'Alt', MouseShortcut.MOUSE_WHE
 ALT_MOUSE_WHEEL_UP = MouseShortcut('Alt', MouseShortcut.MOUSE_WHEEL_UP)
 ALT_MOUSE_WHEEL_DOWN = MouseShortcut('Alt', MouseShortcut.MOUSE_WHEEL_DOWN)
 
-
 # Private API from now On.
+
 
 class _CustomActivatedSlot(object):
 
@@ -202,7 +207,7 @@ class _Scheme(object):
 
     def _on_activated_command_info(self, command_info):
         if command_info.enabled:
-            #: :type commands_manager: ICommandsManager
+            # : :type commands_manager: ICommandsManager
             commands_manager = self._commands_manager()
             commands_manager.activate(command_info.command_id)
 

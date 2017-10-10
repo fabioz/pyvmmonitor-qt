@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.disposable import Disposable
 

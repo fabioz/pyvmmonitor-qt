@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import gc
 
 from pyvmmonitor_core import is_frozen
@@ -18,7 +23,7 @@ class GarbageCollector(object):
             flags = (
                 gc.DEBUG_COLLECTABLE |
                 gc.DEBUG_UNCOLLECTABLE |
-                gc.DEBUG_SAVEALL   # i.e.: put in gc.garbage!
+                gc.DEBUG_SAVEALL  # i.e.: put in gc.garbage!
             )
 
             try:

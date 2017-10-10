@@ -1,6 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 
 from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtWidgets import QGraphicsView
@@ -257,6 +259,7 @@ class BackgroundPainter(object):
 #                 use_rect.height() + (size * 2),
 #                 brush
 #             )
+
 
         # Restore the previous transform
         painter.setTransform(curr_transform, False)

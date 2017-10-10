@@ -1,6 +1,11 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import contextlib
 
-from pyvmmonitor_core.nodes_tree import NodesTree, Node
+from pyvmmonitor_core.nodes_tree import Node, NodesTree
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.qt import QtCore

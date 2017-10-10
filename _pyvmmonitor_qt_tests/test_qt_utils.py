@@ -1,6 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import io
 import time
 import weakref
@@ -8,10 +10,8 @@ import weakref
 from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_qt import compat
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
-from pyvmmonitor_qt.qt.QtGui import QStandardItemModel, QStandardItem
-from pyvmmonitor_qt.qt_utils import execute_after_millis,\
-    count_widget_children
-
+from pyvmmonitor_qt.qt.QtGui import QStandardItem, QStandardItemModel
+from pyvmmonitor_qt.qt_utils import count_widget_children, execute_after_millis
 
 logger = get_logger(__name__)
 

@@ -1,3 +1,10 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
+
+
 def test_qt_transform_equals():
     from pyvmmonitor_qt.qt.QtGui import QTransform
     qtransform1 = QTransform()

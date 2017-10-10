@@ -1,4 +1,7 @@
 '''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
 
 To use:
 

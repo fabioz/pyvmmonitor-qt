@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import sys
 import weakref
 
@@ -44,7 +49,7 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
             activated.append('on_copy')
 
         qt_commands_manager = create_default_qt_commands_manager(main_window)
-        #: :type qt_commands_manager: _DefaultQtShortcutsManager
+        # : :type qt_commands_manager: _DefaultQtShortcutsManager
 
         qt_commands_manager.register_command('copy', 'Copy')
         qt_commands_manager.set_command_handler('copy', on_copy)
@@ -113,7 +118,7 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
             activated.append('on_zoom_out')
 
         qt_commands_manager = create_default_qt_commands_manager(main_window)
-        #: :type qt_commands_manager: _DefaultQtShortcutsManager
+        # : :type qt_commands_manager: _DefaultQtShortcutsManager
 
         qt_commands_manager.register_command('zoom_out', 'Zoom Out')
         qt_commands_manager.set_command_handler('zoom_out', on_zoom_out)

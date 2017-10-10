@@ -1,6 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from __future__ import unicode_literals
 
 import sys
@@ -118,7 +120,6 @@ class QtWeakMethod(object):
         return not self == o
 
 
-
 # ==================================================================================================
 # QTreeView helpers
 # ==================================================================================================
@@ -233,6 +234,8 @@ def count_items(widget):
 
 if qt_api == 'pyside':
     try:
+
+
         from PySide import shiboken
     except ImportError:
         import shiboken
@@ -422,7 +425,6 @@ def show_message(
             icon = QMessageBox.NoIcon
 
     if not is_in_main_thread():
-
 
         # Important: if we're not in the main thread, we have to schedule to run it later
         # (in the UI thread).

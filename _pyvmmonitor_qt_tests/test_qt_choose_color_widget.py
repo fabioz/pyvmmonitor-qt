@@ -1,3 +1,8 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
@@ -25,4 +30,3 @@ def test_choose_color_widget(qtapi):
 
     assert color_wheel_widget.saturation_from_point(center[0], center[1]) == 0.0
     assert color_wheel_widget.saturation_from_point(pixmap_size.width(), 0.0) == 1.0
-

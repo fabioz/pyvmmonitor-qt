@@ -1,7 +1,11 @@
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
 import sys
 
 from pyvmmonitor_qt.stylesheet import apply_default_stylesheet
-
 
 _app = None
 

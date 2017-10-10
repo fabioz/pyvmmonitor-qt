@@ -1,7 +1,8 @@
-# License: LGPL
-#
-# Copyright: Brainwy Software
 '''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+
 This module provides a Pythonic API to a QTreeView using a QStandardItemModel.
 
 Nodes always have an id (which is used to access the node in a fast way and by

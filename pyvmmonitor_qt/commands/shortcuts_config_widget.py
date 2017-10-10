@@ -1,4 +1,10 @@
-from __future__ import unicode_literals, absolute_import
+'''
+License: LGPL
+
+Copyright: Brainwy Software Ltda
+'''
+from __future__ import absolute_import, unicode_literals
+
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
 
 
