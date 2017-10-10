@@ -2,53 +2,15 @@ from __future__ import division
 
 import logging
 
+from pyvmmonitor_core import overrides
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
 from pyvmmonitor_qt.qt_app import obtain_qapp
+from pyvmmonitor_qt.qt_pixmap_widget import QPixmapWidget
 
 logger = logging.getLogger(__name__)
 
 
-class _QPixmapWidget(QWidget):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pixmap = None
-        self._last_size = None
-
-    def paintEvent(self, ev):
-        from pyvmmonitor_qt.qt_utils import painter_on
-        if self._pixmap is not None:
-            size = self._pixmap.width(), self._pixmap.height()
-
-        if self._pixmap is None or size != self._last_size:
-            self._create_pixmap()
-
-            if self._pixmap is None:
-                logger.critical('Pixmap not created in: %s' % (self,))
-                self._last_size = None
-                return
-
-            size = self._pixmap.width(), self._pixmap.height()
-            self._last_size = size
-
-        with painter_on(self, False) as painter:
-            diff = (self._w - size[0]) / 2, (self._h - size[1]) / 2
-            painter.drawPixmap(int(diff[0]), int(diff[1]), self._pixmap)
-
-    @property
-    def _w(self):
-        return self.width()
-
-    @property
-    def _h(self):
-        return self.height()
-
-    @property
-    def _center(self):
-        return self.width() / 2, self.height() / 2
-
-
-class _ColorWheelWidget(_QPixmapWidget):
+class _ColorWheelWidget(QPixmapWidget):
 
     def __init__(self, *args, **kwargs):
         from pyvmmonitor_core.callback import Callback
@@ -84,16 +46,19 @@ class _ColorWheelWidget(_QPixmapWidget):
             pointer_size += 1
         return pointer_size
 
+    @overrides(QPixmapWidget.paintEvent)
     def paintEvent(self, ev):
         from pyvmmonitor_qt.qt_utils import painter_on
         from pyvmmonitor_qt.qt.QtCore import Qt
         from pyvmmonitor_core import math_utils
         import math
 
-        _QPixmapWidget.paintEvent(self, ev)
+        QPixmapWidget.paintEvent(self, ev)
         color = self._color
-        if color is None:
+        if color is None or self._pixmap is None:
             return
+
+        # After the pixmap is drawn, draw the selected hue/saturation.
         hue, saturation = color.hsvHueF(), color.hsvSaturationF()
         size = self._pixmap.width()
         center = self._center
@@ -113,9 +78,10 @@ class _ColorWheelWidget(_QPixmapWidget):
             painter.setPen(Qt.black)
             painter.drawEllipse(*rect2)
 
+    @overrides(QPixmapWidget._create_pixmap)
     def _create_pixmap(self):
         hue_pixmap = self._create_hue_pixmap()
-        self._pixmap = self._lighten_with_alpha(hue_pixmap)
+        return self._lighten_with_alpha(hue_pixmap)
 
     def _lighten_with_alpha(self, hue_pixmap):
         from pyvmmonitor_qt.qt.QtGui import QPixmap
@@ -206,33 +172,12 @@ class _ColorWheelWidget(_QPixmapWidget):
         degrees = math_utils.radians_to_0_360_degrees(angle)
         return degrees / 360.
 
+    @overrides(QPixmapWidget._on_mouse_pos)
     def _on_mouse_pos(self, pos):
         self._last_pos = pos
         saturation = self.saturation_from_point(*pos)
         hue = self.hue_from_point(*pos)
         self.on_hue_saturation_selected(hue, saturation)
-
-    def mousePressEvent(self, ev):
-        from pyvmmonitor_qt.qt.QtCore import Qt
-        if ev.button() == Qt.LeftButton:
-            pos = ev.pos()
-            pos = pos.x(), pos.y()
-            self._on_mouse_pos(pos)
-
-        return QWidget.mousePressEvent(self, ev)
-
-    def mouseMoveEvent(self, ev):
-        if self._last_pos is not None:
-            pos = ev.pos()
-            pos = pos.x(), pos.y()
-            self._last_pos = pos
-            self._on_mouse_pos(pos)
-
-        return QWidget.mouseMoveEvent(self, ev)
-
-    def mouseReleaseEvent(self, ev):
-        self._last_pos = None
-        return QWidget.mouseReleaseEvent(self, ev)
 
 
 class _SelectedColorWidget(QWidget):
@@ -300,6 +245,7 @@ class ChooseColorWidget(QWidget):
         self._color = qcolor
         self._selected_color_widget.color = qcolor
         self._color_wheel_widget.color = qcolor
+
 
 if __name__ == '__main__':
     qapp = obtain_qapp()

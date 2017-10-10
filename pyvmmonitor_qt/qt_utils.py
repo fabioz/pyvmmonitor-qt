@@ -1043,19 +1043,8 @@ def set_painter_antialiased(painter, antialias, widget):
 
 
 def create_painter_path_from_points(points, clockwise=None):
-    if clockwise is not None:
-        from pyvmmonitor_core import math_utils
-        if clockwise != math_utils.is_clockwise(points):
-            points = reversed(points)
-    from pyvmmonitor_qt.qt.QtGui import QPainterPath
-    path = QPainterPath()
-    it = iter(points)
-    first = next(it)
-    path.moveTo(*first)
-    for p in it:
-        path.lineTo(*p)
-    path.lineTo(*first)  # Close
-    return path
+    from pyvmmonitor_qt import qt_painter_path
+    return qt_painter_path.create_painter_path_from_points(points, clockwise)
 
 
 def create_qpolygon_from_points(points, clockwise=None):
