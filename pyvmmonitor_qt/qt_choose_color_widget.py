@@ -28,7 +28,7 @@ WIDTH_VALUE = 70
 
 class _LabelGradientAndInt(QWidget):
 
-    def __init__(self, parent, text, gradient_stops, limits=(0, 100)):
+    def __init__(self, parent, text, gradient_stops=None, limits=(0, 100)):
         from pyvmmonitor_qt.qt.QtWidgets import QLabel
         from pyvmmonitor_qt.qt_gradient_slider import QGradientSlider
         from pyvmmonitor_qt.qt.QtWidgets import QSpinBox
@@ -69,8 +69,8 @@ class _LabelGradientAndInt(QWidget):
         self.set_gradient_stops(gradient_stops)
 
     def set_gradient_stops(self, gradient_stops):
-        assert gradient_stops is not None
-        self._slider.set_gradient_stops(gradient_stops)
+        if gradient_stops is not None:
+            self._slider.set_gradient_stops(gradient_stops)
 
     def set_normalized_value(self, v):
         self._slider.normalized_value = v
@@ -438,32 +438,23 @@ class _ColorWheelWidget(QPixmapWidget):
 
 class _SelectedColorWidget(QWidget):
 
-    def __init__(self, *args, **kwargs):
-        QWidget.__init__(self, *args, **kwargs)
-        self._color = None
+    def __init__(self, parent, model):
+        QWidget.__init__(self, parent)
+        self._model = model
+        model.register_modified(self._on_modified)
 
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, color):
-        '''
-        :param QColor color:
-        '''
-        self._color = color
-        self.update()
+    def _on_modified(self, obj, attrs):
+        if 'color' in attrs:
+            self.update()
 
     def paintEvent(self, ev):
-        if self._color is not None:
-            from pyvmmonitor_qt.qt_utils import painter_on
-            with painter_on(self, False) as painter:
-                radius = self.width() / 5
-                painter.setBrush(self._color)
-                size = self.width() - 2
-                painter.drawRoundedRect(0, 0, size, size, radius, radius)
-        else:
-            super().paintEvent(ev)
+        color = self._model.color
+        from pyvmmonitor_qt.qt_utils import painter_on
+        with painter_on(self, False) as painter:
+            radius = self.width() / 5
+            painter.setBrush(color)
+            size = self.width() - 2
+            painter.drawRoundedRect(0, 0, size, size, radius, radius)
 
 
 class ChooseColorModel(PropsObject):
@@ -486,14 +477,15 @@ class ChooseColorWidget(QWidget):
 
         self._model = model
 
-        self._selected_color_widget = _SelectedColorWidget(self)
+        self._selected_color_widget = _SelectedColorWidget(self, model)
         self._selected_color_widget.setFixedWidth(42)
 
         self._tab_widget = QTabWidget(self)
 
-        self._color_wheel_widget = _ColorWheelWidget(self._tab_widget, self._model)
+        self._color_wheel_widget = _ColorWheelWidget(self._tab_widget, model)
         self._color_wheel_widget.setFixedSize(QSize(200, 200))
         self._tab_widget.addTab(self._color_wheel_widget, 'Wheel')
+
         label = QLabel(self._tab_widget)
         self._tab_widget.addTab(label, 'HSV')
 
