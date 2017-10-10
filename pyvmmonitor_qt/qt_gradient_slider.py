@@ -73,12 +73,35 @@ class QGradientSlider(QPixmapWidget):
 
     def __init__(self, *args, **kwargs):
         from pyvmmonitor_core.callback import Callback
+        from pyvmmonitor_qt.qt.QtGui import QColor
+        from pyvmmonitor_qt.qt.QtCore import Qt
         QPixmapWidget.__init__(self, *args, **kwargs)
         self._props = _QGradientSliderProps()
         self._props.register_modified(self._on_modified)
         self._triangle_path = None
         self._triangle_size = None
+        # Called with on_value(self, value)
         self.on_value = Callback()
+
+        gradient_stops = [
+            (0, QColor(Qt.black)),
+            (1, QColor(Qt.red)),
+        ]
+        self.set_gradient_stops(gradient_stops)
+
+    def set_gradient_stops(self, gradient_stops):
+        from pyvmmonitor_qt.qt.QtGui import QColor
+        last_i = -1
+        for i, val in gradient_stops:
+            assert 0 <= i <= 1, 'Expected %s to be 0 < i < 1' % (i,)
+            assert i > last_i
+            assert val.__class__ == QColor
+            i = last_i
+
+        self._gradient_stops = gradient_stops
+        self._last_widget_size = None  # Force to regenerate
+        self._pixmap = None  # Force to regenerate
+        self.update()
 
     @property
     def normalized_value(self):
@@ -88,6 +111,10 @@ class QGradientSlider(QPixmapWidget):
         if v > 1:
             v = 1
         return v
+
+    @normalized_value.setter
+    def normalized_value(self, value):
+        self.value = self.min_value + ((self.max_value - self.min_value) * value)
 
     def _on_modified(self, obj, attrs):
         if 'value' in attrs:
@@ -115,8 +142,7 @@ class QGradientSlider(QPixmapWidget):
 
         pixmap = QPixmap(w, h)
         gradient = QLinearGradient(0, h // 2, w, h // 2)
-        gradient.setColorAt(0, Qt.black)
-        gradient.setColorAt(1, Qt.red)
+        gradient.setStops(self._gradient_stops)
         with painter_on(pixmap, True) as painter:
             painter.setBrush(QBrush(gradient))
             painter.setPen(Qt.NoPen)

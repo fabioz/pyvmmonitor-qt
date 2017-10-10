@@ -5,44 +5,208 @@ Copyright: Brainwy Software Ltda
 '''
 from __future__ import division
 
+import functools
 import logging
 
 from pyvmmonitor_core import overrides
-from pyvmmonitor_qt.qt.QtWidgets import QWidget
+from pyvmmonitor_core.callback import Callback
+from pyvmmonitor_core.props import PropsObject
+from pyvmmonitor_qt.qt.QtCore import Qt
+from pyvmmonitor_qt.qt.QtGui import QColor
+from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy, QWidget
 from pyvmmonitor_qt.qt_app import obtain_qapp
 from pyvmmonitor_qt.qt_pixmap_widget import QPixmapWidget
 
 logger = logging.getLogger(__name__)
 
 
+def _does_expected_ui_change(func):
+
+    @functools.wraps(func)
+    def _expected_change(self, *args, **kwargs):
+        self._in_expected_ui_change += 1
+        try:
+            func(self, *args, **kwargs)
+        finally:
+            self._in_expected_ui_change -= 1
+
+    return _expected_change
+
+
+def _skip_on_expected_ui_change(func):
+
+    @functools.wraps(func)
+    def _skip_on_change(self, *args, **kwargs):
+        if self._in_expected_ui_change:
+            return
+        func(self, *args, **kwargs)
+
+    return _skip_on_change
+
+
+class _LabelGradientAndInt(QWidget):
+
+    def __init__(self, parent, text, gradient_stops=None, limits=(0, 100)):
+        from pyvmmonitor_qt.qt.QtWidgets import QLabel
+        from pyvmmonitor_qt.qt_gradient_slider import QGradientSlider
+        from pyvmmonitor_qt.qt.QtWidgets import QSpinBox
+        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+        QWidget.__init__(self, parent)
+
+        self.on_value_changed = Callback()
+
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
+        self.setLayout(self._layout)
+
+        self._label = QLabel(self)
+        self._label.setText(text)
+        self._label.setFixedWidth(30)
+
+        self._limits = limits
+
+        self._slider = QGradientSlider(self)
+        self._slider.min_value = limits[0]
+        self._slider.max_value = limits[1]
+        self._slider.on_value.register(self._on_gradient_value_changed)
+
+        self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._slider.setFixedHeight(20)
+
+        self._spin_box = QSpinBox(self)
+        self._spin_box.setMinimum(limits[0])
+        self._spin_box.setMaximum(limits[1])
+        self._spin_box.valueChanged.connect(self._on_spin_value_changed)
+
+        self._layout.addWidget(self._label)
+        self._layout.addWidget(self._slider)
+        self._layout.addWidget(self._spin_box)
+
+        self.set_gradient_stops(gradient_stops)
+
+    def set_gradient_stops(self, gradient_stops):
+        if gradient_stops is not None:
+            self._slider.set_gradient_stops(gradient_stops)
+
+    def set_normalized_value(self, v):
+        self._slider.normalized_value = v
+        not_normalized = round(self._slider.value)  # Round to nearest int
+        self._spin_box.setValue(not_normalized)
+
+    def _on_gradient_value_changed(self, slider, value):
+        self.on_value_changed(self._normalize(value))
+
+    def _on_spin_value_changed(self, value):
+        self.on_value_changed(self._normalize(value))
+
+    def _normalize(self, value):
+        limits = self._limits
+        return (value - limits[0]) / float(limits[1] - limits[0])
+
+
+class HSVWidget(QWidget):
+
+    def __init__(self, parent, model):
+        from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
+        QWidget.__init__(self, parent)
+        self._in_expected_ui_change = 0
+
+        self._layout = QVBoxLayout()
+        self.setLayout(self._layout)
+        assert model is not None
+        self._model = model
+
+        hue_colors = [
+            (hue / 360., QColor.fromHsvF(hue / 360., 1.0, 1.0)) for hue in range(0, 360, 10)]
+        self._hue_widget = _LabelGradientAndInt(self, 'H', hue_colors, (0, 360))
+        self._sat_widget = _LabelGradientAndInt(self, 'S')
+        self._v_widget = _LabelGradientAndInt(self, 'V')
+
+        self._hue_widget.on_value_changed.register(self._update_hue)
+        self._sat_widget.on_value_changed.register(self._update_sat)
+        self._v_widget.on_value_changed.register(self._update_v)
+
+        self._layout.addWidget(self._hue_widget)
+        self._layout.addWidget(self._sat_widget)
+        self._layout.addWidget(self._v_widget)
+
+        self._update_widgets()
+        model.register_modified(self._on_model_changed)
+
+    @property
+    def model(self):
+        return self._model
+
+    def _update_hue(self, h):
+        assert 0 <= h <= 1
+        color = self._model.color
+        old_h, s, v = color.hueF(), color.saturationF(), color.valueF()
+        if old_h != h:
+            color = QColor.fromHsvF(h, s, v)
+            self._model.color = color
+
+    def _update_sat(self, s):
+        assert 0 <= s <= 1
+        color = self._model.color
+        h, old_s, v = color.hueF(), color.saturationF(), color.valueF()
+        if old_s != s:
+            color = QColor.fromHsvF(h, s, v)
+            self._model.color = color
+
+    def _update_v(self, v):
+        assert 0 <= v <= 1
+        color = self._model.color
+        h, s, old_v = color.hueF(), color.saturationF(), color.valueF()
+        if old_v != v:
+            color = QColor.fromHsvF(h, s, v)
+            self._model.color = color
+
+    @_skip_on_expected_ui_change
+    def _on_model_changed(self, obj, attrs):
+        if 'color' in attrs:
+            self._update_widgets()
+
+    @_does_expected_ui_change
+    def _update_widgets(self):
+        color = self._model.color
+        h, s, v = color.hueF(), color.saturationF(), color.valueF()
+        self._sat_widget.set_gradient_stops(
+            [(x / 100, QColor.fromHsvF(h, x / 100., v)) for x in range(100)])
+        self._v_widget.set_gradient_stops(
+            [(x / 100, QColor.fromHsvF(h, s, x / 100.)) for x in range(100)])
+
+        self._hue_widget.set_normalized_value(h)
+        self._sat_widget.set_normalized_value(s)
+        self._v_widget.set_normalized_value(v)
+
+        self.update()
+
+
 class _ColorWheelWidget(QPixmapWidget):
 
-    def __init__(self, *args, **kwargs):
-        from pyvmmonitor_core.callback import Callback
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent, model):
+        super().__init__(parent)
+        self._model = model
 
-        # Called with on_hue_saturation_selected(hue, saturation)
-        # 0 <= hue <= 1
-        # 0 <= saturation <= 1
-        self.on_hue_saturation_selected = Callback()
         self._last_pos = None
-        self._color = None
+        self._model.register_modified(self._on_model_changed)
 
     @property
     def _wheel_size(self):
         return self._w - int(self._pointer_size * 1.3)
 
+    def _on_model_changed(self, obj, attrs):
+        if 'color' in attrs:
+            self.update()
+
     @property
     def color(self):
-        return self._color
+        raise AssertionError('deprecated')
 
     @color.setter
     def color(self, color):
-        '''
-        :param QColor color:
-        '''
-        self._color = color
-        self.update()
+        raise AssertionError('deprecated')
 
     @property
     def _pointer_size(self):
@@ -54,12 +218,11 @@ class _ColorWheelWidget(QPixmapWidget):
     @overrides(QPixmapWidget.paintEvent)
     def paintEvent(self, ev):
         from pyvmmonitor_qt.qt_utils import painter_on
-        from pyvmmonitor_qt.qt.QtCore import Qt
         from pyvmmonitor_core import math_utils
         import math
 
         QPixmapWidget.paintEvent(self, ev)
-        color = self._color
+        color = self._model.color
         if color is None or self._pixmap is None:
             return
 
@@ -90,9 +253,7 @@ class _ColorWheelWidget(QPixmapWidget):
 
     def _lighten_with_alpha(self, hue_pixmap):
         from pyvmmonitor_qt.qt.QtGui import QPixmap
-        from pyvmmonitor_qt.qt.QtCore import Qt
         from pyvmmonitor_qt.qt_utils import painter_on
-        from pyvmmonitor_qt.qt.QtGui import QColor
         from pyvmmonitor_qt.qt.QtGui import QRadialGradient
         from pyvmmonitor_qt.qt.QtGui import QBrush
 
@@ -126,8 +287,6 @@ class _ColorWheelWidget(QPixmapWidget):
         Create a simple hue pixmap where we change the hue in a conical gradient.
         '''
         from pyvmmonitor_qt.qt.QtGui import QPixmap
-        from pyvmmonitor_qt.qt.QtCore import Qt
-        from pyvmmonitor_qt.qt.QtGui import QColor
         from pyvmmonitor_qt.qt.QtGui import QBrush
         from pyvmmonitor_qt.qt_utils import painter_on
         from pyvmmonitor_qt.qt.QtGui import QConicalGradient
@@ -182,7 +341,11 @@ class _ColorWheelWidget(QPixmapWidget):
         self._last_pos = pos
         saturation = self.saturation_from_point(*pos)
         hue = self.hue_from_point(*pos)
-        self.on_hue_saturation_selected(hue, saturation)
+
+        # Update the model for the new saturation / hue.
+        value = self._model.color.valueF()
+        color = QColor.fromHsvF(hue, saturation, value)
+        self._model.color = color
 
 
 class _SelectedColorWidget(QWidget):
@@ -215,41 +378,53 @@ class _SelectedColorWidget(QWidget):
             super().paintEvent(ev)
 
 
+class ChooseColorModel(PropsObject):
+
+    PropsObject.declare_props(color=QColor(Qt.red))
+
+
 class ChooseColorWidget(QWidget):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent, model):
+        '''
+        :param parent:
+        :param ChooseColorModel model:
+        '''
         from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
         from pyvmmonitor_qt.qt.QtCore import QSize
-        super(ChooseColorWidget, self).__init__(*args, **kwargs)
+        from pyvmmonitor_qt.qt.QtWidgets import QTabWidget
+        from pyvmmonitor_qt.qt.QtWidgets import QLabel
+        super(ChooseColorWidget, self).__init__(parent=parent)
+
+        self._model = model
 
         self._selected_color_widget = _SelectedColorWidget(self)
         self._selected_color_widget.setFixedWidth(42)
 
-        self._color_wheel_widget = _ColorWheelWidget(self)
+        self._tab_widget = QTabWidget(self)
+
+        self._color_wheel_widget = _ColorWheelWidget(self._tab_widget, self._model)
         self._color_wheel_widget.setFixedSize(QSize(200, 200))
+        self._tab_widget.addTab(self._color_wheel_widget, 'Wheel')
+        label = QLabel(self._tab_widget)
+        self._tab_widget.addTab(label, 'HSV')
 
         layout = QHBoxLayout(self)
         self.setLayout(layout)
 
         layout.addWidget(self._selected_color_widget)
-        layout.addWidget(self._color_wheel_widget)
+        layout.addWidget(self._tab_widget)
 
-        self._color_wheel_widget.on_hue_saturation_selected.register(
-            self._on_hue_saturation_selected)
-
-    def _on_hue_saturation_selected(self, hue, saturation):
-        from pyvmmonitor_qt.qt.QtGui import QColor
-        color = QColor.fromHsvF(hue, saturation, 1.0)
-        self.set_color(color)
+    @property
+    def model(self):
+        return self._model
 
     @property
     def color_wheel_widget(self):
         return self._color_wheel_widget
 
     def set_color(self, qcolor):
-        self._color = qcolor
-        self._selected_color_widget.color = qcolor
-        self._color_wheel_widget.color = qcolor
+        raise AssertionError('deprecated')
 
 
 if __name__ == '__main__':

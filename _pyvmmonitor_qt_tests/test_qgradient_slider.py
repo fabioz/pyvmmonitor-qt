@@ -21,10 +21,18 @@ def qgradient_slider():
 def test_qgradient_slider(qtapi, qgradient_slider, capsys):
     import logging
     from pyvmmonitor_core.log_utils import logger_level
+    from pyvmmonitor_qt.qt.QtGui import QColor
+    from pyvmmonitor_qt.qt.QtCore import Qt
     qgradient_slider.show()
     assert qgradient_slider.value == 0
     assert qgradient_slider.min_value == 0
     assert qgradient_slider.max_value == 100
+
+    qgradient_slider.set_gradient_stops([
+        (0, QColor(Qt.red)),
+        (0.5, QColor(Qt.yellow)),
+        (1.0, QColor(Qt.blue)),
+    ])
 
     values = []
 

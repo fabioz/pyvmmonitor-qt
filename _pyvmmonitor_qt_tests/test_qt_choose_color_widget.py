@@ -3,22 +3,58 @@ License: LGPL
 
 Copyright: Brainwy Software Ltda
 '''
+import pytest
+
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-def test_choose_color_widget(qtapi):
+@pytest.fixture
+def hsv_widget():
+    from pyvmmonitor_qt.qt_choose_color_widget import HSVWidget
+    from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
+    hsvwidget = HSVWidget(parent=None, model=ChooseColorModel())
+    hsvwidget.show()
+    yield hsvwidget
+    hsvwidget.deleteLater()
+    hsvwidget = None
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)
+
+
+def test_hsv_widget(qtapi, hsv_widget):
+    from pyvmmonitor_qt.qt.QtGui import QColor
+    assert hsv_widget.model is not None
+
+    hsv_widget.model.color = QColor.fromHsvF(0.5, 0.5, 0.5)
+    assert hsv_widget._hue_widget._slider.value == 360 * .5
+
+    hsv_widget.model.color = QColor.fromHsvF(0.1, 0.5, 0.5)
+    assert hsv_widget._hue_widget._slider.value == 360 * .1
+
+    hsv_widget._hue_widget._slider.value = 360 * .4
+    assert hsv_widget.model.color == QColor.fromHsvF(0.4, 0.5, 0.5)
+
+
+@pytest.fixture
+def choose_color_widget():
+    from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorWidget
     from pyvmmonitor_qt.qt_event_loop import process_events
-    from pyvmmonitor_qt.qt.QtGui import QColor
-    choose_color_widget = ChooseColorWidget()
+    choose_color_widget = ChooseColorWidget(parent=None, model=ChooseColorModel())
     choose_color_widget.show()
+    yield choose_color_widget
+    choose_color_widget.deleteLater()
+    choose_color_widget = None
+    process_events(collect=True)
+
+
+def test_choose_color_widget(qtapi, choose_color_widget):
+    from pyvmmonitor_qt.qt_event_loop import process_events
 
     process_events()
     color_wheel_widget = choose_color_widget.color_wheel_widget
     choose_color_widget.color_wheel_widget.repaint()
     pixmap_size = choose_color_widget.color_wheel_widget._pixmap.size()
-
-    choose_color_widget.set_color(QColor(255, 0, 0))
 
     # Just checking that the color wheel was built on paint
     assert pixmap_size.width() > 30
