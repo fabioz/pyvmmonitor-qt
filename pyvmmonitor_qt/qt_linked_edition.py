@@ -13,7 +13,7 @@ from pyvmmonitor_qt.qt.QtWidgets import QComboBox, QDoubleSpinBox, QSpinBox
 from pyvmmonitor_qt.qt_event_loop import NextEventLoopUpdater
 
 
-def _does_expected_ui_change(func):
+def does_expected_ui_change(func):
 
     @functools.wraps(func)
     def _expected_change(self, *args, **kwargs):
@@ -26,7 +26,7 @@ def _does_expected_ui_change(func):
     return _expected_change
 
 
-def _skip_on_expected_ui_change(func):
+def skip_on_expected_ui_change(func):
 
     @functools.wraps(func)
     def _skip_on_change(self, *args, **kwargs):
@@ -37,7 +37,7 @@ def _skip_on_expected_ui_change(func):
     return _skip_on_change
 
 
-def _does_expected_data_change(func):
+def does_expected_data_change(func):
 
     @functools.wraps(func)
     def _expected_change(self, *args, **kwargs):
@@ -50,7 +50,7 @@ def _does_expected_data_change(func):
     return _expected_change
 
 
-def _skip_on_expected_data_change(func):
+def skip_on_expected_data_change(func):
 
     @functools.wraps(func)
     def _skip_on_change(self, *args, **kwargs):
@@ -79,7 +79,7 @@ class BaseLinkedEdition(object):
         self.data = WeakList()
         self._updater = NextEventLoopUpdater(self.update_ui)
 
-    @_does_expected_ui_change
+    @does_expected_ui_change
     def update_ui(self):
         if self.qwidget is not None:
             if not qt_utils.is_qobject_alive(self.qwidget):
@@ -104,12 +104,12 @@ class BaseLinkedEdition(object):
             for d in self.data:
                 d.unregister_modified(self._on_data_changed)
 
-    @_skip_on_expected_data_change
+    @skip_on_expected_data_change
     def _on_data_changed(self, obj, attrs):
         if self._link_to_attribute in attrs:
             self._updater.invalidate()
 
-    @_does_expected_data_change
+    @does_expected_data_change
     def _set_attr(self, value):
         for obj in self.data:
             try:
@@ -190,7 +190,7 @@ class IntEdition(BaseLinkedEdition):
             self.qwidget.setText(str(getattr(data, self._link_to_attribute)))
             return
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_text_changed(self, value):
         try:
             value = int(value)
@@ -199,7 +199,7 @@ class IntEdition(BaseLinkedEdition):
 
         self._set_attr(value)
 
-    @_does_expected_data_change
+    @does_expected_data_change
     def _apply_delta(self, delta):
         for obj in self.data:
             setattr(obj, self._link_to_attribute, getattr(obj, self._link_to_attribute) + delta)
@@ -241,7 +241,7 @@ class SpinBox(BaseLinkedEdition):
             self.qwidget.setValue(getattr(data, self._link_to_attribute))
             return
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_text_changed(self, value):
         for obj in self.data:
             setattr(obj, self._link_to_attribute, value)
@@ -301,7 +301,7 @@ class Combo(BaseLinkedEdition):
 
         return False
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_index_changed(self, index):
         current_text = self.qwidget.currentText()
         try:
@@ -344,7 +344,7 @@ class SelectSingleIntCombo(Combo):
             self.qwidget.setEditable(True)
             self.qwidget.editTextChanged.connect(self._edit_text_changed)
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _edit_text_changed(self, text):
         try:
             value = int(text)
@@ -422,7 +422,7 @@ class FontFamily(BaseLinkedEdition):
 
         return False
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_font_changed(self, font):
         font_family = font.family()
         self._set_attr(font_family)
@@ -452,7 +452,7 @@ class MultiLineText(BaseLinkedEdition):
             self.qwidget.setPlainText(getattr(obj, self._link_to_attribute))
             return
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_text_changed(self):
         text = self.qwidget.toPlainText()
         self._set_attr(text)

@@ -5,7 +5,6 @@ Copyright: Brainwy Software Ltda
 '''
 from __future__ import division
 
-import functools
 import logging
 
 from pyvmmonitor_core import abstract, overrides
@@ -15,38 +14,21 @@ from pyvmmonitor_qt.qt.QtCore import Qt
 from pyvmmonitor_qt.qt.QtGui import QColor
 from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy, QWidget
 from pyvmmonitor_qt.qt_app import obtain_qapp
+from pyvmmonitor_qt.qt_linked_edition import (does_expected_data_change,
+                                              does_expected_ui_change,
+                                              skip_on_expected_data_change,
+                                              skip_on_expected_ui_change)
 from pyvmmonitor_qt.qt_pixmap_widget import QPixmapWidget
 
 logger = logging.getLogger(__name__)
 
-
-def _does_expected_ui_change(func):
-
-    @functools.wraps(func)
-    def _expected_change(self, *args, **kwargs):
-        self._in_expected_ui_change += 1
-        try:
-            func(self, *args, **kwargs)
-        finally:
-            self._in_expected_ui_change -= 1
-
-    return _expected_change
-
-
-def _skip_on_expected_ui_change(func):
-
-    @functools.wraps(func)
-    def _skip_on_change(self, *args, **kwargs):
-        if self._in_expected_ui_change:
-            return
-        func(self, *args, **kwargs)
-
-    return _skip_on_change
+WIDTH_LABEL = 30
+WIDTH_VALUE = 70
 
 
 class _LabelGradientAndInt(QWidget):
 
-    def __init__(self, parent, text, gradient_stops=None, limits=(0, 100)):
+    def __init__(self, parent, text, gradient_stops, limits=(0, 100)):
         from pyvmmonitor_qt.qt.QtWidgets import QLabel
         from pyvmmonitor_qt.qt_gradient_slider import QGradientSlider
         from pyvmmonitor_qt.qt.QtWidgets import QSpinBox
@@ -62,7 +44,7 @@ class _LabelGradientAndInt(QWidget):
 
         self._label = QLabel(self)
         self._label.setText(text)
-        self._label.setFixedWidth(30)
+        self._label.setFixedWidth(WIDTH_LABEL)
 
         self._limits = limits
 
@@ -75,6 +57,7 @@ class _LabelGradientAndInt(QWidget):
         self._slider.setFixedHeight(20)
 
         self._spin_box = QSpinBox(self)
+        self._spin_box.setFixedWidth(WIDTH_VALUE)
         self._spin_box.setMinimum(limits[0])
         self._spin_box.setMaximum(limits[1])
         self._spin_box.valueChanged.connect(self._on_spin_value_changed)
@@ -86,8 +69,8 @@ class _LabelGradientAndInt(QWidget):
         self.set_gradient_stops(gradient_stops)
 
     def set_gradient_stops(self, gradient_stops):
-        if gradient_stops is not None:
-            self._slider.set_gradient_stops(gradient_stops)
+        assert gradient_stops is not None
+        self._slider.set_gradient_stops(gradient_stops)
 
     def set_normalized_value(self, v):
         self._slider.normalized_value = v
@@ -103,6 +86,60 @@ class _LabelGradientAndInt(QWidget):
     def _normalize(self, value):
         limits = self._limits
         return (value - limits[0]) / float(limits[1] - limits[0])
+
+
+class _LabelAndHex(QWidget):
+
+    def __init__(self, parent, text, model):
+        from pyvmmonitor_qt.qt.QtWidgets import QLabel
+        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+        from pyvmmonitor_qt.qt_utils import add_expanding_spacer_to_layout
+        from pyvmmonitor_qt.qt.QtWidgets import QLineEdit
+        QWidget.__init__(self, parent)
+        self._in_expected_ui_change = 0
+        self._in_expected_data_change = 0
+        self._model = model
+
+        self.on_value_changed = Callback()
+
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
+        self.setLayout(self._layout)
+
+        self._label = QLabel(self)
+        self._label.setText(text)
+        self._label.setFixedWidth(WIDTH_LABEL)
+
+        self._line_edit = QLineEdit(self)
+        self._line_edit.textChanged.connect(self._on_line_edit_changed)
+        self._line_edit.setFixedWidth(WIDTH_VALUE)
+
+        self._layout.addWidget(self._label)
+        add_expanding_spacer_to_layout(self._layout)
+        self._layout.addWidget(self._line_edit)
+        self._model.register_modified(self._on_model_changed)
+
+    @does_expected_ui_change
+    @skip_on_expected_data_change
+    def _on_model_changed(self, obj, attrs):
+        if 'color' in attrs:
+            color = obj.color
+            self._line_edit.setText(color.name())
+            self._line_edit.setStyleSheet("")
+
+    @skip_on_expected_ui_change
+    @does_expected_data_change
+    def _on_line_edit_changed(self, value):
+        color = QColor()
+        color.setNamedColor(value)
+        if not color.isValid():
+            color.setNamedColor('#' + value)
+        if color.isValid():
+            self._model.color = color
+            self._line_edit.setStyleSheet("")
+        else:
+            self._line_edit.setStyleSheet("QLineEdit { background: #D30000; color: white;}")
 
 
 class _BaseColorsWidget(QWidget):
@@ -156,12 +193,12 @@ class _BaseColorsWidget(QWidget):
     def _update_2(self, v):
         self._update_from_widget(v, 2)
 
-    @_skip_on_expected_ui_change
+    @skip_on_expected_ui_change
     def _on_model_changed(self, obj, attrs):
         if 'color' in attrs:
             self._update_widgets()
 
-    @_does_expected_ui_change
+    @does_expected_ui_change
     def _update_widgets(self):
         color = self._model.color
         h, s, v = self._get_color_params(color)
@@ -188,7 +225,7 @@ class HSVWidget(_BaseColorsWidget):
     def _create_color_from_params(self, params):
         return QColor.fromHsvF(*params)
 
-    @_does_expected_ui_change
+    @does_expected_ui_change
     def _update_widgets(self):
         _BaseColorsWidget._update_widgets(self)
         color = self._model.color
@@ -205,12 +242,17 @@ class HSVWidget(_BaseColorsWidget):
 
 class RGBWidget(_BaseColorsWidget):
 
+    def __init__(self, parent, model):
+        _BaseColorsWidget.__init__(self, parent, model)
+        self._layout.addWidget(self._widget_3)
+
     def _create_label_widgets(self):
         colors = [
             (c / 255., QColor.fromHsvF(c / 255., 1.0, 1.0)) for c in range(256)]
         self._widget_0 = _LabelGradientAndInt(self, 'R', colors, (0, 255))
         self._widget_1 = _LabelGradientAndInt(self, 'G', colors, (0, 255))
         self._widget_2 = _LabelGradientAndInt(self, 'B', colors, (0, 255))
+        self._widget_3 = _LabelAndHex(self, 'Hex', self._model)
 
     def _get_color_params(self, color):
         return color.redF(), color.greenF(), color.blueF()
@@ -218,7 +260,7 @@ class RGBWidget(_BaseColorsWidget):
     def _create_color_from_params(self, params):
         return QColor.fromRgbF(*params)
 
-    @_does_expected_ui_change
+    @does_expected_ui_change
     def _update_widgets(self):
         _BaseColorsWidget._update_widgets(self)
         color = self._model.color

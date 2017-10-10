@@ -63,6 +63,8 @@ def test_rgb_widget(qtapi, rgb_widget):
     rgb_widget._r_widget._slider.value = 255 * .4
     assert rgb_widget.model.color == QColor.fromRgbF(0.4, 0.5, 0.5)
 
+    qtapi.d()
+
 
 @pytest.fixture
 def choose_color_widget():
