@@ -8,7 +8,7 @@ import pytest
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def qpixmap_widget():
     from pyvmmonitor_qt.qt_event_loop import process_events
     from pyvmmonitor_qt.qt_pixmap_widget import QPixmapWidget
