@@ -119,14 +119,18 @@ class _LabelAndHex(QWidget):
         add_expanding_spacer_to_layout(self._layout)
         self._layout.addWidget(self._line_edit)
         self._model.register_modified(self._on_model_changed)
+        self._update_line_edit()
+
+    def _on_model_changed(self, obj, attrs):
+        if 'color' in attrs:
+            self._update_line_edit()
 
     @does_expected_ui_change
     @skip_on_expected_data_change
-    def _on_model_changed(self, obj, attrs):
-        if 'color' in attrs:
-            color = obj.color
-            self._line_edit.setText(color.name())
-            self._line_edit.setStyleSheet("")
+    def _update_line_edit(self):
+        color = self._model.color
+        self._line_edit.setText(color.name())
+        self._line_edit.setStyleSheet("")
 
     @skip_on_expected_ui_change
     @does_expected_data_change
@@ -148,6 +152,7 @@ class _BaseColorsWidget(QWidget):
         from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
         QWidget.__init__(self, parent)
         self._in_expected_ui_change = 0
+        self._in_expected_data_change = 0
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
         assert model is not None
@@ -174,6 +179,8 @@ class _BaseColorsWidget(QWidget):
     def model(self):
         return self._model
 
+    @skip_on_expected_ui_change
+    @does_expected_data_change
     def _update_from_widget(self, v, index):
         assert 0 <= v <= 1
         color = self._model.color
@@ -193,7 +200,6 @@ class _BaseColorsWidget(QWidget):
     def _update_2(self, v):
         self._update_from_widget(v, 2)
 
-    @skip_on_expected_ui_change
     def _on_model_changed(self, obj, attrs):
         if 'color' in attrs:
             self._update_widgets()
@@ -472,7 +478,7 @@ class ChooseColorWidget(QWidget):
         from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
         from pyvmmonitor_qt.qt.QtCore import QSize
         from pyvmmonitor_qt.qt.QtWidgets import QTabWidget
-        from pyvmmonitor_qt.qt.QtWidgets import QLabel
+        from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder
         super(ChooseColorWidget, self).__init__(parent=parent)
 
         self._model = model
@@ -486,8 +492,11 @@ class ChooseColorWidget(QWidget):
         self._color_wheel_widget.setFixedSize(QSize(200, 200))
         self._tab_widget.addTab(self._color_wheel_widget, 'Wheel')
 
-        label = QLabel(self._tab_widget)
-        self._tab_widget.addTab(label, 'HSV')
+        widget_builder = WidgetBuilder()
+        widget_builder.create_widget(self._tab_widget)
+        self._rgb_widget = widget_builder.add_widget(RGBWidget(widget_builder.widget, model))
+        self._hsv_widget = widget_builder.add_widget(HSVWidget(widget_builder.widget, model))
+        self._tab_widget.addTab(widget_builder.widget, 'RGB/HSV')
 
         layout = QHBoxLayout(self)
         self.setLayout(layout)

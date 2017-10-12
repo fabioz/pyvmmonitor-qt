@@ -500,6 +500,7 @@ def add_expanding_spacer_to_layout(layout, row=None, col=None):
 class CustomMessageDialog(QDialog):
 
     def __init__(self, parent, create_contents=None, title=' ', size=(640, 540), flags=None):
+        from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder
         if flags is not None:
             QDialog.__init__(self, parent, flags)
         else:
@@ -509,6 +510,7 @@ class CustomMessageDialog(QDialog):
 
         from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
         self._layout = QVBoxLayout()
+        self._widget_builder = WidgetBuilder(self, self._layout)
         if create_contents:
             create_contents(self)
         else:
@@ -524,70 +526,31 @@ class CustomMessageDialog(QDialog):
         pass
 
     def create_label(self, txt='', layout=None):
-        from pyvmmonitor_qt.qt.QtWidgets import QLabel
-        widget = QLabel(self)
-        widget.setText(txt)
-        if layout is None:
-            layout = self._layout
-        layout.addWidget(widget)
-        return widget
+        return self._widget_builder.create_label(txt=txt, layout=layout)
 
     def create_text_browser(self, txt='', open_links=False):
-        from pyvmmonitor_qt.qt.QtWidgets import QTextBrowser
-        text_browser = QTextBrowser(self)
-        text_browser.setOpenExternalLinks(open_links)
-        text_browser.setOpenLinks(open_links)
-        text_browser.setContextMenuPolicy(Qt.NoContextMenu)
-        text_browser.setText(txt)
-        self._layout.addWidget(text_browser)
-        return text_browser
+        return self._widget_builder.create_text_browser(txt=txt, open_links=open_links)
 
     def create_text(self, txt='', read_only=False, line_wrap=True, is_html=True, font=None):
-        from pyvmmonitor_qt.qt.QtWidgets import QTextEdit
-        widget = QTextEdit(self)
-        widget.setReadOnly(read_only)
-        if line_wrap:
-            widget.setLineWrapMode(QTextEdit.WidgetWidth)
-        else:
-            widget.setLineWrapMode(QTextEdit.NoWrap)
-        if is_html:
-            widget.setHtml(txt)
-        else:
-            widget.setText(txt)
-
-        if font is not None:
-            widget.setFont(font)
-        self._layout.addWidget(widget)
-        return widget
+        return self._widget_builder.create_text(
+            txt=txt, read_only=read_only, line_wrap=line_wrap, is_html=is_html, font=font)
 
     def create_spacer(self):
-        return add_expanding_spacer_to_layout(self._layout)
+        return self._widget_builder.create_spacer()
 
     def create_buttons(self, show_ok=True, show_cancel=True):
-        assert show_ok or show_cancel
-        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
-
-        if show_ok and show_cancel:
-            flags = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        elif show_ok:
-            flags = QDialogButtonBox.Ok
-        else:
-            flags = QDialogButtonBox.Cancel
-
-        self.bbox = bbox = QDialogButtonBox(flags)
+        bbox = self.bbox = self._widget_builder.create_buttons(
+            show_ok=show_ok, show_cancel=show_cancel)
 
         bbox.rejected.connect(self.reject)
         bbox.accepted.connect(self.accept)
-        self._layout.addWidget(bbox)
+        return bbox
 
     def create_close_button(self):
-        from pyvmmonitor_qt.qt.QtWidgets import QDialogButtonBox
-        flags = QDialogButtonBox.Close
-
-        self.bbox = bbox = QDialogButtonBox(flags)
+        bbox = self.bbox = self._widget_builder.create_close_button()
 
         bbox.rejected.connect(self.reject)
-        self._layout.addWidget(bbox)
+        return bbox
 
 
 class _ResizeMessageBox(CustomMessageDialog):
@@ -675,6 +638,7 @@ class _ResizeMessageBox(CustomMessageDialog):
 
 
 def create_right_aligned_toolbar(parent):
+
     '''
     Creates a toolbar with an expanding widget in the beginning.
     '''
@@ -723,6 +687,7 @@ class MenuCreator(object):
 
 def count_widget_children(qwidget):
     total = 0
+
     for c in qwidget.children():
         total += count_widget_children(c) + 1
     return total
@@ -730,6 +695,7 @@ def count_widget_children(qwidget):
 
 def create_toolbuttton_with_menu(parent, menu, icon=None):
     from pyvmmonitor_qt.qt.QtWidgets import QToolButton
+
     from pyvmmonitor_qt.qt.QtWidgets import QAction
 
     toolbutton = QToolButton(parent)
@@ -751,6 +717,7 @@ def create_toolbuttton_with_menu(parent, menu, icon=None):
 
 def upate_font(widget, scale=1., make_bold=False):
     font = widget.font()
+
     if font is None:
         return
     if scale != 1.:
@@ -770,6 +737,7 @@ def upate_font(widget, scale=1., make_bold=False):
 
 def select_rows(tree, rows, parent_index=None):
     if not isinstance(rows, (tuple, list)):
+
         rows = (rows,)
 
     model = tree.model()
@@ -796,6 +764,7 @@ def select_rows(tree, rows, parent_index=None):
 def show_message_with_copy_to_clipboard(
         title,
         msg,
+
         font=None,
         parent=None,
         size=None,
@@ -833,6 +802,7 @@ def show_message_with_copy_to_clipboard(
 class LaunchExecutableDialog(CustomMessageDialog):
 
     def __init__(
+
             self,
             parent,
             title=' ',
@@ -929,6 +899,7 @@ class LaunchExecutableDialog(CustomMessageDialog):
 
 
 def expand(tree, caption):
+
     '''
     :param QTreeView tree:
     :param unicode caption:
@@ -949,10 +920,12 @@ def expand(tree, caption):
 class _ObjData(object):
 
     def __init__(self, obj):
+
         self.obj = obj
 
 
 def convert_obj_to_data(obj):
+
     '''
     This utility should be used when we set some data to qt (i.e.: tree view item, graphics item,
     etc). As if we don't do that we'll convert strings to unicode automatically, or tuples to
@@ -966,6 +939,7 @@ def convert_data_to_obj(data):
 
 
 def assert_condition_within_timeout(condition, timeout=2.):
+
     '''
     :param callable condition:
         A callable which may return a bool or a string (if True or an empty
@@ -1003,12 +977,14 @@ def assert_condition_within_timeout(condition, timeout=2.):
 def ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter=None):
     from pyvmmonitor_qt.qt.QtWidgets import QFileDialog
     if selected_filter is None:
+
         if files_filter is not None:
             selected_filter = files_filter.split(';;')[0]
     return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter, selected_filter)
 
 
 def set_painter_antialiased(painter, antialias, widget):
+
     '''
     Besides antialising the QPainter, if we have an OpenGL backend, the OpenGL antialiasing also
     needs to be turned on (so, if the widget can be a QGLWidget, the widget is required).
@@ -1052,6 +1028,7 @@ def create_painter_path_from_points(points, clockwise=None):
 def create_qpolygon_from_points(points, clockwise=None):
     from pyvmmonitor_qt.qt.QtGui import QPolygonF
     from pyvmmonitor_qt.qt.QtCore import QPointF
+
     if clockwise is not None:
         from pyvmmonitor_core import math_utils
         if clockwise != math_utils.is_clockwise(points):
@@ -1063,6 +1040,7 @@ def create_qpolygon_from_points(points, clockwise=None):
 def painter_on(device, antialias, widget=None):
     if device.width() <= 0 or device.height() <= 0:
         sys.stderr.write('Warning: trying to create painter on device with empty size.\n')
+
     from pyvmmonitor_qt.qt.QtGui import QPainter
     painter = QPainter(device)
     set_painter_antialiased(painter, antialias, widget)
@@ -1075,6 +1053,7 @@ def painter_on(device, antialias, widget=None):
 
 @contextmanager
 def qimage_as_numpy(image):
+
     '''
     Provide a way to get a QImage as a numpy array.
 
@@ -1122,6 +1101,7 @@ def qimage_as_numpy(image):
 
 
 def set_background_color(widget, qcolor):
+
     '''
     :param QWidget widget:
     :param QColor qcolor:
@@ -1134,6 +1114,7 @@ def set_background_color(widget, qcolor):
 
 
 def set_foreground_color(widget, qcolor):
+
     '''
     :param QWidget widget:
     :param QColor qcolor:
