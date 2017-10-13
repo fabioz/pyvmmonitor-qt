@@ -7,6 +7,33 @@ from pyvmmonitor_core import overrides
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
 
 
+def create_tiled_pixmap(width, height, brush_square_len):
+    '''
+    Creates a pixmap which is tiled (to be used as a background when drawing transparent colors).
+    :param width: pixmap width
+    :param height: pixmap height
+    :param brush_square_len: len of each square to be drawn.
+    '''
+    from pyvmmonitor_qt.qt.QtGui import QPixmap, QBrush
+    from pyvmmonitor_qt.qt_utils import painter_on
+    from pyvmmonitor_qt.qt.QtCore import Qt
+    brush_square_len *= 2  # Double because we'll create a pattern that's twice the size.
+    p = QPixmap(brush_square_len, brush_square_len)
+    middle = brush_square_len / 2
+    with painter_on(p, antialias=False) as pix_painter:
+        pix_painter.fillRect(0, 0, brush_square_len, brush_square_len, Qt.white)
+        pix_painter.fillRect(0, 0, middle, middle, Qt.gray)
+        pix_painter.fillRect(middle, middle, brush_square_len, brush_square_len, Qt.gray)
+        pix_painter.end()
+        brush = QBrush(p)
+
+    p2 = QPixmap(width, height)
+    with painter_on(p2, antialias=False) as pix_painter:
+        pix_painter.fillRect(
+            0, 0, width, height, brush)
+    return p2
+
+
 class QPixmapWidget(QWidget):
     '''
     A widget which shows a pixmap. It may be set by using the pixmap property or

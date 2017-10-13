@@ -68,6 +68,10 @@ class _LabelGradientAndInt(QWidget):
 
         self.set_gradient_stops(gradient_stops)
 
+    @property
+    def slider(self):
+        return self._slider
+
     def set_gradient_stops(self, gradient_stops):
         if gradient_stops is not None:
             self._slider.set_gradient_stops(gradient_stops)
@@ -161,12 +165,19 @@ class _BaseColorsWidget(QWidget):
         self._create_label_widgets()
 
         self._widget_0.on_value_changed.register(self._update_w0)
-        self._widget_1.on_value_changed.register(self._update_w1)
-        self._widget_2.on_value_changed.register(self._update_2)
-
         self._layout.addWidget(self._widget_0)
-        self._layout.addWidget(self._widget_1)
-        self._layout.addWidget(self._widget_2)
+
+        if hasattr(self, '_widget_1'):
+            self._widget_1.on_value_changed.register(self._update_w1)
+            self._layout.addWidget(self._widget_1)
+
+        if hasattr(self, '_widget_2'):
+            self._widget_2.on_value_changed.register(self._update_w2)
+            self._layout.addWidget(self._widget_2)
+
+        if hasattr(self, '_widget_3'):
+            self._widget_3.on_value_changed.register(self._update_w3)
+            self._layout.addWidget(self._widget_3)
 
         self._update_widgets()
         model.register_modified(self._on_model_changed)
@@ -191,14 +202,25 @@ class _BaseColorsWidget(QWidget):
             color = self._create_color_from_params(new_values)
             self._model.color = color
 
+    @skip_on_expected_ui_change
+    @does_expected_data_change
     def _update_w0(self, v):
         self._update_from_widget(v, 0)
 
+    @skip_on_expected_ui_change
+    @does_expected_data_change
     def _update_w1(self, v):
         self._update_from_widget(v, 1)
 
-    def _update_2(self, v):
+    @skip_on_expected_ui_change
+    @does_expected_data_change
+    def _update_w2(self, v):
         self._update_from_widget(v, 2)
+
+    @skip_on_expected_ui_change
+    @does_expected_data_change
+    def _update_w3(self, v):
+        self._update_from_widget(v, 3)
 
     def _on_model_changed(self, obj, attrs):
         if 'color' in attrs:
@@ -207,11 +229,10 @@ class _BaseColorsWidget(QWidget):
     @does_expected_ui_change
     def _update_widgets(self):
         color = self._model.color
-        h, s, v = self._get_color_params(color)
+        params = self._get_color_params(color)
 
-        self._widget_0.set_normalized_value(h)
-        self._widget_1.set_normalized_value(s)
-        self._widget_2.set_normalized_value(v)
+        for i, param in enumerate(params):
+            getattr(self, '_widget_%s' % (i,)).set_normalized_value(param)
 
         self.update()
 
@@ -222,11 +243,19 @@ class HSVWidget(_BaseColorsWidget):
         hue_colors = [
             (hue / 360., QColor.fromHsvF(hue / 360., 1.0, 1.0)) for hue in range(361)]
         self._widget_0 = _LabelGradientAndInt(self, 'H', hue_colors, (0, 360))
+        self._widget_0.slider.setObjectName('Hue')
+
         self._widget_1 = _LabelGradientAndInt(self, 'S')
+        self._widget_1.slider.setObjectName('Saturation')
+
         self._widget_2 = _LabelGradientAndInt(self, 'V')
+        self._widget_2.slider.setObjectName('Value')
 
     def _get_color_params(self, color):
-        return color.hueF(), color.saturationF(), color.valueF()
+        h, s, v = color.hueF(), color.saturationF(), color.valueF()
+        if h <= -1.0:
+            h = 0.0
+        return h, s, v
 
     def _create_color_from_params(self, params):
         return QColor.fromHsvF(*params)
@@ -250,15 +279,20 @@ class RGBWidget(_BaseColorsWidget):
 
     def __init__(self, parent, model):
         _BaseColorsWidget.__init__(self, parent, model)
-        self._layout.addWidget(self._widget_3)
+        self._layout.addWidget(self._widget_hex)
 
     def _create_label_widgets(self):
-        colors = [
-            (c / 255., QColor.fromHsvF(c / 255., 1.0, 1.0)) for c in range(256)]
+        colors = None
         self._widget_0 = _LabelGradientAndInt(self, 'R', colors, (0, 255))
+        self._widget_0.slider.setObjectName('Red')
+
         self._widget_1 = _LabelGradientAndInt(self, 'G', colors, (0, 255))
+        self._widget_1.slider.setObjectName('Green')
+
         self._widget_2 = _LabelGradientAndInt(self, 'B', colors, (0, 255))
-        self._widget_3 = _LabelAndHex(self, 'Hex', self._model)
+        self._widget_2.slider.setObjectName('Blue')
+
+        self._widget_hex = _LabelAndHex(self, 'Hex', self._model)
 
     def _get_color_params(self, color):
         return color.redF(), color.greenF(), color.blueF()
@@ -283,6 +317,86 @@ class RGBWidget(_BaseColorsWidget):
     @property
     def _r_widget(self):  # Just for testing
         return self._widget_0
+
+
+class _CMYKWidget(_BaseColorsWidget):
+
+    def __init__(self, parent, model):
+        _BaseColorsWidget.__init__(self, parent, model)
+        self._layout.addWidget(self._widget_3)
+
+    def _create_label_widgets(self):
+        self._widget_0 = _LabelGradientAndInt(self, 'C')
+        self._widget_0.slider.setObjectName('Cyan')
+
+        self._widget_1 = _LabelGradientAndInt(self, 'M')
+        self._widget_1.slider.setObjectName('Magenta')
+
+        self._widget_2 = _LabelGradientAndInt(self, 'Y')
+        self._widget_2.slider.setObjectName('Yellow')
+
+        self._widget_3 = _LabelGradientAndInt(self, 'K')
+        self._widget_3.slider.setObjectName('Black')
+
+    def _get_color_params(self, color):
+        '''
+        :param QColor color:
+        '''
+        return color.cyanF(), color.magentaF(), color.yellowF(), color.blackF()
+
+    def _create_color_from_params(self, params):
+        return QColor.fromCmykF(*params)
+
+    @does_expected_ui_change
+    def _update_widgets(self):
+        _BaseColorsWidget._update_widgets(self)
+        color = self._model.color
+        c, m, y, k = self._get_color_params(color)
+        self._widget_0.set_gradient_stops(
+            [(x / 100, QColor.fromCmykF(x / 100., m, y, k)) for x in range(101)])
+
+        self._widget_1.set_gradient_stops(
+            [(x / 100, QColor.fromCmykF(c, x / 100., y, k)) for x in range(101)])
+
+        self._widget_2.set_gradient_stops(
+            [(x / 100, QColor.fromCmykF(c, m, x / 100., k)) for x in range(101)])
+
+        self._widget_3.set_gradient_stops(
+            [(x / 100, QColor.fromCmykF(c, m, y, x / 100)) for x in range(101)])
+
+
+class _OpacityWidget(_BaseColorsWidget):
+
+    def _create_label_widgets(self):
+        self._widget_0 = _LabelGradientAndInt(self, 'A', None, (0, 255))
+
+    def _get_color_params(self, color):
+        raise AssertionError('Should not be used')
+
+    def _create_color_from_params(self, params):
+        raise AssertionError('Should not be used')
+
+    @does_expected_ui_change
+    def _update_widgets(self):
+        color = self._model.color
+        r, g, b = color.redF(), color.greenF(), color.blueF()
+        self._widget_0.set_gradient_stops(
+            [(a / 255, QColor.fromRgbF(r, g, b, a / 255)) for a in range(256)])
+        self._widget_0.set_normalized_value(self._model.opacity / 255.)
+
+    @skip_on_expected_ui_change
+    @does_expected_data_change
+    def _update_from_widget(self, v, index):
+        assert 0 <= v <= 1
+        opacity = self._model.opacity
+        new_opacity = int(v * 255)
+        if new_opacity != opacity:
+            self._model.opacity = new_opacity
+
+    @overrides(_BaseColorsWidget._on_model_changed)
+    def _on_model_changed(self, obj, attrs):
+        if 'opacity' in attrs:
+            self._update_widgets()
 
 
 class _ColorWheelWidget(QPixmapWidget):
@@ -465,7 +579,10 @@ class _SelectedColorWidget(QWidget):
 
 class ChooseColorModel(PropsObject):
 
-    PropsObject.declare_props(color=QColor(Qt.red))
+    PropsObject.declare_props(
+        color=QColor(Qt.red),
+        opacity=255,
+    )
 
 
 class ChooseColorWidget(QWidget):
@@ -475,10 +592,10 @@ class ChooseColorWidget(QWidget):
         :param parent:
         :param ChooseColorModel model:
         '''
-        from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
         from pyvmmonitor_qt.qt.QtCore import QSize
         from pyvmmonitor_qt.qt.QtWidgets import QTabWidget
         from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder
+        from pyvmmonitor_qt.qt.QtWidgets import QGridLayout
         super(ChooseColorWidget, self).__init__(parent=parent)
 
         self._model = model
@@ -488,21 +605,32 @@ class ChooseColorWidget(QWidget):
 
         self._tab_widget = QTabWidget(self)
 
-        self._color_wheel_widget = _ColorWheelWidget(self._tab_widget, model)
+        widget_builder = WidgetBuilder()
+        widget_builder.create_widget(self._tab_widget)
+        self._color_wheel_widget = widget_builder.add_widget(
+            _ColorWheelWidget(self._tab_widget, model))
         self._color_wheel_widget.setFixedSize(QSize(200, 200))
-        self._tab_widget.addTab(self._color_wheel_widget, 'Wheel')
+        self._hsv_widget = widget_builder.add_widget(_OpacityWidget(widget_builder.widget, model))
+        self._tab_widget.addTab(widget_builder.widget, 'Wheel')
 
         widget_builder = WidgetBuilder()
         widget_builder.create_widget(self._tab_widget)
         self._rgb_widget = widget_builder.add_widget(RGBWidget(widget_builder.widget, model))
         self._hsv_widget = widget_builder.add_widget(HSVWidget(widget_builder.widget, model))
-        self._tab_widget.addTab(widget_builder.widget, 'RGB/HSV')
+        self._hsv_widget = widget_builder.add_widget(_OpacityWidget(widget_builder.widget, model))
+        self._tab_widget.addTab(widget_builder.widget, 'RGB, HSV')
 
-        layout = QHBoxLayout(self)
+        widget_builder = WidgetBuilder()
+        widget_builder.create_widget(self._tab_widget)
+        self._cmyk_widget = widget_builder.add_widget(_CMYKWidget(self._tab_widget, model))
+        widget_builder.create_spacer()
+        self._tab_widget.addTab(widget_builder.widget, 'CMYK')
+
+        layout = QGridLayout(self)
         self.setLayout(layout)
 
-        layout.addWidget(self._selected_color_widget)
-        layout.addWidget(self._tab_widget)
+        layout.addWidget(self._selected_color_widget, 0, 0)
+        layout.addWidget(self._tab_widget, 0, 1, 2)
 
     @property
     def model(self):

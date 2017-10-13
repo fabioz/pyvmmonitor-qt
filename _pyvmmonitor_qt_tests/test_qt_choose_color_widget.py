@@ -48,6 +48,19 @@ def rgb_widget():
     process_events(collect=True)
 
 
+@pytest.yield_fixture
+def opacity_widget():
+    from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
+    from pyvmmonitor_qt.qt_choose_color_widget import _OpacityWidget
+    widget = _OpacityWidget(parent=None, model=ChooseColorModel())
+    widget.show()
+    yield widget
+    widget.deleteLater()
+    widget = None
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)
+
+
 def test_rgb_widget(qtapi, rgb_widget):
     from pyvmmonitor_qt.qt.QtGui import QColor
     assert rgb_widget.model is not None
@@ -62,6 +75,15 @@ def test_rgb_widget(qtapi, rgb_widget):
 
     rgb_widget._r_widget._slider.value = 255 * .4
     assert rgb_widget.model.color == QColor.fromRgbF(0.4, 0.5, 0.5)
+
+
+def test_opacity_widget(qtapi, opacity_widget):
+    from pyvmmonitor_qt.qt.QtGui import QColor
+    assert opacity_widget.model is not None
+    color = opacity_widget.model.color = QColor.fromRgb(100, 90, 80)
+    assert opacity_widget.model.opacity == 0
+    opacity_widget.model.opacity = 150
+    assert opacity_widget._widget_0._slider.value == 150
 
 
 @pytest.yield_fixture
@@ -79,6 +101,7 @@ def choose_color_widget():
 
 def test_choose_color_widget(qtapi, choose_color_widget):
     from pyvmmonitor_qt.qt_event_loop import process_events
+    from pyvmmonitor_qt.qt.QtGui import QColor
 
     process_events()
     color_wheel_widget = choose_color_widget.color_wheel_widget
@@ -95,3 +118,7 @@ def test_choose_color_widget(qtapi, choose_color_widget):
 
     assert color_wheel_widget.saturation_from_point(center[0], center[1]) == 0.0
     assert color_wheel_widget.saturation_from_point(pixmap_size.width(), 0.0) == 1.0
+
+    choose_color_widget.model.color = QColor.fromCmykF(
+        0.000000, 0.000000, 0.000000, 0.000000, 1.000000)
+

@@ -188,31 +188,14 @@ class BackgroundPainter(object):
         self.background_mode = background_mode
 
     def _calculate_background_pixmap(self, rect):
-        from pyvmmonitor_qt.qt.QtGui import QPixmap, QBrush
-
+        from pyvmmonitor_qt.qt_pixmap_widget import create_tiled_pixmap
         cache_key = rect.x(), rect.y(), rect.width(), rect.height()
         if self._cache_key == cache_key:
             return self._cache
 
-        from pyvmmonitor_qt.qt_utils import painter_on
         size = self.size
+        p2 = create_tiled_pixmap(rect.width() + (size * 2), rect.height() + (size * 2), 10)
 
-        p = QPixmap(20, 20)
-        with painter_on(p, antialias=False) as pix_painter:
-            pix_painter.fillRect(0, 0, 20, 20, Qt.white)
-            pix_painter.fillRect(0, 0, 10, 10, Qt.gray)
-            pix_painter.fillRect(10, 10, 20, 20, Qt.gray)
-            pix_painter.end()
-            brush = QBrush(p)
-
-        p2 = QPixmap(rect.width() + (size * 2), rect.height() + (size * 2))
-        with painter_on(p2, antialias=False) as pix_painter:
-            pix_painter.fillRect(
-                0,
-                0,
-                rect.width() + (size * 2),
-                rect.height() + (size * 2),
-                brush)
         self._cache = p2
         self._cache_key = cache_key
         return p2
@@ -259,7 +242,6 @@ class BackgroundPainter(object):
 #                 use_rect.height() + (size * 2),
 #                 brush
 #             )
-
 
         # Restore the previous transform
         painter.setTransform(curr_transform, False)

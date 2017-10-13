@@ -127,12 +127,12 @@ class QGradientSlider(QPixmapWidget):
         '''
         Creates a qpixmap with the gradient.
         '''
-        from pyvmmonitor_qt.qt.QtGui import QPixmap
         from pyvmmonitor_qt.qt.QtGui import QLinearGradient
         from pyvmmonitor_qt.qt.QtCore import Qt
         from pyvmmonitor_qt.qt_utils import painter_on
         from pyvmmonitor_qt.qt.QtGui import QBrush
         from pyvmmonitor_qt import qt_painter_path
+        from pyvmmonitor_qt.qt_pixmap_widget import create_tiled_pixmap
         w, h = self._w, self._h
         triangle_size = int(min(w, h) * .3)
         if triangle_size < 10:
@@ -140,7 +140,9 @@ class QGradientSlider(QPixmapWidget):
         w *= .9
         h *= .9
 
-        pixmap = QPixmap(w, h)
+        # pixmap = QPixmap(w, h)
+        # Note: we could do the tiling only if there was actually some alpha.
+        pixmap = create_tiled_pixmap(w, h, min(w, h) // 3)
         gradient = QLinearGradient(0, h // 2, w, h // 2)
         gradient.setStops(self._gradient_stops)
         with painter_on(pixmap, True) as painter:
