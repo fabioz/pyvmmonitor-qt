@@ -85,6 +85,7 @@ def execute_after_millis(millis, func):
             timer.setSingleShot(True)
             timer.timeout.connect(timer_alive)
             timer.start(millis)
+
     if not is_in_main_thread():
         from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
         execute_on_next_event_loop(register_timer)
@@ -232,9 +233,9 @@ def count_items(widget):
         i += 1
     return i
 
+
 if qt_api == 'pyside':
     try:
-
 
         from PySide import shiboken
     except ImportError:
@@ -252,6 +253,7 @@ if qt_api == 'pyside':
             if 'modalSession has been' in msg_string:
                 return
             sys.stderr.write(msg_string)
+
         PySide.QtCore.qInstallMsgHandler(handler)
 
 elif qt_api == 'pyside2':
@@ -278,6 +280,7 @@ def get_main_window():
     if m is None or not is_qobject_alive(m):
         return None
     return m
+
 
 _ADDITIONAL_EXCEPTION_MSG = ''  # Unicode
 
@@ -348,7 +351,9 @@ def handle_exception_in_method_return_val(return_val):
                 if sys is not None:
                     sys.excepthook(*sys.exc_info())
                 return return_val
+
         return wrapper
+
     return handle_exception_in_method
 
 
@@ -371,6 +376,7 @@ def handle_exception_in_method(method):
         finally:
             args = None
             kwargs = None
+
     return wrapper
 
 
@@ -430,6 +436,7 @@ def show_message(
         # (in the UI thread).
         def func():
             show_message(message, detailed_message, title, parent, icon)
+
         from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
         execute_on_next_event_loop(func)
         return
@@ -521,6 +528,9 @@ class CustomMessageDialog(QDialog):
 
     def get_layout(self):
         return self._layout
+
+    def get_widget_builder(self):
+        return self._widget_builder
 
     def _create_contents(self):
         pass
@@ -831,6 +841,7 @@ class LaunchExecutableDialog(CustomMessageDialog):
         if stop_condition is None:
 
             def stop_condition(): return False
+
         self.stop_condition = stop_condition
         if not cmd:
             cmd = []
