@@ -81,7 +81,7 @@ def test_opacity_widget(qtapi, opacity_widget):
     from pyvmmonitor_qt.qt.QtGui import QColor
     assert opacity_widget.model is not None
     color = opacity_widget.model.color = QColor.fromRgb(100, 90, 80)
-    assert opacity_widget.model.opacity == 0
+    assert opacity_widget.model.opacity == 255
     opacity_widget.model.opacity = 150
     assert opacity_widget._widget_0._slider.value == 150
 
@@ -121,4 +121,3 @@ def test_choose_color_widget(qtapi, choose_color_widget):
 
     choose_color_widget.model.color = QColor.fromCmykF(
         0.000000, 0.000000, 0.000000, 0.000000, 1.000000)
-
