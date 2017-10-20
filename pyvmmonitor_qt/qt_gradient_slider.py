@@ -184,7 +184,6 @@ class QGradientSlider(QPixmapWidget):
             painter.drawPath(path)
 
     def _on_mouse_pos(self, pos):
-        self._last_pos = pos
         value = self.value_from_point(*pos)
         self.value = value
 

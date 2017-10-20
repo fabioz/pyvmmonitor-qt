@@ -405,7 +405,6 @@ class _ColorWheelWidget(QPixmapWidget):
         super().__init__(parent)
         self._model = model
 
-        self._last_pos = None
         self._model.register_modified(self._on_model_changed)
 
     @property
@@ -546,7 +545,6 @@ class _ColorWheelWidget(QPixmapWidget):
 
     @overrides(QPixmapWidget._on_mouse_pos)
     def _on_mouse_pos(self, pos):
-        self._last_pos = pos
         saturation = self.saturation_from_point(*pos)
         hue = self.hue_from_point(*pos)
 

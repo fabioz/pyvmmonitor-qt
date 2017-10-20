@@ -48,6 +48,7 @@ class QPixmapWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._pixmap = None
+        self._last_pos = None
         self._last_widget_size = None
 
         # When the pixmap is drawn, this will hold the amount translated to print the pixmap
@@ -120,6 +121,7 @@ class QPixmapWidget(QWidget):
         if ev.button() == Qt.LeftButton:
             pos = ev.pos()
             pos = pos.x(), pos.y()
+            self._last_pos = pos
             self._on_mouse_pos(pos)
             return
 
