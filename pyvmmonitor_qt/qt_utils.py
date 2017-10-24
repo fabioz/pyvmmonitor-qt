@@ -470,33 +470,19 @@ def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
     return message_box.exec_()
 
 
-def create_message_box_with_custom_ok_cancel(
-        parent=None,
-        window_title=u'Error',
-        text=u'Something happened',
-        informative_text=u'What do you want to do?',
-        button_accept_text=u'Try with option 1',
-        button_reject_text=u'Try with option 2'):
-    if parent is None:
-        parent = get_main_window()
-
-    from pyvmmonitor_qt.qt.QtWidgets import QMessageBox
-    dialog = QMessageBox(parent())
-    dialog.setWindowTitle(window_title)
-    dialog.setText(text)
-
-    dialog.setInformativeText(informative_text)
-    button_accept = dialog.addButton(button_accept_text, QMessageBox.AcceptRole)
-    button_reject = dialog.addButton(button_reject_text, QMessageBox.RejectRole)
-    dialog.setDefaultButton(button_accept)
-    return dialog
-    # dialog.exec_()
-
-
-def add_expanding_spacer_to_layout(layout, row=None, col=None):
+def add_expanding_spacer_to_layout(layout, row=None, col=None, direction='both'):
     from pyvmmonitor_qt.qt.QtWidgets import QSpacerItem
     from pyvmmonitor_qt.qt.QtWidgets import QSizePolicy
-    spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
+    if direction == 'both':
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)
+    elif direction == 'vertical':
+        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+    elif direction == 'horizontal':
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+    else:
+        raise AssertionError('Unexpected direction: %s' % (direction,))
+
     if row is None and col is None:
         layout.addItem(spacer)
     else:
@@ -986,12 +972,9 @@ def assert_condition_within_timeout(condition, timeout=2.):
 
 
 def ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter=None):
-    from pyvmmonitor_qt.qt.QtWidgets import QFileDialog
-    if selected_filter is None:
-
-        if files_filter is not None:
-            selected_filter = files_filter.split(';;')[0]
-    return QFileDialog.getSaveFileName(parent, caption, initial_dir, files_filter, selected_filter)
+    # Kept for backward compatibilyt
+    from pyvmmonitor_qt import qt_ask
+    return qt_ask.ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter)
 
 
 def set_painter_antialiased(painter, antialias, widget):

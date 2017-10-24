@@ -111,9 +111,13 @@ def apply_default_stylesheet(app, force=False):
         app.setPalette(pal)
 
         _switch_resources_to_style(is_dark)
-        for icon_name, actions in compat.iteritems(_styled_qt_objects):
-            for action in actions:
-                action.setIcon(QIcon(icon_name))
+        for icon_name, styled_qobj in compat.iteritems(_styled_qt_objects):
+            if callable(icon_name):
+                icon_name = icon_name()
+
+            if icon_name:
+                for action in styled_qobj:
+                    action.setIcon(QIcon(icon_name))
 
         on_stylesheet_changed()
 
@@ -133,7 +137,8 @@ def CreateStyledQAction(
         status_tip=None,
         connect_to=None):
     '''
-    :param icon_name: Name to find icon (i.e.: :appbar.page.edit.svg)
+    :param icon_name:
+        Name to find icon (i.e.: :appbar.page.edit.svg) or callable which provides it.
     '''
     from pyvmmonitor_qt.qt.QtGui import QIcon
     from pyvmmonitor_qt.qt.QtWidgets import QAction
@@ -155,7 +160,8 @@ def CreateStyledQAction(
 
 def CreateStyledQPushButton(parent, icon_name, text=''):
     '''
-    :param icon_name: Name to find icon (i.e.: :appbar.page.edit.svg)
+    :param icon_name:
+        Name to find icon (i.e.: :appbar.page.edit.svg) or callable which provides it.
     '''
     from pyvmmonitor_qt.qt.QtWidgets import QPushButton
     from pyvmmonitor_qt.qt.QtGui import QIcon
@@ -163,6 +169,28 @@ def CreateStyledQPushButton(parent, icon_name, text=''):
     ret = QPushButton(parent)
     if text:
         ret.setText(text)
-    ret.setIcon(QIcon(icon_name))
+    if callable(icon_name):
+        ret.setIcon(QIcon(icon_name()))
+    else:
+        ret.setIcon(QIcon(icon_name))
+    _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
+    return ret
+
+
+def CreateStyledQIconWidget(parent, icon_name):
+    '''
+    :param icon_name:
+        Name to find icon (i.e.: :appbar.page.edit.svg) or callable which provides it.
+
+    '''
+    from pyvmmonitor_qt.qt.QtGui import QIcon
+    from pyvmmonitor_qt.qt.QtWidgets import QLabel
+    from pyvmmonitor_qt.qt_pixmap_widget import QIconWidget
+
+    ret = QIconWidget(parent)
+    if callable(icon_name):
+        ret.setIcon(QIcon(icon_name()))
+    else:
+        ret.setIcon(QIcon(icon_name))
     _styled_qt_objects.setdefault(icon_name, WeakSet()).add(ret)
     return ret

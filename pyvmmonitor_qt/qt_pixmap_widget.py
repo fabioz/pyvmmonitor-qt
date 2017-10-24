@@ -147,3 +147,20 @@ class QPixmapWidget(QWidget):
         :param tuple pos:
             Position (x,y) where the mouse was pressed (widget coordinates).
         '''
+
+
+class QIconWidget(QPixmapWidget):
+
+    def setIcon(self, icon):
+        self._icon = icon
+        self._pixmap = None
+        self.update()
+
+    def icon(self):
+        return self._icon
+
+    @overrides(QPixmapWidget._create_pixmap)
+    def _create_pixmap(self):
+        w, h = self._w - 2, self._h - 2
+        if w >= 2 and h >= 2:
+            return self._icon.pixmap(w, h)
