@@ -62,7 +62,16 @@ class _CustomModel(QStandardItemModel):
 
 class TreeNode(object):
 
-    __slots__ = ['_items', '_data', 'tree', 'obj_id', '_children', '_sort_key', '_parent']
+    __slots__ = [
+        '__weakref__',
+        '_children',
+        '_data',
+        '_items',
+        '_parent',
+        '_sort_key',
+        'obj_id',
+        'tree',
+    ]
 
     def __init__(self, data):
         self._items = None
@@ -91,7 +100,11 @@ class TreeNode(object):
                 self._set_item_data(item, d)
 
     def _set_item_data(self, item, d):
-        item.setData(self._as_str(d), Qt.DisplayRole)
+        from pyvmmonitor_qt.qt.QtGui import QIcon
+        if d.__class__ == QIcon:
+            item.setIcon(d)
+        else:
+            item.setData(self._as_str(d), Qt.DisplayRole)
 
     def _as_str(self, obj):
         if obj.__class__ == compat.unicode:
@@ -259,6 +272,15 @@ class TreeNode(object):
     def get_background_brush(self, col):
         return self._items[col].data(Qt.BackgroundRole)
 
+    def set_selectable(self, b, col=-1):
+        if col == -1:
+            items = self._items
+        else:
+            items = [self._items[col]]
+
+        for item in items:
+            item.setSelectable(b)
+
 
 class FilterProxyModelCheckingChildren(QSortFilterProxyModel):
 
@@ -284,11 +306,12 @@ class PythonicQTreeView(object):
 
     __slots__ = [
         '__weakref__',
-        '_sort_model',
         '_fast',
-        '_root_items',
-        'tree',
         '_model',
+        '_root_items',
+        '_sort_model',
+        'on_clicked',
+        'tree',
     ]
 
     def __init__(self, tree, editable=False):
@@ -297,6 +320,7 @@ class PythonicQTreeView(object):
         :param bool editable:
             Determines if the tree items should be editable.
         '''
+        from pyvmmonitor_core.callback import Callback
 
         self.tree = tree
         model = self._model = _CustomModel(tree)
@@ -316,6 +340,17 @@ class PythonicQTreeView(object):
             # Otherwise, it could be set individually with:
             # QStandardItem.setEditable(False)
             tree.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        # Called with on_clicked(TreeNode, column)
+        self.on_clicked = Callback()
+        tree.clicked.connect(self._on_clicked)
+
+    @qt_utils.handle_exception_in_method
+    def _on_clicked(self, index):
+        if index.isValid():
+            col = index.column()
+            node = self.node_from_index(index)
+            self.on_clicked(node, col)
 
     def list_item_captions(self, prefix='', cols=(0,), only_show_expanded=False):
         return qt_utils.list_wiget_item_captions(
@@ -467,6 +502,9 @@ class PythonicQTreeView(object):
         return index.data(_NODE_ROLE)
 
     def __getitem__(self, obj_id):
+        '''
+        :return TreeNode:
+        '''
         return self._fast[obj_id]
 
     def __delitem__(self, obj_id):
@@ -517,6 +555,10 @@ class PythonicQTreeView(object):
         return len(self._fast)
 
     def get_selection(self):
+        '''
+        :return list(unicode):
+            Returns a list with the selected items.
+        '''
         assert thread_utils.is_in_main_thread()
         new_selection = []
         selected_indexes = self.tree.selectedIndexes()
