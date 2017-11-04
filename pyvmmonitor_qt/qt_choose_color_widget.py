@@ -152,12 +152,24 @@ class _LabelAndHex(QWidget):
 
 class _BaseColorsWidget(QWidget):
 
-    def __init__(self, parent, model):
-        from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
+    def __init__(self, parent, model, layout='vertical'):
+        '''
+        :param QWidget parent:
+        :param ChooseColorModel model:
+        '''
         QWidget.__init__(self, parent)
         self._in_expected_ui_change = 0
         self._in_expected_data_change = 0
-        self._layout = QVBoxLayout()
+        if layout == 'vertical':
+            from pyvmmonitor_qt.qt.QtWidgets import QVBoxLayout
+            layout = QVBoxLayout()
+        elif layout == 'horizontal':
+            from pyvmmonitor_qt.qt.QtWidgets import QHBoxLayout
+            layout = QHBoxLayout()
+        else:
+            raise AssertionError('Expected "vertical" or "horizontal" layout.')
+
+        self._layout = layout
         self.setLayout(self._layout)
         assert model is not None
         self._model = model
@@ -239,17 +251,30 @@ class _BaseColorsWidget(QWidget):
 
 class HSVWidget(_BaseColorsWidget):
 
+    def __init__(
+            self,
+            parent,
+            model,
+            layout='vertical',
+            saturation_limits=(0, 100),
+            value_limits=(0, 100)
+    ):
+        self._saturation_limits = saturation_limits
+        self._value_limits = value_limits
+        _BaseColorsWidget.__init__(self, parent, model, layout=layout)
+
     def _create_label_widgets(self):
         hue_colors = [
             (hue / 360., QColor.fromHsvF(hue / 360., 1.0, 1.0)) for hue in range(361)]
         self._widget_0 = _LabelGradientAndInt(self, 'H', hue_colors, (0, 360))
         self._widget_0.slider.setObjectName('Hue')
 
-        self._widget_1 = _LabelGradientAndInt(self, 'S')
+        self._widget_1 = _LabelGradientAndInt(self, 'S', limits=self._saturation_limits)
         self._widget_1.slider.setObjectName('Saturation')
 
-        self._widget_2 = _LabelGradientAndInt(self, 'V')
+        self._widget_2 = _LabelGradientAndInt(self, 'V', limits=self._value_limits)
         self._widget_2.slider.setObjectName('Value')
+        self.update_colors_in_slider = True
 
     def _get_color_params(self, color):
         h, s, v = color.hueF(), color.saturationF(), color.valueF()
@@ -263,12 +288,13 @@ class HSVWidget(_BaseColorsWidget):
     @does_expected_ui_change
     def _update_widgets(self):
         _BaseColorsWidget._update_widgets(self)
-        color = self._model.color
-        h, s, v = self._get_color_params(color)
-        self._widget_1.set_gradient_stops(
-            [(x / 100, QColor.fromHsvF(h, x / 100., v)) for x in range(101)])
-        self._widget_2.set_gradient_stops(
-            [(x / 100, QColor.fromHsvF(h, s, x / 100.)) for x in range(101)])
+        if self.update_colors_in_slider:
+            color = self._model.color
+            h, s, v = self._get_color_params(color)
+            self._widget_1.set_gradient_stops(
+                [(x / 100, QColor.fromHsvF(h, x / 100., v)) for x in range(101)])
+            self._widget_2.set_gradient_stops(
+                [(x / 100, QColor.fromHsvF(h, s, x / 100.)) for x in range(101)])
 
     @property
     def _hue_widget(self):  # Just for testing
