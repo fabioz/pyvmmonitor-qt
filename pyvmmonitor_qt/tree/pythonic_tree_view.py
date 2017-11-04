@@ -383,8 +383,9 @@ class PythonicQTreeView(object):
             yield
 
     def clear(self):
-        while self._root_items:
-            del self[compat.next(iter(self._root_items)).obj_id]
+        with self.batch_changes():
+            while self._root_items:
+                del self[compat.next(iter(self._root_items)).obj_id]
 
     @property
     def columns(self):
