@@ -62,6 +62,8 @@ class _CustomModel(QStandardItemModel):
 
 class TreeNode(object):
 
+    __slots__ = ['_items', '_data', 'tree', 'obj_id', '_children', '_sort_key', '_parent']
+
     def __init__(self, data):
         self._items = None
 
