@@ -69,6 +69,16 @@ class ZoomableGraphicsView(QGraphicsView):
                    20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0,
                    125.0, 150.0, 175.0, 200.0, 300.0)
 
+    @property
+    def background_mode(self):
+        return self._background_painter.background_mode
+
+    @background_mode.setter
+    def background_mode(self, background_mode):
+        if background_mode != self.background_mode:
+            self._background_painter.background_mode = background_mode
+            self.update()
+
     @handle_exception_in_method
     def drawBackground(self, painter, rect):
         self._background_painter.paint(self, painter, rect)
@@ -209,39 +219,40 @@ class BackgroundPainter(object):
         scene_rect = graphics_view.sceneRect()
 
         painter.resetTransform()
-        s = curr_transform.mapRect(scene_rect)
-        # Clear the area
-        painter.fillRect(
-            0,
-            0,
-            graphics_view.width(),
-            graphics_view.height(),
-            palette.window().color())
+        try:
+            s = curr_transform.mapRect(scene_rect)
+            # Clear the area
+            painter.fillRect(
+                0,
+                0,
+                graphics_view.width(),
+                graphics_view.height(),
+                palette.window().color())
 
-        if self.background_mode == BackgroundMode.TILED_TRANSPARENT_BACKGROUND:
-            viewport_rect = QRect(0, 0, graphics_view.width(), graphics_view.height())
-            clip_rect = s.intersected(viewport_rect)
-            painter.setClipRect(clip_rect)
-            painter.fillRect(s, Qt.white)
-            use_rect = clip_rect
+            if self.background_mode == BackgroundMode.TILED_TRANSPARENT_BACKGROUND:
+                viewport_rect = QRect(0, 0, graphics_view.width(), graphics_view.height())
+                clip_rect = s.intersected(viewport_rect)
+                painter.setClipRect(clip_rect)
+                painter.fillRect(s, Qt.white)
+                use_rect = clip_rect
 
-            size = self.size
-            p2 = self._calculate_background_pixmap(use_rect)
-            painter.drawPixmap(
-                use_rect.x() - ((size * 2) - ((s.x() - use_rect.x()) % (size * 2))),
-                use_rect.y() - ((size * 2) - ((s.y() - use_rect.y()) % (size * 2))),
-                p2.width(),
-                p2.height(),
-                p2)
+                size = self.size
+                p2 = self._calculate_background_pixmap(use_rect)
+                painter.drawPixmap(
+                    use_rect.x() - ((size * 2) - ((s.x() - use_rect.x()) % (size * 2))),
+                    use_rect.y() - ((size * 2) - ((s.y() - use_rect.y()) % (size * 2))),
+                    p2.width(),
+                    p2.height(),
+                    p2)
 
-# I thought that the code below would give the same results, but it seems it doesn't
-#             painter.fillRect(
-#                 use_rect.x() - ((size * 2) - ((s.x() - use_rect.x()) % (size * 2))),
-#                 use_rect.y() - ((size * 2) - ((s.y() - use_rect.y()) % (size * 2))),
-#                 use_rect.width() + (size * 2),
-#                 use_rect.height() + (size * 2),
-#                 brush
-#             )
-
-        # Restore the previous transform
-        painter.setTransform(curr_transform, False)
+    # I thought that the code below would give the same results, but it seems it doesn't
+    #             painter.fillRect(
+    #                 use_rect.x() - ((size * 2) - ((s.x() - use_rect.x()) % (size * 2))),
+    #                 use_rect.y() - ((size * 2) - ((s.y() - use_rect.y()) % (size * 2))),
+    #                 use_rect.width() + (size * 2),
+    #                 use_rect.height() + (size * 2),
+    #                 brush
+    #             )
+        finally:
+            # Restore the previous transform
+            painter.setTransform(curr_transform, False)
