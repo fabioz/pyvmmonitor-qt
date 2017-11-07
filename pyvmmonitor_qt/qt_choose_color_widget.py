@@ -428,7 +428,7 @@ class _OpacityWidget(_BaseColorsWidget):
 class _ColorWheelWidget(QPixmapWidget):
 
     def __init__(self, parent, model):
-        super().__init__(parent)
+        super(_ColorWheelWidget, self).__init__()
         self._model = model
 
         self._model.register_modified(self._on_model_changed)

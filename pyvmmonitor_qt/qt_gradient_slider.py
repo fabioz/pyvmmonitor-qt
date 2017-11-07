@@ -16,6 +16,8 @@ def on_value_changed(slider, value):
 slider.on_value.register(on_value_changed)
 
 '''
+from __future__ import division
+
 import logging
 
 from pyvmmonitor_core import overrides

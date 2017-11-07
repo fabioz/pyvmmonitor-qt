@@ -46,7 +46,7 @@ class QPixmapWidget(QWidget):
     _regenerate_pixmap_on_resize = True
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(QPixmapWidget, self).__init__(*args, **kwargs)
         self._pixmap = None
         self._last_pos = None
         self._last_widget_size = None
