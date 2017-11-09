@@ -18,6 +18,7 @@ def prepare_pyqt4():
     sip.setapi('QString', 2)
     sip.setapi('QVariant', 2)
 
+
 qt_api = os.environ.get('QT_API')
 
 root_symbol = None
@@ -71,12 +72,17 @@ def load_plugin_dirs():
     try:
         from pyvmmonitor_qt.qt.QtWidgets import QApplication
         qApp = QApplication.instance()
-        for p in PySide.__path__:
+        check_paths = []
+        for p in root_symbol.__path__:
             plugins_dir = os.path.join(p, "plugins")
+            check_paths.append(plugins_dir)
+
+        for plugins_dir in check_paths:
             if os.path.isdir(plugins_dir):
                 qApp.addLibraryPath(plugins_dir)
                 for d in os.listdir(plugins_dir):
-                    if os.path.isdir(d):
-                        qApp.addLibraryPath(d)
+                    if os.path.isdir(os.path.join(plugins_dir, d)):
+                        qApp.addLibraryPath(os.path.join(plugins_dir, d))
+
     finally:
         _plugins_loaded = True

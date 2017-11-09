@@ -18,7 +18,7 @@ template = '''
 def generate_resources(resources_dir, output_file):
     files = []
     for f in sorted(os.listdir(resources_dir)):
-        if f.endswith('.png'):
+        if f.endswith('.png') or f.endswith('.svg'):
             files.append('    <file>%s</file>' % f)
 
     resources_xml = template % dict(files='\n'.join(files))

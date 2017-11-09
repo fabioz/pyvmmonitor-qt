@@ -5,14 +5,13 @@ Copyright: Brainwy Software Ltda
 '''
 from contextlib import contextmanager
 
-from PySide.QtSvg import QGraphicsSvgItem
-
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import get_weakref
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import QPointF, QRectF, Qt
 from pyvmmonitor_qt.qt.QtGui import QBrush, QColor, QPen
+from pyvmmonitor_qt.qt.QtSvg import QGraphicsSvgItem
 from pyvmmonitor_qt.qt.QtWidgets import (QGraphicsEllipseItem,
                                          QGraphicsPathItem, QGraphicsRectItem)
 from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop

@@ -39,10 +39,10 @@ import datetime
 import itertools
 import os
 import sys
-NoneType = type(None)
 
 from pyvmmonitor_qt.qt import qt_api
 
+NoneType = type(None)
 
 # History:
 # 1.0.15: added support for multiline strings
@@ -59,11 +59,10 @@ __license__ = __doc__
 
 DEBUG_FORMLAYOUT = False
 
-
 STDERR = sys.stderr
 
 _modname = qt_api
-assert _modname in ('pyqt', 'pyside')
+assert _modname in ('pyqt', 'pyside', 'pyside2'), 'Expected pyqt or pyside. Found: %s' % (_modname,)
 
 if _modname == 'pyqt':
     try:
@@ -81,7 +80,7 @@ if _modname == 'pyqt':
     from PyQt4.QtCore import pyqtSlot as Slot
     from PyQt4.QtCore import pyqtProperty as Property
 
-if _modname == 'pyside':
+elif _modname == 'pyside':
     from PySide.QtGui import (QWidget, QLineEdit, QComboBox, QLabel, QSpinBox,
                               QIcon, QStyle, QDialogButtonBox, QHBoxLayout,
                               QVBoxLayout, QDialog, QColor, QPushButton, QCheckBox,
@@ -91,6 +90,16 @@ if _modname == 'pyside':
                               QDoubleValidator, QFormLayout, QFileDialog)
     from PySide.QtCore import Qt, SIGNAL, SLOT, QSize, Slot, Property
 
+elif _modname == 'pyside2':
+    from PySide2.QtWidgets import (QWidget, QLineEdit, QComboBox, QLabel, QSpinBox,
+                              QStyle, QDialogButtonBox, QHBoxLayout,
+                              QVBoxLayout, QDialog, QPushButton, QCheckBox,
+                              QColorDialog, QTabWidget, QApplication,
+                              QStackedWidget, QDateEdit, QDateTimeEdit,
+                              QFontComboBox, QGridLayout, QTextEdit,
+                              QFormLayout, QFileDialog)
+    from PySide2.QtGui import (QIcon, QColor, QPixmap, QFont, QFontDatabase, QDoubleValidator)
+    from PySide2.QtCore import Qt, SIGNAL, SLOT, QSize, Slot, Property
 
 # ----+- Python 3 compatibility -+----
 PY2 = sys.version[0] == '2'
@@ -102,7 +111,9 @@ if PY2:
     def u(obj):
         """Make unicode object"""
         return codecs.unicode_escape_decode(obj)[0]
+
 else:
+
     # Python 3
     def u(obj):
         """Return string as it is"""
@@ -805,6 +816,7 @@ def fedit(data, title="", comment="", icon=None, parent=None, apply=None, restor
 
 if __name__ == "__main__":
 
+
     from pyvmmonitor_qt.qt_app import obtain_qapp
     obtain_qapp()
 
@@ -813,6 +825,7 @@ if __name__ == "__main__":
     def exec_(self):
         self.accept()
         return True
+
     FormDialog.exec_ = exec_
 
     # Emulating the Filename with a CustomDataEditor...
@@ -861,6 +874,7 @@ if __name__ == "__main__":
 
     def apply_test(data):
         print("data:", data)
+
     print("result:", fedit(datalist, title="Example",
                            comment="This is just an <b>example</b>.",
                            apply=apply_test))

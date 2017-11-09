@@ -19,6 +19,7 @@ elif qt_api == 'pyside':
         pass
     from PySide import QtCore
     # Needed for the auto-generated resources
+    Signal = QtCore.Signal
     qRegisterResourceData = QtCore.qRegisterResourceData
     qUnregisterResourceData = QtCore.qUnregisterResourceData
 
@@ -34,11 +35,13 @@ else:
     except ImportError:
         pass
     from PySide2 import QtCore
+    Signal = QtCore.Signal
+    qRegisterResourceData = QtCore.qRegisterResourceData
+    qUnregisterResourceData = QtCore.qUnregisterResourceData
     QSortFilterProxyModel = QtCore.QSortFilterProxyModel
     QItemSelection = QtCore.QItemSelection
     QItemSelectionModel = QtCore.QItemSelectionModel
     QItemSelectionRange = QtCore.QItemSelectionRange
-
 
 # import PySide2.QtCore
 # for c in dir(PySide2.QtCore):
