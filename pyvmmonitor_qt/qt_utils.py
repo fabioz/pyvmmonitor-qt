@@ -257,7 +257,10 @@ if qt_api == 'pyside':
         PySide.QtCore.qInstallMsgHandler(handler)
 
 elif qt_api == 'pyside2':
-    from PySide2 import shiboken2
+    try:
+        from PySide2 import shiboken2
+    except ImportError:
+        import shiboken2
 
     def is_qobject_alive(obj):
         return shiboken2.isValid(obj)
