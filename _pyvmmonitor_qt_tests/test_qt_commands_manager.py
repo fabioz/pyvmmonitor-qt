@@ -39,9 +39,11 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import DEFAULT_SCHEME
     from pyvmmonitor_qt.qt.QtCore import Qt
     from pyvmmonitor_qt.qt.QtGui import QKeySequence
+    from pyvmmonitor_qt.qt_event_loop import process_events
     try:
         main_window = _shortcuts_main_window()
         main_window.show()
+        process_events()
 
         activated = []
 
@@ -108,9 +110,11 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
     from pyvmmonitor_qt.commands.qt_commands_manager import DEFAULT_SCHEME
     from pyvmmonitor_qt.commands.qt_commands_manager import CTRL_MOUSE_WHEEL_DOWN
     from pyvmmonitor_qt.qt.QtCore import Qt
+    from pyvmmonitor_qt.qt_event_loop import process_events
     try:
         main_window = _shortcuts_main_window()
         main_window.show()
+        process_events()
 
         activated = []
 
