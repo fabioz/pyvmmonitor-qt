@@ -35,10 +35,11 @@ def test_svg(qtapi, view):
 
     from pyvmmonitor_qt.qt_graphics_items import (
         create_graphics_item_rect, create_fixed_pixels_graphics_item_svg)
+    from pyvmmonitor_qt.qt.QtSvg import QSvgRenderer
+
     item = create_graphics_item_rect((0, 0, 76, 76))
     view.scene().addItem(item)
 
-    from PySide.QtSvg import QSvgRenderer
     svg_renderer = QSvgRenderer(':appbar.cursor.move.svg')
 
     item = create_fixed_pixels_graphics_item_svg(

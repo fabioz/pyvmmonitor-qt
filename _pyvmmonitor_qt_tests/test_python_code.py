@@ -87,6 +87,12 @@ def test_python_code_text_edit(qtapi):
 def test_python_code_text_edit_save(qtapi, tmpdir):
     from pyvmmonitor_qt.pyface_based.saveable_code_widget import SaveableAdvancedCodeWidget
     from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+    try:
+        # Python 3 has mock builtin
+        from unittest.mock import patch
+    except ImportError:
+        # Python 2: use mock module
+        from mock import patch
 
     p = tmpdir.mkdir("sub").join("hello.py")
     initial_code = '''class Error(object):
@@ -119,10 +125,9 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         time.sleep(1)  # Timeout must be higher for linux/mac.
     p.write(initial_code)
 
-    import mock
     from pyvmmonitor_qt.qt import QtWidgets
 
-    with mock.patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
+    with patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
         m.return_value = QtWidgets.QMessageBox.AcceptRole
         edit.save()
 
@@ -131,7 +136,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write(new_code)
-    with mock.patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
+    with patch('pyvmmonitor_qt.qt.QtWidgets.QMessageBox.exec_') as m:
         m.return_value = QtWidgets.QMessageBox.RejectRole
         edit.save()
 
@@ -140,7 +145,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write('foo')
-    with mock.patch.object(qt_utils, 'ask_save_filename') as m:
+    with patch.object(qt_utils, 'ask_save_filename') as m:
         m.return_value = compat.unicode(p), ''
         edit.filename = ''
 
@@ -151,7 +156,7 @@ def test_python_code_text_edit_save(qtapi, tmpdir):
         assert edit.code.get_code() == initial_code
 
     p.write('foo')
-    with mock.patch.object(qt_utils, 'ask_save_filename') as m:
+    with patch.object(qt_utils, 'ask_save_filename') as m:
         m.return_value = '', ''
         edit.filename = ''
 

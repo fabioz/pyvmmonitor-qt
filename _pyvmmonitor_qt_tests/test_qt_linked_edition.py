@@ -177,10 +177,10 @@ def test_font_family_qt_linked_edition(qtapi):
         font_family.set_data([data])
         assert font_family.qwidget.currentFont().family() == 'Arial'
 
-        data.font = 'Times'
+        data.font = 'Times New Roman'
         assert font_family.qwidget.currentFont().family() == 'Arial'
         process_queue()  # Only update when queue is processed
-        assert font_family.qwidget.currentFont().family() == 'Times'
+        assert font_family.qwidget.currentFont().family() == 'Times New Roman'
 
         font_family.set_current_font_family('Verdana')
         assert font_family.qwidget.currentFont().family() == 'Verdana'
