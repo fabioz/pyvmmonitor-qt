@@ -1,6 +1,7 @@
 
 <RCC>
   <qresource>
+    <file>appbar.3d.x.svg</file>
     <file>appbar.arrow.down.svg</file>
     <file>appbar.arrow.left.png</file>
     <file>appbar.arrow.right.png</file>
