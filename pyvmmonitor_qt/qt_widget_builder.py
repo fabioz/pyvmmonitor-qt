@@ -25,17 +25,17 @@ class WidgetBuilder(object):
         self.layout.setContentsMargins(margin, margin, margin, margin)
         self.widget.setLayout(self.layout)
 
-    def add_widget(self, widget):
-        self.layout.addWidget(widget)
+    def add_widget(self, widget, layout=None):
+        if layout is None:
+            layout = self.layout
+        layout.addWidget(widget)
         return widget
 
     def create_label(self, txt='', layout=None):
         from pyvmmonitor_qt.qt.QtWidgets import QLabel
         widget = QLabel(self.widget)
         widget.setText(txt)
-        if layout is None:
-            layout = self.layout
-        return self.add_widget(widget)
+        return self.add_widget(widget, layout=layout)
 
     def create_text_browser(self, txt='', open_links=False):
         from pyvmmonitor_qt.qt.QtWidgets import QTextBrowser

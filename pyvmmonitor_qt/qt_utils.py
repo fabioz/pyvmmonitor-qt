@@ -578,8 +578,8 @@ class _ResizeMessageBox(CustomMessageDialog):
             self._label_icon = QLabel(self)
             self._label_icon.setPixmap(icon.pixmap(32, 32))
             self._label_icon.setFixedSize(40, 40)
+            self._hor_layout.addWidget(self._label_icon)
 
-        self._hor_layout.addWidget(self._label_icon)
         message = message.replace('\n', '<br/>')
         label = self.create_label(message, layout=self._hor_layout)
         self._layout.addLayout(self._hor_layout)
