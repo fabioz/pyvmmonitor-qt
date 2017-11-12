@@ -94,8 +94,71 @@ def ask_yes_no_cancel(
 #     ret = dialog.exec_()
 
 
+def ask_text_input(
+        title,
+        msg,
+        initial_text='',
+        ok_caption='Ok',
+        cancel_caption='Cancel',
+        parent=None,
+        get_input_error=lambda x: '',
+):
+    '''
+    :return None or the text that the user provided.
+    '''
+    from pyvmmonitor_qt.qt.QtWidgets import QInputDialog
+    from pyvmmonitor_core.weak_utils import get_weakref
+    if parent is None:
+        from pyvmmonitor_qt.qt_utils import get_main_window
+        parent = get_main_window()
+
+    input_dialog = QInputDialog(parent)
+    input_dialog.setWindowTitle(title)
+    input_dialog.setLabelText(msg)
+    input_dialog.setInputMode(QInputDialog.TextInput)
+    input_dialog.setTextValue(initial_text)
+    input_dialog.setOkButtonText(ok_caption)
+    input_dialog.setCancelButtonText(cancel_caption)
+    weak_input_dialog = get_weakref(input_dialog)
+
+    def on_text_value_changed(txt):
+        input_dialog = weak_input_dialog()
+        input_error = get_input_error(txt)
+        if input_error:
+            input_dialog.setLabelText(msg + "\n" + input_error)
+        else:
+            input_dialog.setLabelText(msg)
+
+    input_dialog.textValueChanged.connect(on_text_value_changed)
+    on_text_value_changed(initial_text)
+    while True:
+        ret = input_dialog.exec_()
+        if not ret:
+            return None
+
+        txt = input_dialog.textValue()
+        if not get_input_error(txt):
+            return txt
+
+        # If the user accepted and the value is invalid, show it again (keep in while True).
+
+
 if __name__ == '__main__':
     from pyvmmonitor_qt.qt_app import obtain_qapp
     obtain_qapp()
-    print(ask_yes_no_cancel(
-        'What?', '\nFoo is dirty, is this ok?\n', '&Save', 'Do &not Save', '&Cancel'))
+
+    def get_input_error(txt):
+        if txt == 'foo':
+            return ''
+        return 'The name must be "foo".'
+
+    print(ask_text_input(
+        'Enter title',
+        'Enter message',
+        'initial',
+        'OkFoo',
+        'CFoo',
+        get_input_error=get_input_error))
+
+#     print(ask_yes_no_cancel(
+#         'What?', '\nFoo is dirty, is this ok?\n', '&Save', 'Do &not Save', '&Cancel'))
