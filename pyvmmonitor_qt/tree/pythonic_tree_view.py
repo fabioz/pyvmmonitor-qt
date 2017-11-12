@@ -574,6 +574,9 @@ class PythonicQTreeView(object):
                         new_selection.append(obj_id)
         return new_selection
 
+    def select_all(self):
+        self.set_selection(list(self._fast.keys()))
+
     def set_selection(self, obj_ids, clear_selection=True):
         from pyvmmonitor_qt.qt.QtCore import QModelIndex
         from pyvmmonitor_qt.qt.QtCore import QItemSelection
