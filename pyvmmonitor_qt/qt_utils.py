@@ -980,6 +980,19 @@ def ask_save_filename(parent, caption, initial_dir, files_filter, selected_filte
     return qt_ask.ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter)
 
 
+def _is_opengl_available():
+    try:
+        return _is_opengl_available.__cached__
+    except AttributeError:
+        try:
+            from OpenGL import GL
+            _is_opengl_available.__cached__ = True
+        except ImportError:
+            _is_opengl_available.__cached__ = False
+
+        return _is_opengl_available.__cached__
+
+
 def set_painter_antialiased(painter, antialias, widget):
 
     '''
@@ -996,13 +1009,10 @@ def set_painter_antialiased(painter, antialias, widget):
                     QPainter.SmoothPixmapTransform |
                     QPainter.HighQualityAntialiasing)
     # painter.setRenderHint(QPainter.NonCosmeticDefaultPen, False)
-    use_opengl = hasattr(widget, 'makeCurrent')
-    try:
-        from OpenGL import GL
-    except ImportError:
-        use_opengl = False
+    use_opengl = hasattr(widget, 'makeCurrent') and _is_opengl_available()
 
     if use_opengl:
+        from OpenGL import GL
         widget.makeCurrent()
 
     if antialias:

@@ -7,13 +7,21 @@ if qt_api == 'pyqt':
     QGL = QtOpenGL.QGL
 
 elif qt_api == 'pyside2':
-    # Not currently available in pyside2.
-    # It has actually been deprecated and we should use
-    # QtGui.QGLFormat and other related classes instead.
 
     def create_gl_widget():
+        # QGLWidget Not currently available in pyside2.
+        # It has actually been deprecated and we should use
+        # QtGui.QGLFormat and other related classes instead.
         from PySide2.QtWidgets import QOpenGLWidget
-        return QOpenGLWidget()
+        from PySide2.QtGui import QSurfaceFormat
+        from PySide2 import QtOpenGL
+        QGLFormat = QtOpenGL.QGLFormat
+        QGL = QtOpenGL.QGL
+        open_gl_widget = QOpenGLWidget()
+        fmt = QSurfaceFormat.defaultFormat()
+        fmt.setSamples(8)
+        open_gl_widget.setFormat(fmt)
+        return open_gl_widget
 
     def is_good_opengl_version():
         from PySide2.QtGui import QSurfaceFormat

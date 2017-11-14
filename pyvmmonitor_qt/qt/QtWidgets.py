@@ -1,4 +1,5 @@
 from . import qt_api
+
 if qt_api == 'pyqt':
     from PyQt4 import QtGui as QtWidgets
 
