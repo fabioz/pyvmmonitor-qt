@@ -13,7 +13,7 @@ import weakref
 from contextlib import contextmanager
 from functools import wraps
 
-from pyvmmonitor_core import abstract, overrides
+from pyvmmonitor_core import overrides
 from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
