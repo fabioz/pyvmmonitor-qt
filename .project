@@ -5,6 +5,7 @@
 	<projects>
 		<project>pytest-qt</project>
 		<project>pyvmmonitor-core</project>
+		<project>QDarkStyleSheet</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

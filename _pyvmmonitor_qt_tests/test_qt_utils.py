@@ -103,7 +103,7 @@ unicode: Item 4
 #     qtapi.d()
 
 
-def test_menu_creator(qtapi):
+def test_menu_creator(qtapi, data_regression):
     from pyvmmonitor_qt.qt_utils import MenuCreator
     menu_creator = MenuCreator()
     submenu = menu_creator.add_submenu('Sort')
@@ -131,6 +131,7 @@ def test_menu_creator(qtapi):
     assert isinstance(menu, QMenu)
     # I'd like to check what's there, but it seems QMenu doesn't have that API.
 
+    data_regression.check(menu_creator.to_dict())
     # view interactively
     # from pyvmmonitor_qt.qt.QtGui import QCursor
     # menu.exec_(QCursor.pos())

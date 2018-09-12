@@ -1,0 +1,11 @@
+actions: []
+children:
+- actions:
+  - Cumulative
+  - Total
+  children:
+  - actions:
+    - F1
+    - F2
+    title: Another
+  title: Sort

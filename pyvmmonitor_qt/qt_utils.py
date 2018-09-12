@@ -661,7 +661,13 @@ class IMenuExecutor(object):
 class MenuCreator(object):
     '''Helper class to create menus.'''
 
-    def __init__(self, parent=None, parent_menu=None, caption=None, menu_executor=IMenuExecutor):
+    def __init__(self, parent=None, caption=None, menu_executor=None, **kwargs):
+        '''
+
+        :param parent:
+        :param caption:
+        :param IMenuExecutor menu_executor:
+        '''
         from pyvmmonitor_qt.qt.QtWidgets import QMenu
         from pyvmmonitor_core.interface import assert_implements
         self.parent = parent
@@ -670,17 +676,24 @@ class MenuCreator(object):
             assert_implements(menu_executor, IMenuExecutor)
 
         self._menu_executor = menu_executor
+        self._as_dict = {'actions': []}
+
+        parent_menu = kwargs.get('__parent_menu__')
         if parent_menu is not None:
-            parent_menu.addMenu(self.menu)
+            parent_menu.menu.addMenu(self.menu)
+            parent_menu._as_dict.setdefault('children', []).append(self._as_dict)
 
         if caption is not None:
+            self._as_dict['title'] = caption
             self.menu.setTitle(caption)
 
     def add_qaction(self, qaction):
+        self._as_dict['actions'].append(qaction.text())
         self.menu.addAction(qaction)
         return qaction
 
     def add_action(self, caption, callback=None, checkable=False):
+        self._as_dict['actions'].append(caption)
         action = self.menu.addAction(caption)
         if callback is not None:
             action.triggered.connect(callback)
@@ -689,7 +702,7 @@ class MenuCreator(object):
         return action
 
     def add_submenu(self, caption):
-        return MenuCreator(self.parent, parent_menu=self.menu, caption=caption)
+        return MenuCreator(self.parent, __parent_menu__=self, caption=caption)
 
     def create_menu(self):
         return self.menu
@@ -703,6 +716,9 @@ class MenuCreator(object):
     def exec_(self):
         from pyvmmonitor_qt.qt.QtGui import QCursor
         self.create_menu().exec_(QCursor.pos())
+
+    def to_dict(self):
+        return self._as_dict.copy()
 
 
 def count_widget_children(qwidget):
