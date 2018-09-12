@@ -13,7 +13,7 @@ import weakref
 from contextlib import contextmanager
 from functools import wraps
 
-from pyvmmonitor_core import overrides
+from pyvmmonitor_core import abstract, overrides
 from pyvmmonitor_core.log_utils import get_logger
 from pyvmmonitor_core.thread_utils import is_in_main_thread
 from pyvmmonitor_core.weak_utils import get_weakref
@@ -652,13 +652,24 @@ def create_right_aligned_toolbar(parent):
     return toolbar
 
 
+class IMenuExecutor(object):
+
+    def exec_menu(self, menu_creator):
+        pass
+
+
 class MenuCreator(object):
     '''Helper class to create menus.'''
 
-    def __init__(self, parent=None, parent_menu=None, caption=None):
+    def __init__(self, parent=None, parent_menu=None, caption=None, menu_executor=IMenuExecutor):
         from pyvmmonitor_qt.qt.QtWidgets import QMenu
+        from pyvmmonitor_core.interface import assert_implements
         self.parent = parent
         self.menu = QMenu(parent)
+        if menu_executor is not None:
+            assert_implements(menu_executor, IMenuExecutor)
+
+        self._menu_executor = menu_executor
         if parent_menu is not None:
             parent_menu.addMenu(self.menu)
 
@@ -682,6 +693,12 @@ class MenuCreator(object):
 
     def create_menu(self):
         return self.menu
+
+    def exec_menu(self):
+        if self._menu_executor is None:
+            self._menu_executor.exec_menu(self)
+        else:
+            self.exec_()
 
     def exec_(self):
         from pyvmmonitor_qt.qt.QtGui import QCursor
