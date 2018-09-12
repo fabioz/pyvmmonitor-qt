@@ -695,7 +695,7 @@ class MenuCreator(object):
         return self.menu
 
     def exec_menu(self):
-        if self._menu_executor is None:
+        if self._menu_executor is not None:
             self._menu_executor.exec_menu(self)
         else:
             self.exec_()
