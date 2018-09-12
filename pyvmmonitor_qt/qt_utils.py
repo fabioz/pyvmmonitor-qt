@@ -683,6 +683,10 @@ class MenuCreator(object):
     def create_menu(self):
         return self.menu
 
+    def exec_(self):
+        from pyvmmonitor_qt.qt.QtGui import QCursor
+        self.create_menu().exec_(QCursor.pos())
+
 
 def count_widget_children(qwidget):
     total = 0
