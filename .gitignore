@@ -54,3 +54,4 @@ docs/_build/
 target/
 
 .mu.diff.git.tmp
+.pytest_cache

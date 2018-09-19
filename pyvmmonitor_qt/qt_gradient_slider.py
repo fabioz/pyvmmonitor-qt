@@ -31,13 +31,13 @@ class _ValueCustomProp(PropsCustomProperty):
 
     def convert(self, obj, v):
         if v < obj.min_value:
-            logger.warn(
+            logger.warning(
                 'Trying to set a value (%s) < min (%s) value in QGradientSlider (using min instead).' % (
                     v, obj.min_value))
             v = obj.min_value
 
         elif v > obj.max_value:
-            logger.warn(
+            logger.warning(
                 'Trying to set a value (%s) > max (%s) value in QGradientSlider (using min instead).' % (
                     v, obj.max_value))
             v = obj.max_value
