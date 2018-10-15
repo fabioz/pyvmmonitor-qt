@@ -507,6 +507,13 @@ class PythonicQTreeView(object):
         '''
         return self._fast[obj_id]
 
+    def __contains__(self, obj_id):
+        try:
+            self[obj_id]
+            return True
+        except KeyError:
+            return False
+
     def __delitem__(self, obj_id):
         node = self._fast[obj_id]
 
