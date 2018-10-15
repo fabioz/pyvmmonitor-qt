@@ -11,6 +11,11 @@ elif qt_api == 'pyside2':
     QTextCursor = QtGui.QTextCursor
     QKeySequence = QtGui.QKeySequence
 
+elif qt_api == 'pyqt5':
+    from PyQt5 import QtGui
+    QTextCursor = QtGui.QTextCursor
+    QKeySequence = QtGui.QKeySequence
+
 else:
     from PySide import QtGui
     QTextCursor = QtGui.QTextCursor
@@ -27,7 +32,7 @@ except:
 #         print('%s = QtGui.%s' % (c, c))
 
 QAbstractTextDocumentLayout = QtGui.QAbstractTextDocumentLayout
-QAccessibleEvent = QtGui.QAccessibleEvent
+# QAccessibleEvent = QtGui.QAccessibleEvent
 QActionEvent = QtGui.QActionEvent
 QBitmap = QtGui.QBitmap
 QBrush = QtGui.QBrush
@@ -67,7 +72,7 @@ QInputMethodEvent = QtGui.QInputMethodEvent
 QIntValidator = QtGui.QIntValidator
 QKeyEvent = QtGui.QKeyEvent
 QLinearGradient = QtGui.QLinearGradient
-QMatrix = QtGui.QMatrix
+# QMatrix = QtGui.QMatrix
 QMatrix2x2 = QtGui.QMatrix2x2
 QMatrix2x3 = QtGui.QMatrix2x3
 QMatrix2x4 = QtGui.QMatrix2x4
@@ -96,7 +101,7 @@ QPixmap = QtGui.QPixmap
 QPixmapCache = QtGui.QPixmapCache
 QPolygon = QtGui.QPolygon
 QPolygonF = QtGui.QPolygonF
-QPyTextObject = QtGui.QPyTextObject
+# QPyTextObject = QtGui.QPyTextObject
 QQuaternion = QtGui.QQuaternion
 QRadialGradient = QtGui.QRadialGradient
 QRegExpValidator = QtGui.QRegExpValidator
@@ -139,7 +144,7 @@ QTextTable = QtGui.QTextTable
 QTextTableCell = QtGui.QTextTableCell
 QTextTableCellFormat = QtGui.QTextTableCellFormat
 QTextTableFormat = QtGui.QTextTableFormat
-QToolBarChangeEvent = QtGui.QToolBarChangeEvent
+# QToolBarChangeEvent = QtGui.QToolBarChangeEvent
 # QTouchDevice = QtGui.QTouchDevice
 QTouchEvent = QtGui.QTouchEvent
 QTransform = QtGui.QTransform

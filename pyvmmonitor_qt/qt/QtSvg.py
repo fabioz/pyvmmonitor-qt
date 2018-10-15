@@ -6,6 +6,9 @@ if qt_api == 'pyqt':
 elif qt_api == 'pyside2':
     from PySide2 import QtSvg
 
+elif qt_api == 'pyqt5':
+    from PyQt5 import QtSvg
+
 else:
     from PySide import QtSvg
 

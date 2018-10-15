@@ -6,6 +6,8 @@
 import os
 import subprocess
 
+from pyvmmonitor_qt.qt import qt_api
+
 template = '''
 <RCC>
   <qresource>
@@ -26,12 +28,10 @@ def generate_resources(resources_dir, output_file):
     with open(resources_xml_file, 'w') as stream:
         stream.write(resources_xml)
 
-    is_pyside1 = True
-    try:
+    if qt_api == 'pyside':
         import PySide
         pyrcc = os.path.join(os.path.dirname(PySide.__file__), 'pyside-rcc.exe')
-    except ImportError:
-        is_pyside1 = False
+    elif qt_api == 'pyside2':
         import PySide2 as PySide
         for p in os.environ['PATH'].split(os.pathsep):
             pyrcc = os.path.join(p, 'pyside2-rcc')
@@ -45,6 +45,25 @@ def generate_resources(resources_dir, output_file):
                 break
         else:
             raise AssertionError('Could not find pyrcc.')
+
+    elif qt_api == 'pyqt5':
+        import PyQt5
+        for p in os.environ['PATH'].split(os.pathsep):
+            pyrcc = os.path.join(p, 'pyrcc5')
+            if os.path.exists(pyrcc):
+                break
+            pyrcc = os.path.join(p, 'pyrcc5.exe')
+            if os.path.exists(pyrcc):
+                break
+            pyrcc = os.path.join(p, 'pyrcc5.bat')
+            if os.path.exists(pyrcc):
+                break
+            pyrcc = os.path.join(p, 'pyrcc5.sh')
+            if os.path.exists(pyrcc):
+                break
+
+    else:
+        raise AssertionError('qt_api not supported: %s' % (qt_api,))
 
     assert os.path.exists(pyrcc), 'Expected: %s to exist.' % (pyrcc,)
     p = subprocess.Popen(
@@ -60,8 +79,9 @@ def generate_resources(resources_dir, output_file):
     replacement = 'from pyvmmonitor_qt.qt import QtCore, QtSvg, QtXml, load_plugin_dirs;load_plugin_dirs()'
     stdout = stdout.replace('from PySide import QtCore', replacement)
     stdout = stdout.replace('from PySide2 import QtCore', replacement)
+    stdout = stdout.replace('from PyQt5 import QtCore', replacement)
     import sys
-    if is_pyside1 and not sys.version_info[0] >= 3:
+    if qt_api == 'pyside' and not sys.version_info[0] >= 3:
         stdout = stdout.replace('"\\', 'b"\\')
     with open(output_file, 'w') as stream:
         stream.write(stdout)

@@ -211,7 +211,7 @@ class BackgroundPainter(object):
         return p2
 
     def paint(self, graphics_view, painter, rect):
-        from pyvmmonitor_qt.qt.QtCore import QRect
+        from pyvmmonitor_qt.qt.QtCore import QRectF
         curr_transform = painter.transform()
 
         palette = graphics_view.palette()
@@ -230,7 +230,7 @@ class BackgroundPainter(object):
                 palette.window().color())
 
             if self.background_mode == BackgroundMode.TILED_TRANSPARENT_BACKGROUND:
-                viewport_rect = QRect(0, 0, graphics_view.width(), graphics_view.height())
+                viewport_rect = QRectF(0, 0, graphics_view.width(), graphics_view.height())
                 clip_rect = s.intersected(viewport_rect)
                 painter.setClipRect(clip_rect)
                 painter.fillRect(s, Qt.white)

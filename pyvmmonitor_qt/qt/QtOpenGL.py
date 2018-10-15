@@ -28,6 +28,28 @@ elif qt_api == 'pyside2':
         default_format = QSurfaceFormat.defaultFormat()
         return default_format.majorVersion() >= 2
 
+elif qt_api == 'pyqt5':
+
+    def create_gl_widget():
+        # QGLWidget Not currently available in pyside2.
+        # It has actually been deprecated and we should use
+        # QtGui.QGLFormat and other related classes instead.
+        from PyQt5.QtWidgets import QOpenGLWidget
+        from PyQt5.QtGui import QSurfaceFormat
+        from PyQt5 import QtOpenGL
+        QGLFormat = QtOpenGL.QGLFormat
+        QGL = QtOpenGL.QGL
+        open_gl_widget = QOpenGLWidget()
+        fmt = QSurfaceFormat.defaultFormat()
+        fmt.setSamples(8)
+        open_gl_widget.setFormat(fmt)
+        return open_gl_widget
+
+    def is_good_opengl_version():
+        from PyQt5.QtGui import QSurfaceFormat
+        default_format = QSurfaceFormat.defaultFormat()
+        return default_format.majorVersion() >= 2
+
 else:
     from PySide import QtOpenGL
     QGLFormat = QtOpenGL.QGLFormat

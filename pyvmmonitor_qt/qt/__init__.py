@@ -40,7 +40,12 @@ if qt_api is None:
                 root_symbol = PySide2
                 qt_api = 'pyside2'
             except ImportError:
-                raise ImportError('Cannot import PySide, PySide2 or PyQt4')
+                try:
+                    import PyQt5
+                    root_symbol = PyQt5
+                    qt_api = 'pyqt5'
+                except:
+                    raise ImportError('Cannot import PySide, PySide2, PyQt4 or PyQt5')
 
 elif qt_api == 'pyqt':
     root_symbol = PyQt4
@@ -53,6 +58,10 @@ elif qt_api == 'pyside':
 elif qt_api == 'pyside2':
     import PySide2
     root_symbol = PySide2
+
+elif qt_api == 'pyqt5':
+    import PyQt5
+    root_symbol = PyQt5
 
 else:
     raise RuntimeError("Invalid Qt API %r, valid values are: 'pyqt', 'pyside' or 'pyside2'"

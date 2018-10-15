@@ -1,10 +1,13 @@
-from . import qt_api
+from pyvmmonitor_qt.qt import qt_api
 
 if qt_api == 'pyqt':
     from PyQt4 import QtGui as QtWidgets
 
 elif qt_api == 'pyside':
     from PySide import QtGui as QtWidgets
+
+elif qt_api == 'pyqt5':
+    from PyQt5 import QtWidgets
 
 else:
     from PySide2 import QtWidgets
@@ -65,7 +68,7 @@ QGraphicsEffect = QtWidgets.QGraphicsEffect
 QGraphicsEllipseItem = QtWidgets.QGraphicsEllipseItem
 QGraphicsGridLayout = QtWidgets.QGraphicsGridLayout
 QGraphicsItem = QtWidgets.QGraphicsItem
-QGraphicsItemAnimation = QtWidgets.QGraphicsItemAnimation
+# QGraphicsItemAnimation = QtWidgets.QGraphicsItemAnimation
 QGraphicsItemGroup = QtWidgets.QGraphicsItemGroup
 QGraphicsLayout = QtWidgets.QGraphicsLayout
 QGraphicsLayoutItem = QtWidgets.QGraphicsLayoutItem
@@ -185,7 +188,7 @@ QTapAndHoldGesture = QtWidgets.QTapAndHoldGesture
 QTapGesture = QtWidgets.QTapGesture
 QTextBrowser = QtWidgets.QTextBrowser
 QTextEdit = QtWidgets.QTextEdit
-QTileRules = QtWidgets.QTileRules
+# QTileRules = QtWidgets.QTileRules
 QTimeEdit = QtWidgets.QTimeEdit
 QToolBar = QtWidgets.QToolBar
 QToolBox = QtWidgets.QToolBox

@@ -29,6 +29,19 @@ elif qt_api == 'pyside':
     QItemSelectionModel = QtGui.QItemSelectionModel
     QItemSelectionRange = QtGui.QItemSelectionRange
 
+elif qt_api == 'pyqt5':
+    try:
+        from PyQt5 import __version__, __version_info__
+    except ImportError:
+        pass
+    from PyQt5 import QtCore
+    from PyQt5.QtCore import pyqtSignal as Signal
+    qRegisterResourceData = QtCore.qRegisterResourceData
+    qUnregisterResourceData = QtCore.qUnregisterResourceData
+    QSortFilterProxyModel = QtCore.QSortFilterProxyModel
+    QItemSelection = QtCore.QItemSelection
+    QItemSelectionModel = QtCore.QItemSelectionModel
+    QItemSelectionRange = QtCore.QItemSelectionRange
 else:
     try:
         from PySide2 import __version__, __version_info__
@@ -77,7 +90,7 @@ QElapsedTimer = QtCore.QElapsedTimer
 QEvent = QtCore.QEvent
 QEventLoop = QtCore.QEventLoop
 QEventTransition = QtCore.QEventTransition
-QFactoryInterface = QtCore.QFactoryInterface
+# QFactoryInterface = QtCore.QFactoryInterface
 QFile = QtCore.QFile
 # QFileDevice = QtCore.QFileDevice
 QFileInfo = QtCore.QFileInfo
@@ -136,8 +149,8 @@ QStateMachine = QtCore.QStateMachine
 QSysInfo = QtCore.QSysInfo
 QSystemSemaphore = QtCore.QSystemSemaphore
 QT_TRANSLATE_NOOP = QtCore.QT_TRANSLATE_NOOP
-QT_TRANSLATE_NOOP3 = QtCore.QT_TRANSLATE_NOOP3
-QT_TRANSLATE_NOOP_UTF8 = QtCore.QT_TRANSLATE_NOOP_UTF8
+# QT_TRANSLATE_NOOP3 = QtCore.QT_TRANSLATE_NOOP3
+# QT_TRANSLATE_NOOP_UTF8 = QtCore.QT_TRANSLATE_NOOP_UTF8
 QT_TR_NOOP = QtCore.QT_TR_NOOP
 QT_TR_NOOP_UTF8 = QtCore.QT_TR_NOOP_UTF8
 QTemporaryFile = QtCore.QTemporaryFile

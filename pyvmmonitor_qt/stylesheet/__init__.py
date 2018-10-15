@@ -79,8 +79,17 @@ def _switch_resources_to_style(is_dark):
 
 def apply_default_stylesheet(app, force=False):
     global _applied_stylesheet
+    global _USE_THEME
 
     if not _applied_stylesheet or force:
+        if _USE_THEME == 'DARK':
+            try:
+                import qdarkstyle
+            except ImportError:
+                import sys
+                sys.stderr.write('import qdarkstyle failed (using native style as a fallback).')
+                _USE_THEME = 'NATIVE'
+
         _applied_stylesheet = True
 
         if _USE_THEME == 'DARK_ORANGE':
