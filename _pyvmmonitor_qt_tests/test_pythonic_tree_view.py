@@ -389,3 +389,40 @@ def test_filtering(qtapi, tree):
 
     filtered_tree.filter_text = ''
     assert list_wiget_item_captions(filtered_tree.tree) == ['aa', '+bb']
+
+
+@pytest.yield_fixture
+def virtual_tree():
+    from pyvmmonitor_qt.qt.QtWidgets import QTreeView
+    from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
+    tree = QTreeView()
+
+    def has_children(pythonic_tree, node):
+        if node is None or node.data[0] == '1':
+            return True
+        return False
+
+    def create_children(pythonic_tree, node):
+        if node is None:
+            pythonic_tree['1'] = '1'
+            pythonic_tree['3'] = '2'
+        else:
+            if node.data[0] == '1':
+                pythonic_tree.add_node(node, 'foo', '5')
+
+    tree = PythonicQTreeView(tree, has_children=has_children, create_children=create_children)
+    yield tree
+    from pyvmmonitor_qt import qt_utils
+    if qt_utils.is_qobject_alive(tree.tree):
+        tree.tree.deleteLater()
+    tree = None
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    process_events(collect=True)
+
+
+def test_virtual_model(qtapi, virtual_tree):
+    from pyvmmonitor_qt.qt_utils import list_wiget_item_captions
+    virtual_tree.tree.show()
+    assert list_wiget_item_captions(virtual_tree.tree) == ['1', '+5', '2']
+    virtual_tree.clear()
+    assert list_wiget_item_captions(virtual_tree.tree) == ['1', '+5', '2']

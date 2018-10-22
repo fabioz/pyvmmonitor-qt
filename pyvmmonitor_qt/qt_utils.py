@@ -265,6 +265,13 @@ elif qt_api == 'pyside2':
     def is_qobject_alive(obj):
         return shiboken2.isValid(obj)
 
+elif qt_api == 'pyqt5':
+
+    import sip
+
+    def is_qobject_alive(obj):
+        return not sip.isdeleted(obj)
+
 else:
 
     def is_qobject_alive(obj):

@@ -6,8 +6,10 @@ Note: this is unfinished.
 
 from pyvmmonitor_core import compat
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
+from pyvmmonitor_qt.qt_utils import QtWeakMethod
 
 _SHOW_INFO = {
+    'size': 'QSize',
     'sizeHint': 'QSize',
     'minimumSize': 'QSize',
 }
@@ -43,8 +45,9 @@ class _WidgetViewer(QWidget):
 
 class _LiveAppInspector(QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, roots=None):
         super(_LiveAppInspector, self).__init__(parent)
+        self._roots = roots
 
         from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder
         from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
@@ -54,18 +57,61 @@ class _LiveAppInspector(QWidget):
         widget_builder = WidgetBuilder(self, layout)
 
         qtree_view = widget_builder.add_qtree_view()
-        self.tree = tree = PythonicQTreeView(qtree_view)
-        tree.columns = ['Widget']
 
         self._widget_viewer = widget_viewer = _WidgetViewer()
         self._id_to_widget_ref = {}
+        self._widget_id_to_attr_name = {}
         widget_builder.add_widget(widget_viewer)
         widget_builder.create_custom_buttons([
             ['Refresh', self.refresh],
         ])
 
+        self.tree = tree = PythonicQTreeView(
+            qtree_view,
+            has_children=QtWeakMethod(self, '_has_children'),
+            create_children=QtWeakMethod(self, '_create_children'),
+        )
+        tree.columns = ['Widget']
         self.refresh()
         qtree_view.selectionModel().selectionChanged.connect(self._on_selection_changed)
+
+    def _has_children(self, pythonic_tree, node):
+        return True
+
+    def _create_children(self, pythonic_tree, node):
+        if node is None:
+            from pyvmmonitor_qt.qt_app import obtain_qapp
+            if self._roots is None:
+                top_level_widgets = obtain_qapp().topLevelWidgets()
+            else:
+                top_level_widgets = self._roots
+
+            for widget in top_level_widgets:
+                self._create_node(pythonic_tree, widget, '', self._widget_id_to_attr_name)
+        else:
+            parent_obj_id = node.obj_id
+            widget = self._id_to_widget_ref[parent_obj_id]
+            widget = widget()
+            if widget is not None:
+                for child in widget.children():
+                    self._create_node(pythonic_tree, child, parent_obj_id, self._widget_id_to_attr_name)
+
+    def _create_node(self, pythonic_tree, widget, parent_id, widget_id_to_attr_name):
+        import weakref
+        widget_id_to_attr_name.update(self._get_id_to_attr_name(widget))
+
+        obj_id = parent_id + '.' + compat.unicode(id(widget))
+        self._id_to_widget_ref[obj_id] = weakref.ref(widget)
+
+        s = '%s (%s)' % (widget.__class__.__name__, id(widget))
+        if widget.objectName():
+            s += ' (%s)' % (widget.objectName(),)
+
+        found_as_attr_name = widget_id_to_attr_name.get(id(widget))
+        if found_as_attr_name:
+            s += ' (%s)' % (found_as_attr_name,)
+
+        return pythonic_tree.add_node(parent_id or None, obj_id, [s])
 
     def _get_id_to_attr_name(self, obj):
         id_to_name = {}
@@ -76,33 +122,9 @@ class _LiveAppInspector(QWidget):
         return id_to_name
 
     def refresh(self):
-        self.tree.clear()
+        self._widget_id_to_attr_name.clear()
         self._id_to_widget_ref.clear()
-
-        from pyvmmonitor_qt.qt_app import obtain_qapp
-        top_level_widgets = obtain_qapp().topLevelWidgets()
-        for widget in top_level_widgets:
-            self._fill(widget, None, {})
-
-    def _fill(self, widget, parent_id, widget_id_to_attr_name):
-        import weakref
-        widget_id_to_attr_name.update(self._get_id_to_attr_name(widget))
-
-        obj_id = compat.unicode(id(widget))
-        self._id_to_widget_ref[obj_id] = weakref.ref(widget)
-        if obj_id not in self.tree:
-            s = '%s (%s)' % (widget.__class__.__name__, id(widget))
-            if widget.objectName():
-                s += ' (%s)' % (widget.objectName(),)
-
-            found_as_attr_name = widget_id_to_attr_name.get(id(widget))
-            if found_as_attr_name:
-                s += ' (%s)' % (found_as_attr_name,)
-
-            self.tree.add_node(parent_id, obj_id, [s])
-
-            for child in widget.children():
-                self._fill(child, obj_id, widget_id_to_attr_name)
+        self.tree.clear()
 
     def _on_selection_changed(self):
         from pyvmmonitor_qt.qt_event_loop import execute_on_next_event_loop
@@ -117,5 +139,5 @@ class _LiveAppInspector(QWidget):
             self._widget_viewer.set_data(widget)
 
 
-def create_live_app_inspector(parent=None):
-    return _LiveAppInspector(parent)
+def create_live_app_inspector(parent=None, roots=None):
+    return _LiveAppInspector(parent, roots=roots)
