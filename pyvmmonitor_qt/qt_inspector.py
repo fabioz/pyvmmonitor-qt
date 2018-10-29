@@ -22,6 +22,7 @@ class _WidgetViewer(QWidget):
         super(_WidgetViewer, self).__init__(parent)
         layout = QGridLayout()
         self.setLayout(layout)
+        self._widget = None
 
         from pyvmmonitor_qt.qt_widget_builder import WidgetBuilderCols
         widget_builder = WidgetBuilderCols(2, self, layout)
@@ -31,6 +32,13 @@ class _WidgetViewer(QWidget):
             self._method_name_to_line_edit[method_name] = widget_builder.create_line_edit()
 
     def set_data(self, widget):
+        if self._widget is not None:
+            if hasattr(self._widget, 'setStyleSheet'):
+                self._widget.setStyleSheet("")
+
+        self._widget = widget
+        if hasattr(widget, 'setStyleSheet'):
+            widget.setStyleSheet("background-color:red;")
         from pyvmmonitor_qt.qt.QtCore import QSize
         for method_name in _SHOW_INFO:
             method = getattr(widget, method_name, None)
@@ -46,23 +54,26 @@ class _WidgetViewer(QWidget):
 class _LiveAppInspector(QWidget):
 
     def __init__(self, parent=None, roots=None):
-        super(_LiveAppInspector, self).__init__(parent)
-        self._roots = roots
-
+        from pyvmmonitor_qt.qt_term import QtTermWidget
         from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder
         from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
 
-        layout = WidgetBuilder.create_layout()
-        self.setLayout(layout)
-        widget_builder = WidgetBuilder(self, layout)
+        super(_LiveAppInspector, self).__init__(parent)
+        self._roots = roots
 
-        qtree_view = widget_builder.add_qtree_view()
+        layout = WidgetBuilder.create_layout('horizontal')
+        self.setLayout(layout)
+
+        widget_builder1 = WidgetBuilder()
+        widget_builder1.create_widget(self)
+        qtree_view = widget_builder1.add_qtree_view()
 
         self._widget_viewer = widget_viewer = _WidgetViewer()
-        self._id_to_widget_ref = {}
+        self._id_to_widget = {}
         self._widget_id_to_attr_name = {}
-        widget_builder.add_widget(widget_viewer)
-        widget_builder.create_custom_buttons([
+        widget_builder1.add_widget(widget_viewer)
+
+        widget_builder1.create_custom_buttons([
             ['Refresh', self.refresh],
         ])
 
@@ -72,6 +83,17 @@ class _LiveAppInspector(QWidget):
             create_children=QtWeakMethod(self, '_create_children'),
         )
         tree.columns = ['Widget']
+
+        widget_builder2 = WidgetBuilder()
+        widget_builder2.create_widget(self)
+        widget_builder2.create_label('Terminal (Ctrl+Enter to evaluate)')
+        self._term_widget = w = QtTermWidget(self)
+        w.set_locals({'inspector':  self})
+        widget_builder2.add_widget(w)
+
+        layout.addWidget(widget_builder1.widget)
+        layout.addWidget(widget_builder2.widget)
+
         self.refresh()
         qtree_view.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
@@ -90,18 +112,19 @@ class _LiveAppInspector(QWidget):
                 self._create_node(pythonic_tree, widget, '', self._widget_id_to_attr_name)
         else:
             parent_obj_id = node.obj_id
-            widget = self._id_to_widget_ref[parent_obj_id]
-            widget = widget()
+            widget = self._id_to_widget[parent_obj_id]
             if widget is not None:
+                print('%s - children: %s' % (widget, widget.children()))
                 for child in widget.children():
                     self._create_node(pythonic_tree, child, parent_obj_id, self._widget_id_to_attr_name)
+            else:
+                print('None widget:', parent_obj_id, widget)
 
     def _create_node(self, pythonic_tree, widget, parent_id, widget_id_to_attr_name):
-        import weakref
         widget_id_to_attr_name.update(self._get_id_to_attr_name(widget))
 
         obj_id = parent_id + '.' + compat.unicode(id(widget))
-        self._id_to_widget_ref[obj_id] = weakref.ref(widget)
+        self._id_to_widget[obj_id] = widget
 
         s = '%s (%s)' % (widget.__class__.__name__, id(widget))
         if widget.objectName():
@@ -123,7 +146,7 @@ class _LiveAppInspector(QWidget):
 
     def refresh(self):
         self._widget_id_to_attr_name.clear()
-        self._id_to_widget_ref.clear()
+        self._id_to_widget.clear()
         self.tree.clear()
 
     def _on_selection_changed(self):
@@ -134,10 +157,11 @@ class _LiveAppInspector(QWidget):
         selection = self.tree.get_selection()
         if selection:
             obj_id = next(iter(selection))
-            widget_ref = self._id_to_widget_ref[obj_id]
-            widget = widget_ref()
+            widget = self._id_to_widget[obj_id]
+            self._term_widget.set_locals({'widget': widget})
             self._widget_viewer.set_data(widget)
 
 
 def create_live_app_inspector(parent=None, roots=None):
-    return _LiveAppInspector(parent, roots=roots)
+    app_inspector = _LiveAppInspector(parent, roots=roots)
+    return app_inspector

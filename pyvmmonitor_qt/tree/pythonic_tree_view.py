@@ -480,9 +480,10 @@ class PythonicQTreeView(object):
         with self.batch_changes():
             self._model.beginResetModel()
             try:
-                while self._root_items:
-                    del self[compat.next(iter(self._root_items)).obj_id]
+                self._root_items.clear()
+                self._fast.clear()
                 self._root_items._created_children = False
+                self._model.clear()
             finally:
                 self._model.endResetModel()
 
