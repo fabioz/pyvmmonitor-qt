@@ -45,9 +45,11 @@ To use:
 
 from __future__ import unicode_literals
 
+import weakref
 from contextlib import contextmanager
 
 from pyvmmonitor_core import compat, thread_utils
+from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.qt.QtCore import QSortFilterProxyModel, Qt
 from pyvmmonitor_qt.qt.QtGui import QStandardItem, QStandardItemModel
@@ -58,6 +60,20 @@ _NODE_ROLE = Qt.UserRole + 21
 
 class _CustomModel(QStandardItemModel):
     pass
+
+
+class _VirtualModel(_CustomModel):
+
+    def __init__(self, tree, pythonic_tree):
+        super(_VirtualModel, self).__init__()
+        self.pythonic_tree = weakref.ref(pythonic_tree)
+
+    def hasChildren(self, parent_model_index):
+        return self.pythonic_tree()._virtual_has_children(parent_model_index)
+
+    def rowCount(self, parent_model_index):
+        self.pythonic_tree()._virtual_create_children(parent_model_index)
+        return QStandardItemModel.rowCount(self, parent_model_index)
 
 
 class TreeNode(object):
@@ -71,6 +87,8 @@ class TreeNode(object):
         '_sort_key',
         'obj_id',
         'tree',
+
+        '_created_children',  # Only used when virtual
     ]
 
     def __init__(self, data):
@@ -82,6 +100,8 @@ class TreeNode(object):
         self.obj_id = None
         self._children = set()
         self._sort_key = None
+
+        self._created_children = False
 
     @property
     def data(self):
@@ -302,6 +322,13 @@ class FilterProxyModelCheckingChildren(QSortFilterProxyModel):
         return self._filter_text
 
 
+class _RootItems(set):
+
+    def __init__(self):
+        set.__init__(self)
+        self._created_children = False
+
+
 class PythonicQTreeView(object):
 
     __slots__ = [
@@ -312,18 +339,26 @@ class PythonicQTreeView(object):
         '_sort_model',
         'on_clicked',
         'tree',
+
+        # Only when virtual
+        '_has_children',
+        '_create_children',
     ]
 
-    def __init__(self, tree, editable=False):
+    def __init__(self, tree, editable=False, has_children=None, create_children=None):
         '''
         :param QTreeView tree:
         :param bool editable:
             Determines if the tree items should be editable.
         '''
-        from pyvmmonitor_core.callback import Callback
 
         self.tree = tree
-        model = self._model = _CustomModel(tree)
+        if has_children and create_children:
+            self._has_children = has_children
+            self._create_children = create_children
+            model = self._model = _VirtualModel(tree, self)
+        else:
+            model = self._model = _CustomModel(tree)
         from pyvmmonitor_qt.qt.QtWidgets import QAbstractItemView
 
         tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -332,9 +367,9 @@ class PythonicQTreeView(object):
         self._sort_model = FilterProxyModelCheckingChildren()
         self._sort_model.setSourceModel(model)
 
-        tree.setModel(self._sort_model)
         self._fast = {}
-        self._root_items = set()
+        self._root_items = _RootItems()
+
         if not editable:
             # Set all items not editable
             # Otherwise, it could be set individually with:
@@ -344,6 +379,28 @@ class PythonicQTreeView(object):
         # Called with on_clicked(TreeNode, column)
         self.on_clicked = Callback()
         tree.clicked.connect(self._on_clicked)
+
+        tree.setModel(self._sort_model)
+
+    def _virtual_has_children(self, index):
+        if index.isValid():
+            data = self.node_from_index(index)
+        else:
+            data = None
+
+        return self._has_children(self, data)
+
+    def _virtual_create_children(self, index):
+        if index.isValid():
+            node = self.node_from_index(index)
+            data = node
+        else:
+            node = self._root_items
+            data = None
+
+        if not node._created_children:
+            node._created_children = True
+            self._create_children(self, data)
 
     @qt_utils.handle_exception_in_method
     def _on_clicked(self, index):
@@ -421,8 +478,14 @@ class PythonicQTreeView(object):
 
     def clear(self):
         with self.batch_changes():
-            while self._root_items:
-                del self[compat.next(iter(self._root_items)).obj_id]
+            self._model.beginResetModel()
+            try:
+                self._root_items.clear()
+                self._fast.clear()
+                self._root_items._created_children = False
+                self._model.clear()
+            finally:
+                self._model.endResetModel()
 
     @property
     def columns(self):
@@ -506,6 +569,13 @@ class PythonicQTreeView(object):
         :return TreeNode:
         '''
         return self._fast[obj_id]
+
+    def __contains__(self, obj_id):
+        try:
+            self[obj_id]
+            return True
+        except KeyError:
+            return False
 
     def __delitem__(self, obj_id):
         node = self._fast[obj_id]

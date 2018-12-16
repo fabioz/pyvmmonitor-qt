@@ -1,11 +1,13 @@
 from . import qt_api
 
-
 if qt_api == 'pyqt':
     from PyQt4 import QtXml
 
 elif qt_api == 'pyside2':
     from PySide2 import QtXml
+
+elif qt_api == 'pyqt5':
+    from PyQt5 import QtXml
 
 else:
     from PySide import QtXml
@@ -14,7 +16,6 @@ else:
 # for c in dir(PySide2.QtXml):
 #     if c.startswith('Q'):
 #         print('%s = QtXml.%s' % (c, c))
-
 
 QDomAttr = QtXml.QDomAttr
 QDomCDATASection = QtXml.QDomCDATASection
