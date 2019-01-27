@@ -1102,6 +1102,32 @@ def painter_on(device, antialias, widget=None):
             painter.end()
 
 
+def qimage_as_bytes(image):
+    from pyvmmonitor_qt.qt.QtCore import QByteArray
+    from pyvmmonitor_qt.qt.QtCore import QBuffer
+    from pyvmmonitor_qt.qt.QtCore import QIODevice
+
+    ba = QByteArray()
+    buffer = QBuffer(ba)
+    buffer.open(QIODevice.WriteOnly)
+    image.save(buffer, "PNG")
+    return ba.data()
+
+
+def bytes_as_qimage(png_bytes):
+    from pyvmmonitor_qt.qt.QtCore import QByteArray
+    from pyvmmonitor_qt.qt.QtCore import QBuffer
+    from pyvmmonitor_qt.qt.QtCore import QIODevice
+    from pyvmmonitor_qt.qt.QtGui import QImage
+
+    ba = QByteArray(png_bytes)
+    buffer = QBuffer(ba)
+    buffer.open(QIODevice.ReadOnly)
+    qimage = QImage()
+    qimage.load(buffer, "PNG")
+    return qimage
+
+
 @contextmanager
 def qimage_as_numpy(image):
 

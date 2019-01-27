@@ -55,6 +55,14 @@ def transform_tuple(point, qtransform):
     return qtransform.map(*point)
 
 
+def transform_to_raw_tuple(transform):
+    return tuple(transform)
+
+
+def raw_tuple_to_transform(tup):
+    return Transform(*tup)
+
+
 def calc_angle_in_radians_from_qtransform(qtransform):
     from pyvmmonitor_core.math_utils import calc_angle_in_radians
 
