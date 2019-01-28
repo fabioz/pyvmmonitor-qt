@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pyvmmonitor_core import overrides
 from pyvmmonitor_core.callback import Callback
 from pyvmmonitor_core.weak_utils import get_weakref
+from pyvmmonitor_qt import qt_utils
 from pyvmmonitor_qt.qt import QtCore
 from pyvmmonitor_qt.qt.QtCore import QPointF, QRectF, Qt
 from pyvmmonitor_qt.qt.QtGui import QBrush, QColor, QPen
@@ -176,6 +177,8 @@ def _update(item, radius, pixels_displacement, transform, force=False):
 
 
 def _update_info(item, graphics_widget, force=False):
+    if not qt_utils.is_qobject_alive(graphics_widget):
+        return
     transform = graphics_widget.transform()
     pixels_displacement = item._pixels_displacement
     if pixels_displacement != (0, 0):
