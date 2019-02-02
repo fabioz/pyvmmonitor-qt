@@ -425,4 +425,4 @@ def test_virtual_model(qtapi, virtual_tree):
     virtual_tree.tree.show()
     assert list_wiget_item_captions(virtual_tree.tree) == ['1', '+5', '2']
     virtual_tree.clear()
-    assert list_wiget_item_captions(virtual_tree.tree) == ['1', '+5', '2']
+    assert list_wiget_item_captions(virtual_tree.tree) == []
