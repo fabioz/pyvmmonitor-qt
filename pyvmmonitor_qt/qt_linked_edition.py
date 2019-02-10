@@ -271,7 +271,7 @@ class DoubleSpinBox(SpinBox):
 
 class Combo(BaseLinkedEdition):
 
-    __slots__ = ['caption_to_internal_value', '_caption_to_index']
+    __slots__ = ['caption_to_internal_value', '_caption_to_index', '_connected']
 
     def __init__(self, parent_widget, link_to_attribute, caption_to_internal_value):
         '''
@@ -280,15 +280,30 @@ class Combo(BaseLinkedEdition):
         :param OrderedDict caption_to_internal_value:
         '''
         BaseLinkedEdition.__init__(self, link_to_attribute)
+        self._connected = False
         self._link_to_attribute = link_to_attribute
-        qwidget = self.qwidget = QComboBox(parent_widget)
-        self._caption_to_index = {}
-        for i, caption in enumerate(compat.iterkeys(caption_to_internal_value)):
-            qwidget.addItem(caption)
-            self._caption_to_index[caption] = i
+        self.qwidget = QComboBox(parent_widget)
+        self.set_caption_to_internal_value(caption_to_internal_value)
 
-        qwidget.currentIndexChanged.connect(self._on_index_changed)
-        self.caption_to_internal_value = caption_to_internal_value
+    def set_caption_to_internal_value(self, caption_to_internal_value):
+        '''
+        :param OrderedDict caption_to_internal_value:
+        '''
+        if self._connected:
+            self.qwidget.currentIndexChanged.disconnect(self._on_index_changed)
+            self._connected = False
+
+        try:
+            self.qwidget.clear()
+            self._caption_to_index = {}
+            for i, caption in enumerate(compat.iterkeys(caption_to_internal_value)):
+                self.qwidget.addItem(caption)
+                self._caption_to_index[caption] = i
+
+            self.caption_to_internal_value = caption_to_internal_value.copy()
+        finally:
+            self.qwidget.currentIndexChanged.connect(self._on_index_changed)
+            self._connected = True
 
     @overrides(BaseLinkedEdition._on_update_ui)
     def _on_update_ui(self):

@@ -30,6 +30,9 @@ class _DummyClipboard(object):
 
 
 def get_clipboard():
+    '''
+    :return QClipboard
+    '''
     if _clipboard_stack:
         return _clipboard_stack[-1]
 
@@ -49,4 +52,3 @@ def push_clipboard():
 
 def pop_clipboard():
     del _clipboard_stack[-1]
-
