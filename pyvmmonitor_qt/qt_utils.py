@@ -621,8 +621,9 @@ class _ResizeMessageBox(CustomMessageDialog):
 
     def _clicked_button(self, bt):
         from pyvmmonitor_qt.qt.QtWidgets import QApplication
+        from pyvmmonitor_qt.qt_clipboard import get_clipboard
         if bt == self.bt_copy:
-            QApplication.clipboard().setText(self._copy_text)
+            get_clipboard().text = self._copy_text
             self.bt_copy.setText('Copied to clipboard')
 
         elif bt == self.bt_show_details:
@@ -815,10 +816,10 @@ def show_message_with_copy_to_clipboard(
     if parent is None:
         parent = get_main_window()
 
-    from pyvmmonitor_qt.qt.QtWidgets import QApplication
+    from pyvmmonitor_qt.qt_clipboard import get_clipboard
 
     def copy():
-        QApplication.clipboard().setText(msg)
+        get_clipboard().text = msg
         dialog.bt_copy.setText('Copied to clipboard')
 
     def create_contents(dialog):
