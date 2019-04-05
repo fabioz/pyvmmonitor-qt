@@ -336,6 +336,10 @@ class Combo(BaseLinkedEdition):
 
     current_text = property(get_current_text, set_current_text)
 
+    @property
+    def captions(self):
+        return tuple(self.caption_to_internal_value.keys())
+
 
 class SelectSingleIntCombo(Combo):
 
