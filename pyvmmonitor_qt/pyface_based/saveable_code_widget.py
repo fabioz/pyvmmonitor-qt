@@ -25,7 +25,7 @@ def get_python_file_encoding(bytestr):
         i += 1
         line = line.strip()
         if line and line[0] == '#':
-            result = re.search("coding[:=]\s*([-\w.]+)", line)
+            result = re.search(r"coding[:=]\s*([-\w.]+)", line)
             if result:
                 try:
                     c = codecs.lookup(result.group(1))

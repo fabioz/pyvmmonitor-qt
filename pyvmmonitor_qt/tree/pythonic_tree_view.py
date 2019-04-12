@@ -388,7 +388,7 @@ class PythonicQTreeView(object):
         else:
             data = None
 
-        return self._has_children(self, data)
+        return bool(self._has_children(self, data))
 
     def _virtual_create_children(self, index):
         if index.isValid():
