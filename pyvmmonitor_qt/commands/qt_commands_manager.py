@@ -321,6 +321,11 @@ class _DefaultQtCommandsManager(object):
             self, command_id, command_handler, scope=ICommandsManager.DEFAULT_SCOPE):
         return self._commands_manager.set_command_handler(command_id, command_handler, scope)
 
+    @implements(ICommandsManager.remove_command_handler)
+    def remove_command_handler(
+            self, command_id, command_handler, scope=ICommandsManager.DEFAULT_SCOPE):
+        return self._commands_manager.remove_command_handler(command_id, command_handler, scope)
+
     @implements(ICommandsManager.activate)
     def activate(self, command_id, **kwargs):
         return self._commands_manager.activate(command_id, **kwargs)
