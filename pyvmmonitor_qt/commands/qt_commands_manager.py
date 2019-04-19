@@ -334,6 +334,10 @@ class _DefaultQtCommandsManager(object):
     def list_command_ids(self):
         return self._commands_manager.list_command_ids()
 
+    @implements(ICommandsManager.list_active_scopes)
+    def list_active_scopes(self):
+        return self._commands_manager.list_active_scopes()
+
 
 def create_default_qt_commands_manager(widget, commands_manager=None):
     return _DefaultQtCommandsManager(widget, commands_manager=commands_manager)
