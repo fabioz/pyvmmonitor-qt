@@ -9,7 +9,9 @@
     <file>appbar.clipboard.paste.svg</file>
     <file>appbar.close.svg</file>
     <file>appbar.connect.png</file>
+    <file>appbar.cursor.move.black.svg</file>
     <file>appbar.cursor.move.svg</file>
+    <file>appbar.draw.paintbrush.svg</file>
     <file>appbar.dropper.svg</file>
     <file>appbar.eye.hide.png</file>
     <file>appbar.eye.png</file>
@@ -34,7 +36,11 @@
     <file>appbar.vector.line.curve.svg</file>
     <file>appbar.vector.line.svg</file>
     <file>appbar.vector.rectangle.svg</file>
+    <file>clear.selection.svg</file>
+    <file>erase.selection.svg</file>
+    <file>eraser.svg</file>
     <file>flood.fill.svg</file>
+    <file>hsv.svg</file>
     <file>magnify_browse.png</file>
     <file>magnify_minus.png</file>
     <file>magnify_plus.png</file>
