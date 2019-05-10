@@ -36,10 +36,12 @@
     <file>appbar.vector.rectangle.svg</file>
     <file>checkbox.png</file>
     <file>down_arrow.png</file>
+    <file>flood.fill.svg</file>
     <file>handle.png</file>
     <file>magnify_browse.png</file>
     <file>magnify_minus.png</file>
     <file>magnify_plus.png</file>
+    <file>rectangle.selection.svg</file>
     <file>tree-branch-closed-dark.png</file>
     <file>tree-branch-closed.png</file>
     <file>tree-branch-open-dark.png</file>

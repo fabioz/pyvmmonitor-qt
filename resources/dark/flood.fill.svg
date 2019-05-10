@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" width="50" height="50" viewBox="0 0 50.00 50.00" enable-background="new 0 0 50.00 50.00" xml:space="preserve">
+	<path fill="none" stroke-width="3" stroke-linejoin="round" stroke="#FFFFFF" stroke-opacity="1" d="M 9.91174,25.8805L 27.5774,8.21479L 46.2594,26.8968L 28.5937,44.5625L 9.91174,25.8805 Z "/>
+	<path fill="#FFFFFF" fill-opacity="1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#FFFFFF" stroke-opacity="1" d="M 18.6875,12.7188C 13.5208,16.7604 8.35417,20.8021 6.98958,23.7813C 5.625,26.7604 8.0625,28.6771 7.53125,29.6354C 7,30.5938 3.5,30.5938 2.26042,28.5521C 1.02083,26.5104 2.04167,22.4271 4.39583,19.4688C 6.75,16.5104 10.4375,14.6771 13.0625,13.7188C 15.6875,12.7604 17.25,12.6771 18.8125,12.5938"/>
+	<line fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#FFFFFF" stroke-opacity="1" x1="27.7336" y1="19.9946" x2="31.338" y2="4.21157"/>
+</svg>
