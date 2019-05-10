@@ -57,46 +57,46 @@ def test_shortcuts_in_app(qtapi, _shortcuts_main_window):
         qt_commands_manager.set_command_handler('copy', on_copy)
 
         qt_commands_manager.set_shortcut(DEFAULT_SCHEME, 'copy', QKeySequence('Ctrl+C'))
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
 
         assert activated == ['on_copy']
         del activated[:]
 
         qt_commands_manager.remove_shortcut(DEFAULT_SCHEME, 'copy', 'Ctrl+C')
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
         assert activated == []
 
         qt_commands_manager.set_shortcut(DEFAULT_SCHEME, 'copy', 'Ctrl+D')
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_copy']
         del activated[:]
 
         # Both active (Ctrl+C, Ctrl+D)
         qt_commands_manager.set_shortcut(DEFAULT_SCHEME, 'copy', 'Ctrl+C')
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_copy']
         del activated[:]
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_copy']
         del activated[:]
 
         qt_commands_manager.remove_shortcut(DEFAULT_SCHEME, 'copy', 'Ctrl+C')
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
         assert activated == []
 
         qt_commands_manager.add_shortcuts_scheme('MyScheme')
         qt_commands_manager.set_shortcut('MyScheme', 'copy', 'Ctrl+C')
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
         assert activated == []
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_copy']
         del activated[:]
 
         qt_commands_manager.activate_scheme('MyScheme')
-        qtapi.keyPress(main_window, 'c', Qt.CTRL)
+        qtapi.keyPress(main_window, 'c', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_copy']
         del activated[:]
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         assert activated == []
     finally:
         main_window = None
@@ -133,7 +133,7 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
         del activated[:]
 
         qt_commands_manager.set_shortcut(DEFAULT_SCHEME, 'zoom_out', 'Ctrl+D')
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         assert activated == ['on_zoom_out']
         del activated[:]
         qt_commands_manager.mouse_shortcut_activated(CTRL_MOUSE_WHEEL_DOWN)
@@ -142,7 +142,7 @@ def test_mouse_shortcuts_in_app(qtapi, _shortcuts_main_window):
 
         qt_commands_manager.add_shortcuts_scheme('MyScheme')
         qt_commands_manager.activate_scheme('MyScheme')
-        qtapi.keyPress(main_window, 'd', Qt.CTRL)
+        qtapi.keyPress(main_window, 'd', Qt.KeyboardModifier.ControlModifier)
         qt_commands_manager.mouse_shortcut_activated(CTRL_MOUSE_WHEEL_DOWN)
         assert activated == []
     finally:

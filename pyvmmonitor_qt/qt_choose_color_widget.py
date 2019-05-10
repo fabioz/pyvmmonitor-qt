@@ -654,7 +654,7 @@ class ChooseColorWidget(QWidget):
         self.setLayout(layout)
 
         layout.addWidget(self._selected_color_widget, 0, 0)
-        layout.addWidget(self._tab_widget, 0, 1, 2)
+        layout.addWidget(self._tab_widget, 0, 1, 2, 1)
 
     @property
     def model(self):
