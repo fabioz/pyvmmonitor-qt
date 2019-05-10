@@ -16,6 +16,7 @@
     <file>appbar.folder.open.png</file>
     <file>appbar.folder.open.svg</file>
     <file>appbar.list.gear.png</file>
+    <file>appbar.magic.wand.svg</file>
     <file>appbar.new.svg</file>
     <file>appbar.page.add.png</file>
     <file>appbar.page.add.svg</file>
@@ -27,8 +28,12 @@
     <file>appbar.save.as.svg</file>
     <file>appbar.save.png</file>
     <file>appbar.save.svg</file>
+    <file>appbar.text.serif.svg</file>
     <file>appbar.transform.rotate.clockwise.svg</file>
     <file>appbar.undo.png</file>
+    <file>appbar.vector.line.curve.svg</file>
+    <file>appbar.vector.line.svg</file>
+    <file>appbar.vector.rectangle.svg</file>
     <file>magnify_browse.png</file>
     <file>magnify_minus.png</file>
     <file>magnify_plus.png</file>
