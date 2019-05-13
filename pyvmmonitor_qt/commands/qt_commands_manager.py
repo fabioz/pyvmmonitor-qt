@@ -5,42 +5,107 @@ Copyright: Brainwy Software Ltda
 '''
 from pyvmmonitor_core import implements, interface
 from pyvmmonitor_core.commands_manager import ICommandsManager
+from pyvmmonitor_core.weak_utils import get_weakref
 
-DEFAULT_SCHEME = 'Default'
 
+class IQtCommandsManager(object):
 
-class IQtCommandsManager(ICommandsManager):
+    DEFAULT_SCOPE = ICommandsManager.DEFAULT_SCOPE
 
-    DEFAULT_SCHEME = DEFAULT_SCHEME
-
-    def add_shortcuts_scheme(self, scheme_name):
-        pass
-
-    def activate_scheme(self, scheme_name):
-        pass
-
-    def set_shortcut(self, scheme, command_id, shortcut):
+    def register_scope(self, scope):
         '''
-        :param str scheme:
+        A scope is first registered and later it should be set to a widget (so, when the given
+        widget is active the related shortcuts should be active).
+        :param str scope:
+        '''
+
+    def set_scope_widget(self, scope, widget):
+        '''
+        :param str scope:
+        :param QWidget widget:
+        '''
+
+    def set_shortcut(self, command_id, shortcut, scope=DEFAULT_SCOPE):
+        '''
         :param str command_id:
         :param QKeySequence|str shortcut:
             Either the QKeySequence to be used, a string to be used to create the QKeySequence
             or a MouseShortcut.
+        :param str scope:
+            The widget scope for the shortcut (if not passed uses default widget scope).
         '''
 
-    def remove_shortcut(self, scheme, command_id, shortcut):
+    def remove_shortcut(self, command_id, shortcut, scope=DEFAULT_SCOPE):
         '''
-        :param str scheme:
         :param str command_id:
         :param shortcut:
             Either the QKeySequence to be used, a string to be used to create the QKeySequence
             or a MouseShortcut.
+        :param str scope:
+            The widget scope for the shortcut (if not passed uses default widget scope).
         '''
 
-    def mouse_shortcut_activated(self, mouse_shortcut):
+    def mouse_shortcut_activated(self, mouse_shortcut, scope=DEFAULT_SCOPE):
         '''
         Users should call to activate some mouse shortcut (which can't be handled by QShortcut).
         :param MouseShortcut mouse_shortcut:
+        '''
+
+    def register_command(self, command_id, command_name, icon=None, status_tip=None):
+        '''
+        Registers a command and makes it available to be activated (if no handler is available
+        after being registered, nothing is done if it's activated).
+
+        :param str command_id:
+        :param str command_name:
+        :param object icon:
+            May be the actual icon or a way to identify it (at core it doesn't make
+            a difference, it just stores the value to be consumed later on).
+        :param str status_tip:
+            A tip for the command (if not given, a default one may be given based on the
+            command_name).
+        '''
+
+    def get_command_info(self, command_id):
+        '''
+        :param str command_id:
+            The command id for which we want the info.
+
+        :return: _CommandInfo
+        '''
+
+    def set_command_handler(self, command_id, command_handler, scope=DEFAULT_SCOPE):
+        '''
+        Sets a handler to the given command id (optionally with a different scope).
+
+        The command_handler must be a callable -- it may accept arguments (which then will need to
+        be passed in #activate).
+
+        It's possible to pass None to set no command handler in the context (also see
+        remove_command_handler to remove a registered command handler -- in case it's registered
+        and then removed).
+        '''
+
+    def remove_command_handler(self, command_id, command_handler, scope=DEFAULT_SCOPE):
+        '''
+        Removes a registered handler if it's the current handler at a given scope (does nothing
+        if it's not the current handler).
+        '''
+
+    def activate(self, command_id, __scope__=DEFAULT_SCOPE, **kwargs):
+        '''
+        Activates a given command.
+
+        kwargs are passed on to the handler of the command. Note that only arguments which are
+        simple python objects should be passed.
+
+        Namely: int/long/float/complex/str/bytes/bool/tuple/list/set (this restriction is enforced
+        so that clients can be sure that they can easily replicate a command invocation).
+        '''
+
+    def list_command_ids(self):
+        '''
+        Returns the available command ids.
         '''
 
 
@@ -57,6 +122,9 @@ class MouseShortcut(object):
             return o._parts == self._parts
 
         return False
+
+    def toString(self):
+        return ', '.join(self._parts)
 
     def __ne__(self, o):
         return not self == o
@@ -105,6 +173,9 @@ class _MouseQShortcut(object):
         self.mouse_shortcut = mouse_shortcut
         self.activated = _CustomActivatedSlot(self)
 
+    def deleteLater(self):
+        pass
+
     def __eq__(self, o):
         if isinstance(o, _MouseQShortcut):
             return o.mouse_shortcut == self.mouse_shortcut
@@ -118,226 +189,184 @@ class _MouseQShortcut(object):
         return hash(self.mouse_shortcut)
 
 
-class _CommandInfo(object):
+class _Shortcut(object):
 
-    __slots__ = [
-        'command_id',
-        'shortcut',
-        '__weakref__',
-        'on_activated',
-        'enabled',
-    ]
+    __slots__ = ['command_id', 'shortcut', 'scope', 'commands_manager', '__weakref__', '_shortcut_repr']
 
-    def __init__(self, command_id, shortcut, on_activated):
+    def __init__(self, command_id, shortcut, scope, commands_manager):
         self.command_id = command_id
         self.shortcut = shortcut
-        self.on_activated = on_activated
-        self.enabled = False
+        self.scope = scope
+        self.commands_manager = get_weakref(commands_manager)
+        if isinstance(shortcut, str):
+            self._shortcut_repr = shortcut
+        else:
+            self._shortcut_repr = shortcut.toString()
 
     def _activated(self):
-        if self.enabled:
-            self.on_activated(self)
+        commands_manager = self.commands_manager()
+        if commands_manager is not None:
+            commands_manager.activate(self.command_id, self.scope)
 
-    def enable(self, qshortcut):
-        if not self.enabled:
-            qshortcut.activated.connect(self._activated)
-            self.enabled = True
+    def __eq__(self, o):
+        # Note that the command id is not used for equals!
+        if isinstance(o, _Shortcut):
+            return (
+                self.shortcut == o.shortcut and
+                self.scope == o.scope
+            )
 
-    def disable(self, qshortcut):
-        if qshortcut is not None and self.enabled:
-            self.enabled = False
-            qshortcut.activated.disconnect(self._activated)
+        return False
 
+    def __ne__(self, o):
+        return not self == o
 
-class _Scheme(object):
-
-    def __init__(self, commands_manager, obtain_qshortcut):
-        from pyvmmonitor_core.weak_utils import get_weakref
-
-        self._shortcut_cache_key_to_commad_id_to_command_infos = {}
-        self._commands_manager = get_weakref(commands_manager)
-        self._obtain_qshortcut = obtain_qshortcut
-
-    def set_shortcut(self, command_id, shortcut, enable, widget):
-        from pyvmmonitor_qt.qt_utils import QtWeakMethod
-
-        cache_key_qshortcut, qshortcut = self._obtain_qshortcut(shortcut)
-
-        existing = self._shortcut_cache_key_to_commad_id_to_command_infos.get(cache_key_qshortcut)
-
-        if existing is None:
-            existing = self._shortcut_cache_key_to_commad_id_to_command_infos[
-                cache_key_qshortcut] = {}
-
-        command_info = existing.get(command_id)
-        if command_info is None:
-            command_info = _CommandInfo(
-                command_id, shortcut, QtWeakMethod(self, '_on_activated_command_info'))
-            existing[command_id] = command_info
-
-        if enable:
-            command_info.enable(qshortcut)
-
-    def remove_shortcut(self, command_id, shortcut, enable, widget):
-        cache_key_qshortcut, qshortcut = self._obtain_qshortcut(shortcut)
-
-        existing = self._shortcut_cache_key_to_commad_id_to_command_infos.get(cache_key_qshortcut)
-        if existing is None:
-            return
-
-        command_info = existing.get(command_id)
-        if command_info is not None:
-            command_info.disable(qshortcut)
-
-    def deactivate(self):
-        from pyvmmonitor_qt import compat
-        for command_id_to_command_info in compat.itervalues(
-                self._shortcut_cache_key_to_commad_id_to_command_infos):
-
-            for command_info in compat.itervalues(command_id_to_command_info):
-                command_info.disable(self._obtain_qshortcut(command_info.shortcut)[1])
-
-    def activate(self, widget):
-        from pyvmmonitor_qt import compat
-        for command_id_to_command_info in compat.itervalues(
-                self._shortcut_cache_key_to_commad_id_to_command_infos):
-
-            for command_info in compat.itervalues(command_id_to_command_info):
-                command_info.enable(self._obtain_qshortcut(command_info.shortcut)[1])
-
-    def _on_activated_command_info(self, command_info):
-        if command_info.enabled:
-            # : :type commands_manager: ICommandsManager
-            commands_manager = self._commands_manager()
-            commands_manager.activate(command_info.command_id)
+    def __hash__(self):
+        return hash((self._shortcut_repr, self.scope))
 
 
 @interface.check_implements(IQtCommandsManager)
 class _DefaultQtCommandsManager(object):
 
-    def __init__(self, widget, commands_manager=None):
-        from pyvmmonitor_core.weak_utils import get_weakref
-        if commands_manager is None:
-            from pyvmmonitor_core.commands_manager import create_default_commands_manager
-            commands_manager = create_default_commands_manager()
+    def __init__(self, widget):
+        from pyvmmonitor_core.commands_manager import create_default_commands_manager
+        commands_manager = create_default_commands_manager()
 
-        self._widget = get_weakref(widget)
         self._commands_manager = commands_manager
-        self._scheme_name_to_scheme = {}
-        self._actions = {}
 
-        # Default scheme is always there
-        self.add_shortcuts_scheme(DEFAULT_SCHEME)
-        self._active_scheme = DEFAULT_SCHEME
         self._qshortcuts = {}
+        self._scope_to_widget = {IQtCommandsManager.DEFAULT_SCOPE: get_weakref(widget)}
+        self._shortcuts_registered = set()
 
-    def _obtain_qshortcut(self, shortcut):
+    def _get_widget_for_scope(self, scope):
+        w = self._scope_to_widget.get(scope)
+        if w is None:
+            return None
+        return w()
+
+    @implements(IQtCommandsManager.set_shortcut)
+    def set_shortcut(self, command_id, shortcut, scope=IQtCommandsManager.DEFAULT_SCOPE):
+        s = _Shortcut(command_id, shortcut, scope, self)
+        if s in self._shortcuts_registered:
+            prev = self._shortcuts_registered.pop(s)
+            self._remove_shortcut(prev)
+        self._shortcuts_registered.add(s)
+        self._apply_shortcut(s)
+
+    def _apply_shortcut(self, shortcut):
+        w = self._get_widget_for_scope(shortcut.scope)
+        if w is not None:
+            qshortcut = self._obtain_qshortcut(
+                shortcut.shortcut, w, shortcut.scope)
+            qshortcut.activated.connect(shortcut._activated)
+
+    def _remove_shortcut(self, shortcut):
+        w = self._get_widget_for_scope(shortcut.scope)
+        if w is not None:
+            qshortcut = self._obtain_qshortcut(
+                shortcut.shortcut, w, shortcut.scope, remove=True)
+            if qshortcut is not None:
+                qshortcut.activated.disconnect(shortcut._activated)
+                # Note: even doing a deleteLater, we have to setKey(0), otherwise
+                # a new key created for the same shortcut doesn't work.
+                qshortcut.setKey(0)
+                qshortcut.deleteLater()
+        self._shortcuts_registered.discard(shortcut)
+
+    @implements(IQtCommandsManager.remove_shortcut)
+    def remove_shortcut(self, command_id, shortcut, scope=IQtCommandsManager.DEFAULT_SCOPE):
+        s = _Shortcut(command_id, shortcut, scope, self)
+        if s in self._shortcuts_registered:
+            self._remove_shortcut(s)
+
+    @implements(IQtCommandsManager.activate)
+    def activate(self, command_id, __scope__=IQtCommandsManager.DEFAULT_SCOPE, **kwargs):
+        self._commands_manager.activate(command_id, __scope__, **kwargs)
+
+    def _obtain_qshortcut(self, shortcut, widget, scope, remove=False):
         '''
         Helper method to get a QShortcut from a shortcut.
-        :param str shortcut:
+        :param str|MouseShortcut shortcut:
         '''
         from pyvmmonitor_qt.qt.QtGui import QKeySequence
         from pyvmmonitor_qt.qt.QtWidgets import QShortcut
+        from pyvmmonitor_qt.qt.QtCore import Qt
+
+        assert isinstance(shortcut, (str, QKeySequence, MouseShortcut)), 'Did not expect: %s' % (
+            shortcut.__class__,)
+
+        if shortcut.__class__ == MouseShortcut:
+            cache_key = (shortcut, scope)
+        else:
+            key_sequence = QKeySequence(shortcut)
+            cache_key = (key_sequence.toString(), scope)
+
+        ret = self._qshortcuts.get(cache_key)
+        if ret is not None:
+            if remove:
+                del self._qshortcuts[cache_key]
+            return ret
+
+        if remove:
+            return None
 
         if shortcut.__class__ == MouseShortcut:
             ret = _MouseQShortcut(shortcut)
-            cache_key = shortcut
             self._qshortcuts[cache_key] = ret
-            return cache_key, ret
+            return ret
 
-        key_sequence = QKeySequence(shortcut)
-        cache_key = key_sequence.toString()
-        qshortcut = self._qshortcuts.get(cache_key)
-        if qshortcut is None:
-            widget = self._widget()
-            qshortcut = QShortcut(key_sequence, widget)
-            self._qshortcuts[cache_key] = qshortcut
-        return cache_key, qshortcut
+        qshortcut = QShortcut(key_sequence, widget)
+        if scope != IQtCommandsManager.DEFAULT_SCOPE:
+            qshortcut.setContext(Qt.WidgetWithChildrenShortcut)
+        # qshortcut.setContext(Qt.WidgetShortcut)
+        # qshortcut.setContext(Qt.WindowShortcut)
+        # qshortcut.setContext(Qt.ApplicationShortcut)
+        self._qshortcuts[cache_key] = qshortcut
 
-    @implements(IQtCommandsManager.add_shortcuts_scheme)
-    def add_shortcuts_scheme(self, scheme_name):
-        from pyvmmonitor_qt.qt_utils import QtWeakMethod
-
-        if scheme_name in self._scheme_name_to_scheme:
-            raise AssertionError('Scheme: %s already added.' % (scheme_name,))
-        self._scheme_name_to_scheme[scheme_name] = _Scheme(
-            self, QtWeakMethod(self, '_obtain_qshortcut'))
-
-    @implements(IQtCommandsManager.activate_scheme)
-    def activate_scheme(self, scheme_name):
-        if scheme_name not in self._scheme_name_to_scheme:
-            raise KeyError('Scheme: %s not available.' % (scheme_name,))
-
-        if scheme_name == self._active_scheme:
-            return
-
-        curr_scheme = self._scheme_name_to_scheme[self._active_scheme]
-        curr_scheme.deactivate()
-
-        self._active_scheme = scheme_name
-        curr_scheme = self._scheme_name_to_scheme[self._active_scheme]
-        curr_scheme.activate(widget=self._widget())
-
-    @implements(IQtCommandsManager.set_shortcut)
-    def set_shortcut(self, scheme, command_id, shortcut):
-        self._scheme_name_to_scheme[scheme].set_shortcut(
-            command_id, shortcut, enable=scheme == self._active_scheme, widget=self._widget())
-
-    @implements(IQtCommandsManager.remove_shortcut)
-    def remove_shortcut(self, scheme, command_id, shortcut):
-        self._scheme_name_to_scheme[scheme].remove_shortcut(
-            command_id, shortcut, enable=scheme == self._active_scheme, widget=self._widget())
+        return qshortcut
 
     @implements(IQtCommandsManager.mouse_shortcut_activated)
-    def mouse_shortcut_activated(self, mouse_shortcut):
-        qshortcut = self._qshortcuts.get(mouse_shortcut)
+    def mouse_shortcut_activated(self, mouse_shortcut, scope=ICommandsManager.DEFAULT_SCOPE):
+        qshortcut = self._qshortcuts.get((mouse_shortcut, scope))
         if qshortcut is not None and qshortcut.__class__ == _MouseQShortcut:
             qshortcut.activated()
 
-    # ICommandsManager delegates
-    @implements(ICommandsManager.register_scope)
+    @implements(IQtCommandsManager.register_scope)
     def register_scope(self, scope):
-        return self._commands_manager.register_scope(scope)
+        self._commands_manager.register_scope(scope)
+        self._scope_to_widget[scope] = get_weakref(None)
 
-    @implements(ICommandsManager.activate_scope)
-    def activate_scope(self, scope):
-        return self._commands_manager.activate_scope(scope)
+    @implements(IQtCommandsManager.set_scope_widget)
+    def set_scope_widget(self, scope, widget):
+        self._scope_to_widget[scope] = get_weakref(widget)
+        for shortcut in self._shortcuts_registered:
+            if shortcut.scope == scope:
+                self._apply_shortcut(shortcut)
 
-    @implements(ICommandsManager.deactivate_scope)
-    def deactivate_scope(self, scope):
-        return self._commands_manager.deactivate_scope(scope)
-
-    @implements(ICommandsManager.register_command)
+    # IQtCommandsManager delegates
+    @implements(IQtCommandsManager.register_command)
     def register_command(self, command_id, command_name, icon=None, status_tip=None):
         return self._commands_manager.register_command(
             command_id, command_name, icon=icon, status_tip=status_tip)
 
-    @implements(ICommandsManager.get_command_info)
+    @implements(IQtCommandsManager.get_command_info)
     def get_command_info(self, command_id):
         return self._commands_manager.get_command_info(command_id)
 
-    @implements(ICommandsManager.set_command_handler)
+    @implements(IQtCommandsManager.set_command_handler)
     def set_command_handler(
-            self, command_id, command_handler, scope=ICommandsManager.DEFAULT_SCOPE):
+            self, command_id, command_handler, scope=IQtCommandsManager.DEFAULT_SCOPE):
         return self._commands_manager.set_command_handler(command_id, command_handler, scope)
 
-    @implements(ICommandsManager.remove_command_handler)
+    @implements(IQtCommandsManager.remove_command_handler)
     def remove_command_handler(
-            self, command_id, command_handler, scope=ICommandsManager.DEFAULT_SCOPE):
+            self, command_id, command_handler, scope=IQtCommandsManager.DEFAULT_SCOPE):
         return self._commands_manager.remove_command_handler(command_id, command_handler, scope)
 
-    @implements(ICommandsManager.activate)
-    def activate(self, command_id, **kwargs):
-        return self._commands_manager.activate(command_id, **kwargs)
-
-    @implements(ICommandsManager.list_command_ids)
+    @implements(IQtCommandsManager.list_command_ids)
     def list_command_ids(self):
         return self._commands_manager.list_command_ids()
 
-    @implements(ICommandsManager.list_active_scopes)
-    def list_active_scopes(self):
-        return self._commands_manager.list_active_scopes()
 
-
-def create_default_qt_commands_manager(widget, commands_manager=None):
-    return _DefaultQtCommandsManager(widget, commands_manager=commands_manager)
+def create_default_qt_commands_manager(widget):
+    return _DefaultQtCommandsManager(widget)

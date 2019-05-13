@@ -1019,6 +1019,26 @@ def assert_condition_within_timeout(condition, timeout=2.):
         time.sleep(1 / 50.)
 
 
+def assert_focus_within_timeout(widget):
+    from pyvmmonitor_qt.qt_event_loop import process_events
+    if widget.hasFocus():
+        return
+
+    widget.setFocus()
+    process_events()
+    if widget.hasFocus():
+        return
+
+    def check_focus():
+        widget.setFocus()
+        process_events()
+        if widget.hasFocus():
+            return True
+        return 'Widget: %s still has no focus.' % (widget,)
+
+    assert_condition_within_timeout(check_focus)
+
+
 def ask_save_filename(parent, caption, initial_dir, files_filter, selected_filter=None):
     # Kept for backward compatibilyt
     from pyvmmonitor_qt import qt_ask

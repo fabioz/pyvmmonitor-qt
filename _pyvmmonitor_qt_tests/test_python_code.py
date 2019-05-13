@@ -17,6 +17,7 @@ from pyvmmonitor_qt.qt.QtTest import QTest
 
 def test_python_code_text_edit_current_line(qtapi):
     from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+    from pyvmmonitor_qt.qt_utils import assert_focus_within_timeout
     from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
 
     PygmentsHighlighter.style = MonokaiStyle
@@ -29,7 +30,7 @@ c = 30'''
     edit.show()
 
     cursor = edit.textCursor()
-    edit.setFocus()
+    assert_focus_within_timeout(edit)
     cursor.setPosition(0)
     edit.setTextCursor(cursor)  # We must set it for it to be applied!
 
@@ -40,10 +41,12 @@ c = 30'''
 
 def test_python_code_text_edit(qtapi):
     from pyvmmonitor_qt.pyface_based.pygments_highlighter import PygmentsHighlighter
+    from pyvmmonitor_qt.qt_utils import assert_focus_within_timeout
     from pyvmmonitor_qt.pyface_based.code_widget import CodeWidget
 
     PygmentsHighlighter.style = MonokaiStyle
     edit = CodeWidget(parent=None)
+    edit.show()
     qtapi.add_widget(edit)
     edit.line_highlight_color = QColor(90, 90, 90)
     initial_code = '''class Error(object):
@@ -51,7 +54,7 @@ def test_python_code_text_edit(qtapi):
     edit.set_code(initial_code)
 
     cursor = edit.textCursor()
-    edit.setFocus()
+    assert_focus_within_timeout(edit)
     cursor.setPosition(len(initial_code))
     edit.setTextCursor(cursor)  # We must set it for it to be applied!
 
