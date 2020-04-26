@@ -8,6 +8,8 @@ import types
 import pytest
 from pytestqt.plugin import qtbot  # @UnusedImport
 
+pytest_plugins = ['pytestqt.plugin']
+
 
 def _list_widgets(qtbot):
     from pytestqt.qtbot import _iter_widgets
@@ -52,6 +54,7 @@ def qtapi(qtbot):
 
         for widget, visible in widget_and_visibility:
             widget.setVisible(visible)
+
     qtbot.d = types.MethodType(d, qtbot)
 
     yield qtbot
