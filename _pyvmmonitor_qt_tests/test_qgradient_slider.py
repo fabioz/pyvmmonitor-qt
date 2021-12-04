@@ -8,7 +8,7 @@ import pytest
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def qgradient_slider():
     from pyvmmonitor_qt.qt_event_loop import process_events
     from pyvmmonitor_qt.qt_gradient_slider import QGradientSlider

@@ -8,7 +8,7 @@ import pytest
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def view(qtapi):
     from pyvmmonitor_qt.zoomable_graphics_view import ZoomableGraphicsView
     view = ZoomableGraphicsView()

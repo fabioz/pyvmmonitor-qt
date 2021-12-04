@@ -11,7 +11,7 @@ import pytest
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def _shortcuts_main_window(qtapi):
     from pyvmmonitor_qt.qt.QtWidgets import QMainWindow
     from pyvmmonitor_qt.qt_widget_builder import WidgetBuilder

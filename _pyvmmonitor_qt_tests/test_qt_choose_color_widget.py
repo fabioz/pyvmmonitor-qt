@@ -8,7 +8,7 @@ import pytest
 from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def hsv_widget():
     from pyvmmonitor_qt.qt_choose_color_widget import HSVWidget
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
@@ -35,7 +35,7 @@ def test_hsv_widget(qtapi, hsv_widget):
     assert hsv_widget.model.color == QColor.fromHsvF(0.4, 0.5, 0.5)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def rgb_widget():
     from pyvmmonitor_qt.qt_choose_color_widget import RGBWidget
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
@@ -48,7 +48,7 @@ def rgb_widget():
     process_events(collect=True)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def opacity_widget():
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
     from pyvmmonitor_qt.qt_choose_color_widget import _OpacityWidget
@@ -86,7 +86,7 @@ def test_opacity_widget(qtapi, opacity_widget):
     assert opacity_widget._widget_0._slider.value == 150
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def choose_color_widget():
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorModel
     from pyvmmonitor_qt.qt_choose_color_widget import ChooseColorWidget

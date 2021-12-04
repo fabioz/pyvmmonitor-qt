@@ -21,7 +21,7 @@ def __show_dialog_and_exec(parent, title, message, detailed_message, icon):
         title, message, detailed_message))
 
 
-@pytest.yield_fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def mock_show_error():
     from pyvmmonitor_qt import qt_utils
     original = qt_utils.__show_dialog_and_exec
@@ -30,7 +30,7 @@ def mock_show_error():
     qt_utils.__show_dialog_and_exec = original
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def qtapi(qtbot):
     from pyvmmonitor_qt.qt_app import obtain_qapp
     from pyvmmonitor_qt.qt_collect import start_collect_only_in_ui_thread

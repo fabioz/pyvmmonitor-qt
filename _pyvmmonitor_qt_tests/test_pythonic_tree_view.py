@@ -11,7 +11,7 @@ from pyvmmonitor_qt.pytest_plugin import qtapi  # @UnusedImport
 from pyvmmonitor_qt.qt.QtWidgets import QWidget
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def tree():
     from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
@@ -391,7 +391,7 @@ def test_filtering(qtapi, tree):
     assert list_wiget_item_captions(filtered_tree.tree) == ['aa', '+bb']
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def virtual_tree():
     from pyvmmonitor_qt.qt.QtWidgets import QTreeView
     from pyvmmonitor_qt.tree.pythonic_tree_view import PythonicQTreeView
