@@ -8,7 +8,7 @@ import types
 import pytest
 from pytestqt.plugin import qtbot  # @UnusedImport
 
-pytest_plugins = ['pytestqt.plugin']
+pytest_plugins = []
 
 
 def _list_widgets(qtbot):

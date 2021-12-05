@@ -535,7 +535,7 @@ class PythonicQTreeView(object):
             node = TreeNode(node)
 
         assert thread_utils.is_in_main_thread()
-        assert obj_id not in self._fast
+        assert obj_id not in self._fast, '%s already in %s' % (obj_id, self)
         if parent_node is None:
             items = node._attach_to_tree(self, obj_id)
             if index == -1:
