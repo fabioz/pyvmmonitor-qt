@@ -9,6 +9,9 @@ elif qt_api == 'pyside':
 elif qt_api == 'pyqt5':
     from PyQt5 import QtWidgets
 
+elif qt_api == 'pyside6':
+    from PySide6 import QtWidgets
+
 else:
     from PySide2 import QtWidgets
 
@@ -24,8 +27,6 @@ QAbstractItemView = QtWidgets.QAbstractItemView
 QAbstractScrollArea = QtWidgets.QAbstractScrollArea
 QAbstractSlider = QtWidgets.QAbstractSlider
 QAbstractSpinBox = QtWidgets.QAbstractSpinBox
-QAction = QtWidgets.QAction
-QActionGroup = QtWidgets.QActionGroup
 QApplication = QtWidgets.QApplication
 QBoxLayout = QtWidgets.QBoxLayout
 QButtonGroup = QtWidgets.QButtonGroup
@@ -40,11 +41,11 @@ QCompleter = QtWidgets.QCompleter
 QDataWidgetMapper = QtWidgets.QDataWidgetMapper
 QDateEdit = QtWidgets.QDateEdit
 QDateTimeEdit = QtWidgets.QDateTimeEdit
-QDesktopWidget = QtWidgets.QDesktopWidget
+# QDesktopWidget = QtWidgets.QDesktopWidget
 QDial = QtWidgets.QDial
 QDialog = QtWidgets.QDialog
 QDialogButtonBox = QtWidgets.QDialogButtonBox
-QDirModel = QtWidgets.QDirModel
+# QDirModel = QtWidgets.QDirModel
 QDockWidget = QtWidgets.QDockWidget
 QDoubleSpinBox = QtWidgets.QDoubleSpinBox
 QErrorMessage = QtWidgets.QErrorMessage
@@ -106,7 +107,7 @@ QInputDialog = QtWidgets.QInputDialog
 QItemDelegate = QtWidgets.QItemDelegate
 QItemEditorCreatorBase = QtWidgets.QItemEditorCreatorBase
 QItemEditorFactory = QtWidgets.QItemEditorFactory
-QKeyEventTransition = QtWidgets.QKeyEventTransition
+# QKeyEventTransition = QtWidgets.QKeyEventTransition
 QLCDNumber = QtWidgets.QLCDNumber
 QLabel = QtWidgets.QLabel
 QLayout = QtWidgets.QLayout
@@ -121,7 +122,7 @@ QMdiSubWindow = QtWidgets.QMdiSubWindow
 QMenu = QtWidgets.QMenu
 QMenuBar = QtWidgets.QMenuBar
 QMessageBox = QtWidgets.QMessageBox
-QMouseEventTransition = QtWidgets.QMouseEventTransition
+# QMouseEventTransition = QtWidgets.QMouseEventTransition
 QPanGesture = QtWidgets.QPanGesture
 QPinchGesture = QtWidgets.QPinchGesture
 QPlainTextDocumentLayout = QtWidgets.QPlainTextDocumentLayout
@@ -133,7 +134,17 @@ QRadioButton = QtWidgets.QRadioButton
 QRubberBand = QtWidgets.QRubberBand
 QScrollArea = QtWidgets.QScrollArea
 QScrollBar = QtWidgets.QScrollBar
-QShortcut = QtWidgets.QShortcut
+
+try:
+    QAction = QtWidgets.QAction
+    QActionGroup = QtWidgets.QActionGroup
+    QShortcut = QtWidgets.QShortcut
+except AttributeError:
+    from PySide6 import QtGui
+    QAction = QtGui.QAction
+    QActionGroup = QtGui.QActionGroup
+    QShortcut = QtGui.QShortcut
+
 QSizeGrip = QtWidgets.QSizeGrip
 QSizePolicy = QtWidgets.QSizePolicy
 QSlider = QtWidgets.QSlider
@@ -198,10 +209,10 @@ QTreeView = QtWidgets.QTreeView
 QTreeWidget = QtWidgets.QTreeWidget
 QTreeWidgetItem = QtWidgets.QTreeWidgetItem
 QTreeWidgetItemIterator = QtWidgets.QTreeWidgetItemIterator
-QUndoCommand = QtWidgets.QUndoCommand
-QUndoGroup = QtWidgets.QUndoGroup
-QUndoStack = QtWidgets.QUndoStack
-QUndoView = QtWidgets.QUndoView
+# QUndoCommand = QtWidgets.QUndoCommand
+# QUndoGroup = QtWidgets.QUndoGroup
+# QUndoStack = QtWidgets.QUndoStack
+# QUndoView = QtWidgets.QUndoView
 QVBoxLayout = QtWidgets.QVBoxLayout
 QWhatsThis = QtWidgets.QWhatsThis
 QWidget = QtWidgets.QWidget

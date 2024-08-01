@@ -46,6 +46,21 @@ def generate_resources(resources_dir, output_file):
         else:
             raise AssertionError('Could not find pyrcc.')
 
+    elif qt_api == 'pyside6':
+        import PySide6 as PySide
+        for p in os.environ['PATH'].split(os.pathsep):
+            pyrcc = os.path.join(p, 'pyside6-rcc')
+            if os.path.exists(pyrcc):
+                break
+            pyrcc = os.path.join(p, 'pyside6-rcc.exe')
+            if os.path.exists(pyrcc):
+                break
+            pyrcc = os.path.join(p, 'pyside6-rcc.sh')
+            if os.path.exists(pyrcc):
+                break
+        else:
+            raise AssertionError('Could not find pyrcc.')
+
     elif qt_api == 'pyqt5':
         import PyQt5
         for p in os.environ['PATH'].split(os.pathsep):

@@ -11,6 +11,11 @@ elif qt_api == 'pyside2':
     QTextCursor = QtGui.QTextCursor
     QKeySequence = QtGui.QKeySequence
 
+elif qt_api == 'pyside6':
+    from PySide6 import QtGui
+    QTextCursor = QtGui.QTextCursor
+    QKeySequence = QtGui.QKeySequence
+
 elif qt_api == 'pyqt5':
     from PyQt5 import QtGui
     QTextCursor = QtGui.QTextCursor
@@ -96,7 +101,7 @@ QPainterPathStroker = QtGui.QPainterPathStroker
 QPalette = QtGui.QPalette
 QPen = QtGui.QPen
 QPicture = QtGui.QPicture
-QPictureIO = QtGui.QPictureIO
+# QPictureIO = QtGui.QPictureIO
 QPixmap = QtGui.QPixmap
 QPixmapCache = QtGui.QPixmapCache
 QPolygon = QtGui.QPolygon
@@ -104,7 +109,7 @@ QPolygonF = QtGui.QPolygonF
 # QPyTextObject = QtGui.QPyTextObject
 QQuaternion = QtGui.QQuaternion
 QRadialGradient = QtGui.QRadialGradient
-QRegExpValidator = QtGui.QRegExpValidator
+# QRegExpValidator = QtGui.QRegExpValidator
 QRegion = QtGui.QRegion
 QResizeEvent = QtGui.QResizeEvent
 QSessionManager = QtGui.QSessionManager
