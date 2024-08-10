@@ -203,6 +203,9 @@ class _Shortcut(object):
         else:
             self._shortcut_repr = shortcut.toString()
 
+    def __str__(self) -> str:
+        return '_Shortcut(%s, %s, %s, %s)' % (self._shortcut_repr, self.command_id, self.scope, self.shortcut)
+
     def _activated(self):
         commands_manager = self.commands_manager()
         if commands_manager is not None:
@@ -253,20 +256,24 @@ class _DefaultQtCommandsManager(object):
         self._shortcuts_registered.add(s)
         self._apply_shortcut(s)
 
-    def _apply_shortcut(self, shortcut):
+    def _apply_shortcut(self, shortcut: _Shortcut):
         w = self._get_widget_for_scope(shortcut.scope)
         if w is not None:
             qshortcut = self._obtain_qshortcut(
                 shortcut.shortcut, w, shortcut.scope)
             qshortcut.activated.connect(shortcut._activated)
 
-    def _remove_shortcut(self, shortcut):
+    def _remove_shortcut(self, shortcut: _Shortcut):
         w = self._get_widget_for_scope(shortcut.scope)
         if w is not None:
             qshortcut = self._obtain_qshortcut(
                 shortcut.shortcut, w, shortcut.scope, remove=True)
             if qshortcut is not None:
-                qshortcut.activated.disconnect(shortcut._activated)
+                # We don't disconnect (because we create a new _Shortcut
+                # the reference to remove wouldn't be correct).
+                # As we delete it, it shouldn't make a difference.
+                # qshortcut.activated.disconnect(shortcut._activated)
+
                 # Note: even doing a deleteLater, we have to setKey(0), otherwise
                 # a new key created for the same shortcut doesn't work.
                 qshortcut.setKey(0)
