@@ -99,7 +99,7 @@ class LineNumberWidget(GutterWidget):
         nlines = max(1, self.parent().blockCount())
         ndigits = max(self.min_char_width,
                       int(math.floor(math.log10(nlines) + 1)))
-        width = max(self.fontMetrics().width(u'0' * ndigits) + 3,
+        width = max(self.fontMetrics().boundingRect(u'0' * ndigits).width() + 3,
                     self.min_width)
         return width
 

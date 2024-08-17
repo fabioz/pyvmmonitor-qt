@@ -146,7 +146,10 @@ QReadLocker = QtCore.QReadLocker
 QReadWriteLock = QtCore.QReadWriteLock
 QRect = QtCore.QRect
 QRectF = QtCore.QRectF
-# QRegExp = QtCore.QRegExp
+try:
+    QRegExp = QtCore.QRegExp
+except AttributeError:
+    QRegExp = QtCore.QRegularExpression
 QResource = QtCore.QResource
 QRunnable = QtCore.QRunnable
 QSemaphore = QtCore.QSemaphore
