@@ -265,6 +265,15 @@ elif qt_api == 'pyside2':
     def is_qobject_alive(obj):
         return shiboken2.isValid(obj)
 
+elif qt_api == 'pyside6':
+    try:
+        from PySide6 import shiboken6
+    except ImportError:
+        import shiboken6
+
+    def is_qobject_alive(obj):
+        return shiboken6.isValid(obj)
+
 elif qt_api == 'pyqt5':
 
     import sip
@@ -637,7 +646,7 @@ class _ResizeMessageBox(CustomMessageDialog):
                 self.bt_show_details.setText('Hide Details...')
                 self.resize(640, 480)
                 self.move(
-                    QApplication.desktop().availableGeometry(self._initial_pos).center() -
+                    QApplication.desktop().availableGeometry(self._initial_pos).center() - 
                     self.rect().center())
 
         elif bt == self.bt_close:
@@ -1008,7 +1017,7 @@ def assert_condition_within_timeout(condition, timeout=2.):
 
         if time.time() - initial > timeout:
             raise AssertionError(
-                u'Could not reach condition before timeout: %s (condition return: %s)' %
+                u'Could not reach condition before timeout: %s (condition return: %s)' % 
                 (timeout, c))
 
         # from pyvmmonitor_qt.qt_event_loop import process_events
@@ -1069,10 +1078,11 @@ def set_painter_antialiased(painter, antialias, widget):
     widget, so, making it required so that each case actually takes it into account).
     '''
     from pyvmmonitor_qt.qt.QtGui import QPainter
-    RENDER_HINTS = (QPainter.Antialiasing |
-                    QPainter.TextAntialiasing |
-                    QPainter.SmoothPixmapTransform |
-                    QPainter.HighQualityAntialiasing)
+    RENDER_HINTS = (QPainter.Antialiasing | 
+                    QPainter.TextAntialiasing | 
+                    QPainter.SmoothPixmapTransform  
+                    # | QPainter.HighQualityAntialiasing
+                    )
     # painter.setRenderHint(QPainter.NonCosmeticDefaultPen, False)
     use_opengl = hasattr(widget, 'makeCurrent') and _is_opengl_available()
 

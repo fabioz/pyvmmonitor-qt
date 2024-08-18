@@ -6,6 +6,9 @@ if qt_api == 'pyqt':
 elif qt_api == 'pyside2':
     from PySide2 import QtXml
 
+elif qt_api == 'pyside6':
+    from PySide6 import QtXml
+
 elif qt_api == 'pyqt5':
     from PyQt5 import QtXml
 
@@ -34,17 +37,17 @@ QDomNodeList = QtXml.QDomNodeList
 QDomNotation = QtXml.QDomNotation
 QDomProcessingInstruction = QtXml.QDomProcessingInstruction
 QDomText = QtXml.QDomText
-QXmlAttributes = QtXml.QXmlAttributes
-QXmlContentHandler = QtXml.QXmlContentHandler
-QXmlDTDHandler = QtXml.QXmlDTDHandler
-QXmlDeclHandler = QtXml.QXmlDeclHandler
-QXmlDefaultHandler = QtXml.QXmlDefaultHandler
-QXmlEntityResolver = QtXml.QXmlEntityResolver
-QXmlErrorHandler = QtXml.QXmlErrorHandler
-QXmlInputSource = QtXml.QXmlInputSource
-QXmlLexicalHandler = QtXml.QXmlLexicalHandler
-QXmlLocator = QtXml.QXmlLocator
-QXmlNamespaceSupport = QtXml.QXmlNamespaceSupport
-QXmlParseException = QtXml.QXmlParseException
-QXmlReader = QtXml.QXmlReader
-QXmlSimpleReader = QtXml.QXmlSimpleReader
+# QXmlAttributes = QtXml.QXmlAttributes
+# QXmlContentHandler = QtXml.QXmlContentHandler
+# QXmlDTDHandler = QtXml.QXmlDTDHandler
+# QXmlDeclHandler = QtXml.QXmlDeclHandler
+# QXmlDefaultHandler = QtXml.QXmlDefaultHandler
+# QXmlEntityResolver = QtXml.QXmlEntityResolver
+# QXmlErrorHandler = QtXml.QXmlErrorHandler
+# QXmlInputSource = QtXml.QXmlInputSource
+# QXmlLexicalHandler = QtXml.QXmlLexicalHandler
+# QXmlLocator = QtXml.QXmlLocator
+# QXmlNamespaceSupport = QtXml.QXmlNamespaceSupport
+# QXmlParseException = QtXml.QXmlParseException
+# QXmlReader = QtXml.QXmlReader
+# QXmlSimpleReader = QtXml.QXmlSimpleReader
