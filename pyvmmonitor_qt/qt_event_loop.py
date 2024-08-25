@@ -86,7 +86,7 @@ def process_events(collect=False, handle_future_events=False):
         timer.setSingleShot(True)
         timer.timeout.connect(app.exit)
         timer.start(0)
-        app.exec_()
+        app.exec()
 
     if handle_future_events:
         process_queue(handle_future_events=True)
