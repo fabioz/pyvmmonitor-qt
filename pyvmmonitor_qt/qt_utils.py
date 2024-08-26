@@ -416,7 +416,7 @@ def set_additional_exception_msg(exception_msg):
 
 
 def show_message(
-        message,
+        message: str,
         detailed_message='',
         title='Error',
         parent=None,
@@ -448,6 +448,10 @@ def show_message(
         else:
             logger.warn('Invalid icon: %s' % (icon,))
             icon = QMessageBox.NoIcon
+
+    if len(message) > 180:
+        import textwrap
+    message = textwrap.fill(message, width=180)
 
     if not is_in_main_thread():
 
