@@ -49,16 +49,18 @@ def ask_yes_no_cancel(
 
     from pyvmmonitor_qt.qt.QtWidgets import QMessageBox
     bbox = QMessageBox(QMessageBox.Question, title, msg, QMessageBox.NoButton, parent)
-    bbox.addButton(yes_caption, QMessageBox.YesRole)
-    bbox.addButton(no_caption, QMessageBox.NoRole)
-    bbox.addButton(cancel_caption, QMessageBox.RejectRole)
+    yes_bt = bbox.addButton(yes_caption, QMessageBox.YesRole)
+    no_bt = bbox.addButton(no_caption, QMessageBox.NoRole)
+    cancel_bt = bbox.addButton(cancel_caption, QMessageBox.RejectRole)
 
     ret = bbox.exec_()
-    if ret == 0:
+
+    clicked_bt = bbox.clickedButton()
+    if clicked_bt == yes_bt:
         return YES
-    if ret == 1:
+    if clicked_bt == no_bt:
         return NO
-    if ret == 2:
+    if clicked_bt == cancel_bt:
         return CANCEL
 
     logger.critical('Unexpected return: %s' % (ret,))

@@ -645,9 +645,15 @@ class _ResizeMessageBox(CustomMessageDialog):
                 self.tx_details.setVisible(True)
                 self.bt_show_details.setText('Hide Details...')
                 self.resize(640, 480)
-                self.move(
-                    QApplication.desktop().availableGeometry(self._initial_pos).center() - 
-                    self.rect().center())
+
+                if qt_api == 'pyside6':
+                    from pyvmmonitor_qt.qt.QtGui import QGuiApplication
+                    screen = QGuiApplication.screenAt(self._initial_pos)
+                    screen_geometry = screen.geometry()
+                else:
+                    screen_geometry = QApplication.desktop(self._initial_pos).availableGeometry()
+
+                self.move(screen_geometry.center() - self.rect().center())
 
         elif bt == self.bt_close:
             self.reject()
