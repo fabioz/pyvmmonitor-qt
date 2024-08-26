@@ -102,7 +102,7 @@ def apply_default_stylesheet(app, force=False):
         elif _USE_THEME == 'DARK':
             import qdarkstyle
             # setup stylesheet
-            STYLESHEET = qdarkstyle.load_stylesheet()
+            STYLESHEET = qdarkstyle.load_stylesheet(pyside6=True, pyside=False)
             is_dark = True
         else:  # Native or error...
             from pyvmmonitor_qt.stylesheet.light import STYLESHEET

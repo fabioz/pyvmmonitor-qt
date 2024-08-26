@@ -62,7 +62,7 @@ DEBUG_FORMLAYOUT = False
 STDERR = sys.stderr
 
 _modname = qt_api
-assert _modname in ('pyqt', 'pyside', 'pyside2'), 'Expected pyqt or pyside. Found: %s' % (_modname,)
+assert _modname in ('pyqt', 'pyside', 'pyside2', 'pyside6'), 'Expected pyqt or pyside. Found: %s' % (_modname,)
 
 if _modname == 'pyqt':
     try:
@@ -100,6 +100,17 @@ elif _modname == 'pyside2':
                               QFormLayout, QFileDialog)
     from PySide2.QtGui import (QIcon, QColor, QPixmap, QFont, QFontDatabase, QDoubleValidator)
     from PySide2.QtCore import Qt, SIGNAL, SLOT, QSize, Slot, Property
+
+elif _modname == 'pyside6':
+    from PySide6.QtWidgets import (QWidget, QLineEdit, QComboBox, QLabel, QSpinBox,
+                              QStyle, QDialogButtonBox, QHBoxLayout,
+                              QVBoxLayout, QDialog, QPushButton, QCheckBox,
+                              QColorDialog, QTabWidget, QApplication,
+                              QStackedWidget, QDateEdit, QDateTimeEdit,
+                              QFontComboBox, QGridLayout, QTextEdit,
+                              QFormLayout, QFileDialog)
+    from PySide6.QtGui import (QIcon, QColor, QPixmap, QFont, QFontDatabase, QDoubleValidator)
+    from PySide6.QtCore import Qt, SIGNAL, SLOT, QSize, Slot, Property
 
 # ----+- Python 3 compatibility -+----
 PY2 = sys.version[0] == '2'
@@ -815,7 +826,6 @@ def fedit(data, title="", comment="", icon=None, parent=None, apply=None, restor
 
 
 if __name__ == "__main__":
-
 
     from pyvmmonitor_qt.qt_app import obtain_qapp
     obtain_qapp()
