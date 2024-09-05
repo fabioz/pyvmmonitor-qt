@@ -451,7 +451,7 @@ def show_message(
 
     if len(message) > 180:
         import textwrap
-    message = textwrap.fill(message, width=180)
+        message = textwrap.fill(message, width=180)
 
     if not is_in_main_thread():
 
