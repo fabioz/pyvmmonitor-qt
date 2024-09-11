@@ -139,7 +139,7 @@ class ZoomableGraphicsView(QGraphicsView):
 
     @handle_exception_in_method
     def wheelEvent(self, event, anchor=ANCHOR_MOUSE):
-        if event.delta() < 0:
+        if event.angleDelta().y() < 0:
             self.zoom_out(anchor)
         else:
             self.zoom_in(anchor)
